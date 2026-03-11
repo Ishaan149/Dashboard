@@ -1,0 +1,182 @@
+.progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.progressBar {
+  flex: 1;
+  height: 4px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #30d158, #10b981);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+  box-shadow: 0 0 6px rgba(48,209,88,0.5);
+}
+
+.progressLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.35);
+  white-space: nowrap;
+}
+
+.columns {
+  display: flex;
+  gap: 0;
+  min-height: 0;
+}
+
+.section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.sectionTitle {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+  margin: 0 0 10px 0;
+}
+
+.divider {
+  width: 1px;
+  background: rgba(255,255,255,0.07);
+  margin: 0 18px;
+  align-self: stretch;
+}
+
+.inputRow {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.input {
+  flex: 1;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-family: inherit;
+  font-size: 14px;
+  color: rgba(255,255,255,0.92);
+  outline: none;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+}
+.input::placeholder { color: rgba(255,255,255,0.28); }
+.input:focus {
+  border-color: #10b981;
+  background: rgba(16,185,129,0.08);
+  box-shadow: 0 0 0 3px rgba(16,185,129,0.2);
+}
+
+.addBtn {
+  padding: 10px 18px;
+  background: #10b981;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.15s, box-shadow 0.2s;
+}
+.addBtn:hover {
+  opacity: 0.88;
+  box-shadow: 0 0 16px rgba(16,185,129,0.4);
+}
+
+.dropTarget {
+  border-radius: 12px;
+  outline: 2px dashed rgba(16,185,129,0.4);
+  outline-offset: 4px;
+  background: rgba(16,185,129,0.04);
+}
+
+.dragHandle {
+  color: rgba(255,255,255,0.18);
+  font-size: 14px;
+  cursor: grab;
+  flex-shrink: 0;
+  user-select: none;
+}
+.dragHandle:active { cursor: grabbing; }
+
+.list { list-style: none; display: flex; flex-direction: column; gap: 7px; }
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid transparent;
+  transition: background 0.2s, border-color 0.2s;
+  animation: slideIn 0.2s ease;
+}
+.item:hover {
+  background: rgba(255,255,255,0.07);
+  border-color: rgba(255,255,255,0.1);
+}
+.item.done {
+  background: rgba(48,209,88,0.06);
+  border-color: rgba(48,209,88,0.12);
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.checkbox {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.2);
+  flex-shrink: 0;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  background: transparent;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  padding: 0;
+}
+.checkbox:hover { border-color: #30d158; }
+.item.done .checkbox {
+  background: #30d158;
+  border-color: #30d158;
+  box-shadow: 0 0 10px rgba(48,209,88,0.4);
+}
+
+.text { flex: 1; font-size: 14px; line-height: 1.4; }
+.item.done .text { text-decoration: line-through; color: rgba(255,255,255,0.35); }
+
+.delete {
+  background: none; border: none;
+  color: rgba(255,255,255,0.28); cursor: pointer;
+  font-size: 14px; line-height: 1;
+  padding: 3px 5px; border-radius: 6px;
+  opacity: 0; transition: opacity 0.15s, color 0.15s;
+}
+.item:hover .delete { opacity: 1; }
+.delete:hover { color: #ff453a; }
+
+.empty {
+  text-align: center;
+  color: rgba(255,255,255,0.25);
+  font-size: 13px;
+  padding: 24px 0 8px;
+}
