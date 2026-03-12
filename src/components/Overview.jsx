@@ -110,7 +110,7 @@ export default function Overview() {
           <div className={styles.colHeader}>
             <p className={styles.colLabel}>Today's Habits</p>
             {habits.length > 0 && (
-              <span className={styles.goalsBadge}>{todayDone.length}/{habits.length}</span>
+              <span className={styles.goalsBadge}>{habits.filter(h => todayDone.includes(h.id)).length}/{habits.length}</span>
             )}
           </div>
           {habits.length === 0 ? (
@@ -124,7 +124,7 @@ export default function Overview() {
                     <span className={styles.checkbox}>
                       {done && <Checkmark />}
                     </span>
-                    <span className={styles.itemText}>{h.emoji} {h.name}</span>
+                    <span className={styles.itemText}>{h.name}</span>
                   </li>
                 )
               })}

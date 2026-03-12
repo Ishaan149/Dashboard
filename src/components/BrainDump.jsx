@@ -57,6 +57,7 @@ export default function BrainDump() {
     if (!activeNote?.content) return
     if (!confirm('Clear this note?')) return
     updateContent('')
+    clearTimeout(timerRef.current)
     setStatus('idle')
   }
 

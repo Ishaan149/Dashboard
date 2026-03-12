@@ -13,12 +13,12 @@ import { useAuth } from './context/AuthContext'
 import styles from './App.module.css'
 
 const VIEWS = {
-  overview:  <Overview />,
-  todo:      <TodoCard />,
-  goals:     <GoalsCard />,
-  braindump: <BrainDump />,
-  jobs:      <JobTracker />,
-  habits:    <HabitTracker />,
+  overview:  Overview,
+  todo:      TodoCard,
+  goals:     GoalsCard,
+  braindump: BrainDump,
+  jobs:      JobTracker,
+  habits:    HabitTracker,
 }
 
 export default function App() {
@@ -34,6 +34,7 @@ export default function App() {
   }
 
   const showLoginPrompt = !authLoading && user === null && !dismissed
+  const ActiveView = VIEWS[view]
 
   return (
     <div className={styles.layout}>
@@ -44,7 +45,7 @@ export default function App() {
         <TopBar view={view} />
         <div className={styles.content}>
           <div className={styles.view} key={view}>
-            {VIEWS[view]}
+            <ActiveView />
           </div>
         </div>
       </div>
