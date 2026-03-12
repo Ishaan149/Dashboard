@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import { useAuth } from '../context/AuthContext'
 import styles from './Sidebar.module.css'
 
 const NAV = [
@@ -59,6 +61,9 @@ const NAV = [
 ]
 
 export default function Sidebar({ active, onChange }) {
+  const { user, logOut } = useAuth()
+  const [showEmail, setShowEmail] = useState(false)
+
   return (
     <aside className={styles.sidebar}>
       {/* Logo */}
@@ -88,12 +93,25 @@ export default function Sidebar({ active, onChange }) {
       </nav>
 
       {/* Footer */}
-      <div className={styles.footer}>
+      <div className={styles.footer} onClick={() => setShowEmail(v => !v)} style={{ cursor: 'pointer' }}>
         <div className={styles.avatar}>IK</div>
         <div className={styles.footerText}>
           <span className={styles.footerName}>Ishaan Kurmi</span>
-          <span className={styles.footerSub}>Personal</span>
+          <span className={styles.footerSub}>
+            {showEmail && user?.email ? user.email : 'Personal'}
+          </span>
         </div>
+        {showEmail && user && (
+          <button
+            className={styles.logoutBtn}
+            onClick={e => { e.stopPropagation(); logOut() }}
+            title="Sign out"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+          </button>
+        )}
       </div>
     </aside>
   )
