@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import SyncBadge from './SyncBadge'
 import styles from './TopBar.module.css'
 
 const DAYS   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
@@ -36,6 +37,7 @@ export default function TopBar({ view }) {
           </span>
         </div>
         <div className={styles.right}>
+          <SyncBadge />
           <div className={styles.clock}>
             {h12}:{pad(m)} <span className={styles.ampm}>{ampm}</span>
           </div>

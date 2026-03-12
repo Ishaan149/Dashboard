@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { useLocalStorage } from '../hooks/useLocalStorage'
+import { useSyncedStorage as useLocalStorage } from '../hooks/useSyncedStorage'
 import Card from './Card'
 import styles from './BrainDump.module.css'
 

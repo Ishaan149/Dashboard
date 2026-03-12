@@ -1,4 +1,4 @@
-import { useLocalStorage } from '../hooks/useLocalStorage'
+import { useSyncedStorage as useLocalStorage } from '../hooks/useSyncedStorage'
 import Card from './Card'
 import styles from './JobTracker.module.css'
 

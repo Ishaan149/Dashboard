@@ -1,4 +1,4 @@
-import { useLocalStorage } from '../hooks/useLocalStorage'
+import { useSyncedStorage as useLocalStorage } from '../hooks/useSyncedStorage'
 import { useState, useEffect } from 'react'
 import { getDailyQuote } from '../data/quotes'
 import Card from './Card'
