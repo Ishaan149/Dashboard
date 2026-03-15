@@ -8,18 +8,22 @@ import GoalsCard from './components/GoalsCard'
 import BrainDump from './components/BrainDump'
 import JobTracker from './components/JobTracker'
 import HabitTracker from './components/HabitTracker'
+import DayPlanner from './components/DayPlanner'
 import LoginPrompt from './components/LoginPrompt'
 import { useAuth } from './context/AuthContext'
 import styles from './App.module.css'
 
 const VIEWS = {
-  overview:  Overview,
-  todo:      TodoCard,
-  goals:     GoalsCard,
-  braindump: BrainDump,
-  jobs:      JobTracker,
-  habits:    HabitTracker,
+  overview:   Overview,
+  todo:       TodoCard,
+  goals:      GoalsCard,
+  braindump:  BrainDump,
+  jobs:       JobTracker,
+  habits:     HabitTracker,
+  dayplanner: DayPlanner,
 }
+
+const FULL_WIDTH_VIEWS = new Set(['dayplanner'])
 
 export default function App() {
   const [view, setView] = useState('overview')
@@ -35,6 +39,7 @@ export default function App() {
 
   const showLoginPrompt = !authLoading && user === null && !dismissed
   const ActiveView = VIEWS[view]
+  const isFullWidth = FULL_WIDTH_VIEWS.has(view)
 
   return (
     <div className={styles.layout}>
@@ -44,7 +49,7 @@ export default function App() {
       <div className={styles.main}>
         <TopBar view={view} />
         <div className={styles.content}>
-          <div className={styles.view} key={view}>
+          <div className={isFullWidth ? styles.viewFull : styles.view} key={view}>
             <ActiveView />
           </div>
         </div>

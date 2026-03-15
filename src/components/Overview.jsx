@@ -4,6 +4,21 @@ import { getDailyQuote } from '../data/quotes'
 import Card from './Card'
 import styles from './Overview.module.css'
 
+const CATEGORY_COLORS = {
+  work: '#10b981',
+  gym:  '#f59e0b',
+  uni:  '#6366f1',
+  rest: '#6b7280',
+}
+
+function fmtMins(mins) {
+  const h = Math.floor(mins / 60) % 24
+  const m = mins % 60
+  const ampm = h >= 12 ? 'PM' : 'AM'
+  const h12  = h % 12 || 12
+  return `${h12}:${String(m).padStart(2, '0')} ${ampm}`
+}
+
 function getToday() {
   return new Date().toISOString().slice(0, 10)
 }
@@ -31,6 +46,8 @@ export default function Overview() {
   const [jobRecords]  = useLocalStorage('job_applications', [])
   const [habits]      = useLocalStorage('habits', [])
   const [habitLogs]   = useLocalStorage('habit_logs', {})
+  const [blocks]      = useLocalStorage('dayplanner-blocks', [])
+  const [dpSettings]  = useLocalStorage('dayplanner-settings', { startHour: 10, endHour: 27 })
 
   const today     = getToday()
   const weekStart = getWeekStart()
@@ -52,6 +69,26 @@ export default function Overview() {
   }, [])
 
   const quote = getDailyQuote()
+
+  const [nowMinutes, setNowMinutes] = useState(() => {
+    const d = new Date()
+    const raw = d.getHours() * 60 + d.getMinutes()
+    if (dpSettings.endHour > 24 && raw < (dpSettings.endHour - 24) * 60) return raw + 1440
+    return raw
+  })
+  useEffect(() => {
+    const id = setInterval(() => {
+      const d = new Date()
+      const raw = d.getHours() * 60 + d.getMinutes()
+      setNowMinutes(dpSettings.endHour > 24 && raw < (dpSettings.endHour - 24) * 60 ? raw + 1440 : raw)
+    }, 60_000)
+    return () => clearInterval(id)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dpSettings.endHour])
+
+  const sortedBlocks = [...blocks].sort((a, b) => a.startMinutes - b.startMinutes)
+  const shownBlocks  = sortedBlocks.slice(0, 5)
+  const extraBlocks  = sortedBlocks.length - shownBlocks.length
 
   const pendingTodos = todayTodos.filter(t => !t.done)
   const shownTodos   = pendingTodos.slice(0, 5)
@@ -131,6 +168,41 @@ export default function Overview() {
             </ul>
           )}
         </div>
+      </div>
+
+      {/* Today's schedule */}
+      <div className={styles.scheduleCard}>
+        <div className={styles.scheduleHeader}>
+          <span className={styles.colLabel} style={{ marginBottom: 0 }}>Today's Schedule</span>
+          {blocks.length > 0 && (
+            <span className={styles.goalsBadge}>{blocks.length} block{blocks.length !== 1 ? 's' : ''}</span>
+          )}
+        </div>
+        {blocks.length === 0 ? (
+          <p className={styles.empty}>No blocks planned yet</p>
+        ) : (
+          <ul className={styles.scheduleList}>
+            {shownBlocks.map(b => {
+              const color    = CATEGORY_COLORS[b.category] ?? CATEGORY_COLORS.work
+              const isNow    = nowMinutes >= b.startMinutes && nowMinutes < b.endMinutes
+              return (
+                <li key={b.id} className={`${styles.scheduleItem} ${isNow ? styles.scheduleNow : ''}`}>
+                  <div className={styles.scheduleBar} style={{ background: color }} />
+                  <div className={styles.scheduleInfo}>
+                    <span className={styles.scheduleLabel}>
+                      {b.label || b.category.charAt(0).toUpperCase() + b.category.slice(1)}
+                    </span>
+                    <span className={styles.scheduleTime}>
+                      {fmtMins(b.startMinutes)} – {fmtMins(b.endMinutes)}
+                    </span>
+                  </div>
+                  {isNow && <span className={styles.nowPill}>now</span>}
+                </li>
+              )
+            })}
+          </ul>
+        )}
+        {extraBlocks > 0 && <p className={styles.more}>+{extraBlocks} more</p>}
       </div>
 
       {/* Job apps row */}

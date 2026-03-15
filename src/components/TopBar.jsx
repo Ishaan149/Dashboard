@@ -7,11 +7,12 @@ const MONTHS = ['January','February','March','April','May','June','July','August
 const pad    = n => String(n).padStart(2, '0')
 
 const TITLES = {
-  overview:  'Overview',
-  todo:      'To-Do',
-  goals:     'Goals',
-  braindump: 'Brain Dump',
-  habits:    'Habit Tracker',
+  overview:   'Overview',
+  todo:       'To-Do',
+  goals:      'Goals',
+  braindump:  'Brain Dump',
+  habits:     'Habit Tracker',
+  dayplanner: 'Day Planner',
 }
 
 export default function TopBar({ view }) {

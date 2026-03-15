@@ -1,0 +1,318 @@
+/* ── Root ─────────────────────────────────────────────────────────────── */
+.root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+/* ── Settings bar ─────────────────────────────────────────────────────── */
+.settingsBar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 0 14px;
+  flex-shrink: 0;
+}
+
+.settingsGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.settingsLabel {
+  font-size: 12px;
+  color: #94a3b8;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.settingsSelect {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 6px;
+  color: #e2e8f0;
+  font-size: 12px;
+  padding: 4px 8px;
+  cursor: pointer;
+  outline: none;
+}
+.settingsSelect:hover {
+  border-color: rgba(255,255,255,0.2);
+}
+
+.settingsSpacer { flex: 1; }
+
+.clearBtn {
+  background: transparent;
+  border: 1px solid rgba(239,68,68,0.35);
+  border-radius: 6px;
+  color: #f87171;
+  font-size: 12px;
+  padding: 4px 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.clearBtn:hover { background: rgba(239,68,68,0.10); }
+
+.confirmRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.confirmText { font-size: 12px; color: #94a3b8; }
+.confirmYes {
+  background: rgba(239,68,68,0.15);
+  border: 1px solid rgba(239,68,68,0.4);
+  border-radius: 5px;
+  color: #f87171;
+  font-size: 12px;
+  padding: 3px 10px;
+  cursor: pointer;
+}
+.confirmNo {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 5px;
+  color: #94a3b8;
+  font-size: 12px;
+  padding: 3px 10px;
+  cursor: pointer;
+}
+
+/* ── Body ─────────────────────────────────────────────────────────────── */
+.body {
+  display: flex;
+  gap: 20px;
+  flex: 1;
+  min-height: 0;
+  align-items: flex-start;
+}
+
+/* ── Timeline ─────────────────────────────────────────────────────────── */
+.timelineWrap {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  max-height: calc(100vh - 220px);
+  padding-bottom: 32px;
+}
+
+.grid {
+  position: relative;
+  cursor: crosshair;
+  user-select: none;
+}
+
+.hourRow {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: flex-start;
+  pointer-events: none;
+}
+
+.hourLabel {
+  width: 56px;
+  flex-shrink: 0;
+  font-size: 11px;
+  color: #64748b;
+  padding-right: 8px;
+  text-align: right;
+  padding-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.hourLine {
+  flex: 1;
+  height: 1px;
+  background: rgba(255,255,255,0.06);
+  margin-top: 8px;
+}
+
+/* ── Now line ─────────────────────────────────────────────────────────── */
+.nowLine {
+  position: absolute;
+  left: 56px;
+  right: 0;
+  height: 2px;
+  background: #f87171;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.nowDot {
+  position: absolute;
+  left: -4px;
+  top: -3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f87171;
+}
+
+/* ── Edit panel ───────────────────────────────────────────────────────── */
+.panel {
+  width: 260px;
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: sticky;
+  top: 0;
+  animation: fadeSlide 0.15s ease;
+}
+
+@keyframes fadeSlide {
+  from { opacity: 0; transform: translateX(8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.panelTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+.closeBtn:hover { color: #e2e8f0; }
+
+.panelBody {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
+.fieldLabel {
+  font-size: 11px;
+  font-weight: 500;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.fieldInput {
+  width: 100%;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 6px;
+  color: #e2e8f0;
+  font-size: 13px;
+  padding: 7px 10px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+.fieldInput:focus {
+  border-color: rgba(99,102,241,0.5);
+}
+
+.categoryRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.catBtn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: transparent;
+  color: #94a3b8;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.catBtn:hover {
+  border-color: var(--cat-color, #94a3b8);
+  color: #e2e8f0;
+}
+.catBtnActive {
+  border-color: var(--cat-color, #94a3b8);
+  background: color-mix(in srgb, var(--cat-color, #94a3b8) 15%, transparent);
+  color: #e2e8f0;
+}
+
+.catDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.timeRow {
+  display: flex;
+  gap: 10px;
+}
+
+.timeField {
+  flex: 1;
+  min-width: 0;
+}
+
+.fieldSelect {
+  width: 100%;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 6px;
+  color: #e2e8f0;
+  font-size: 12px;
+  padding: 6px 8px;
+  outline: none;
+  cursor: pointer;
+}
+.fieldSelect:focus {
+  border-color: rgba(99,102,241,0.5);
+}
+
+.panelFooter {
+  padding: 10px 16px 14px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.deleteBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid rgba(239,68,68,0.3);
+  border-radius: 6px;
+  color: #f87171;
+  font-size: 12px;
+  padding: 6px 12px;
+  cursor: pointer;
+  width: 100%;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.deleteBtn:hover { background: rgba(239,68,68,0.10); }
