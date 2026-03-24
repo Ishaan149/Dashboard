@@ -1,7 +1,31 @@
 import { useState } from 'react'
-import { useSyncedStorage as useLocalStorage } from '../hooks/useSyncedStorage'
+import { useSyncedStorage } from '../hooks/useSyncedStorage'
 import Card from './Card'
 import styles from './GoalsCard.module.css'
+
+const DAYS = [
+  { key: 'mon', label: 'Mon' },
+  { key: 'tue', label: 'Tue' },
+  { key: 'wed', label: 'Wed' },
+  { key: 'thu', label: 'Thu' },
+  { key: 'fri', label: 'Fri' },
+  { key: 'sat', label: 'Sat' },
+  { key: 'sun', label: 'Sun' },
+]
+
+const EMPTY_WEEK = { mon: [], tue: [], wed: [], thu: [], fri: [], sat: [], sun: [] }
+
+function getWeekDates() {
+  const today = new Date()
+  const dow = today.getDay() // 0=Sun, 1=Mon…6=Sat
+  const monday = new Date(today)
+  monday.setDate(today.getDate() - ((dow + 6) % 7))
+  return DAYS.map((_, i) => {
+    const d = new Date(monday)
+    d.setDate(monday.getDate() + i)
+    return d
+  })
+}
 
 function Checkmark() {
   return (
@@ -12,29 +36,21 @@ function Checkmark() {
   )
 }
 
-function GoalColumn({ label, icon, storageKey }) {
-  const [items, setItems] = useLocalStorage(storageKey, [])
+function DayColumn({ label, date, tasks, onAdd, onToggle, onRemove, isToday }) {
   const [input, setInput] = useState('')
 
   function add() {
     const text = input.trim()
     if (!text) return
-    setItems(prev => [...prev, { id: Date.now(), text, done: false }])
+    onAdd(text)
     setInput('')
   }
 
-  function toggle(id) {
-    setItems(prev => prev.map(g => g.id === id ? { ...g, done: !g.done } : g))
-  }
-
-  function remove(id) {
-    setItems(prev => prev.filter(g => g.id !== id))
-  }
-
   return (
-    <div className={styles.col}>
-      <div className={styles.colLabel}>
-        <span className={styles.icon}>{icon}</span> {label}
+    <div className={`${styles.col} ${isToday ? styles.today : ''}`}>
+      <div className={styles.colHeader}>
+        <span className={styles.dayName}>{label}</span>
+        <span className={styles.dateNum}>{date.getDate()}</span>
       </div>
 
       <div className={styles.addRow}>
@@ -44,24 +60,24 @@ function GoalColumn({ label, icon, storageKey }) {
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && add()}
-          placeholder="Add goal…"
+          placeholder="Add…"
           maxLength={150}
         />
         <button className={styles.addBtn} onClick={add}>+</button>
       </div>
 
       <ul className={styles.list}>
-        {items.map(g => (
-          <li key={g.id} className={`${styles.item} ${g.done ? styles.done : ''}`}>
+        {tasks.map(task => (
+          <li key={task.id} className={`${styles.item} ${task.done ? styles.done : ''}`}>
             <button
               className={styles.checkbox}
-              onClick={() => toggle(g.id)}
-              aria-label={g.done ? 'Mark incomplete' : 'Mark complete'}
+              onClick={() => onToggle(task.id)}
+              aria-label={task.done ? 'Mark incomplete' : 'Mark complete'}
             >
-              {g.done && <Checkmark />}
+              {task.done && <Checkmark />}
             </button>
-            <span className={styles.text}>{g.text}</span>
-            <button className={styles.delete} onClick={() => remove(g.id)} aria-label="Delete">✕</button>
+            <span className={styles.text}>{task.text}</span>
+            <button className={styles.delete} onClick={() => onRemove(task.id)} aria-label="Delete">✕</button>
           </li>
         ))}
       </ul>
@@ -70,12 +86,63 @@ function GoalColumn({ label, icon, storageKey }) {
 }
 
 export default function GoalsCard() {
+  const [week, setWeek] = useSyncedStorage('week_planner_tasks', EMPTY_WEEK)
+  const [clearConfirm, setClearConfirm] = useState(false)
+
+  const weekDates = getWeekDates()
+  const todayIdx = (new Date().getDay() + 6) % 7 // Mon=0 … Sun=6
+
+  function addTask(dayKey, text) {
+    setWeek(prev => ({
+      ...prev,
+      [dayKey]: [...(prev[dayKey] || []), { id: Date.now(), text, done: false }],
+    }))
+  }
+
+  function toggleTask(dayKey, id) {
+    setWeek(prev => ({
+      ...prev,
+      [dayKey]: prev[dayKey].map(t => t.id === id ? { ...t, done: !t.done } : t),
+    }))
+  }
+
+  function removeTask(dayKey, id) {
+    setWeek(prev => ({
+      ...prev,
+      [dayKey]: prev[dayKey].filter(t => t.id !== id),
+    }))
+  }
+
+  function handleClear() {
+    if (!clearConfirm) { setClearConfirm(true); return }
+    setWeek(EMPTY_WEEK)
+    setClearConfirm(false)
+  }
+
   return (
-    <Card title="Goals">
+    <Card title="Week Planner">
+      <div className={styles.toolbar}>
+        <button
+          className={`${styles.clearBtn} ${clearConfirm ? styles.confirm : ''}`}
+          onClick={handleClear}
+          onBlur={() => setClearConfirm(false)}
+        >
+          {clearConfirm ? 'Confirm clear?' : 'Clear Week'}
+        </button>
+      </div>
       <div className={styles.cols}>
-        <GoalColumn label="This Week"  icon="📅" storageKey="goals_weekly"  />
-        <div className={styles.divider} />
-        <GoalColumn label="This Month" icon="🗓" storageKey="goals_monthly" />
+        {DAYS.map((d, i) => (
+          <DayColumn
+            key={d.key}
+            label={d.label}
+            date={weekDates[i]}
+            tasks={week[d.key] || []}
+            onAdd={text => addTask(d.key, text)}
+            onToggle={id => toggleTask(d.key, id)}
+            onRemove={id => removeTask(d.key, id)}
+            isToday={i === todayIdx}
+          />
+        ))}
       </div>
     </Card>
   )
