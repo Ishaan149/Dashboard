@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useSyncedStorage as useLocalStorage } from '../hooks/useSyncedStorage'
 import Card from './Card'
 import styles from './JobTracker.module.css'
@@ -37,9 +38,10 @@ export default function JobTracker() {
   const today = getToday()
   const [records, setRecords] = useLocalStorage('job_applications', [])
   const [note, setNote] = useLocalStorage('job_note', '')
+  const [selectedDate, setSelectedDate] = useState(today)
 
-  const todayRecord = records.find(r => r.date === today)
-  const todayCount = todayRecord ? todayRecord.count : 0
+  const selectedRecord = records.find(r => r.date === selectedDate)
+  const todayCount = selectedRecord ? selectedRecord.count : 0
 
   const weekStart = getWeekStart()
   const monthStart = getMonthStart()
@@ -48,20 +50,20 @@ export default function JobTracker() {
 
   function upsert(delta) {
     setRecords(prev => {
-      const exists = prev.find(r => r.date === today)
+      const exists = prev.find(r => r.date === selectedDate)
       if (exists) {
         return prev.map(r =>
-          r.date === today
+          r.date === selectedDate
             ? { ...r, count: Math.max(0, r.count + delta) }
             : r
         )
       }
-      return [...prev, { date: today, count: Math.max(0, delta) }]
+      return [...prev, { date: selectedDate, count: Math.max(0, delta) }]
     })
   }
 
   const history = [...records]
-    .filter(r => r.date !== today)
+    .filter(r => r.date !== selectedDate)
     .sort((a, b) => b.date.localeCompare(a.date))
 
   const total = records.reduce((sum, r) => sum + r.count, 0)
@@ -81,7 +83,7 @@ export default function JobTracker() {
           </button>
           <div className={styles.countDisplay}>
             <span className={styles.count}>{todayCount}</span>
-            <span className={styles.countLabel}>today</span>
+            <span className={styles.countLabel}>{selectedDate === today ? 'today' : 'selected'}</span>
           </div>
           <button
             className={styles.countBtn}
@@ -91,7 +93,13 @@ export default function JobTracker() {
             +
           </button>
         </div>
-        <p className={styles.dateLabel}>{formatToday()}</p>
+        <input
+          type="date"
+          className={styles.dateInput}
+          value={selectedDate}
+          max={today}
+          onChange={e => setSelectedDate(e.target.value)}
+        />
         <div className={styles.statsRow}>
           <div className={styles.statItem}>
             <span className={styles.statValue}>{weekCount}</span>
