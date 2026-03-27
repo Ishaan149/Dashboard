@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useSyncedStorage } from '../hooks/useSyncedStorage'
 import Card from './Card'
 import styles from './GoalsCard.module.css'
@@ -36,8 +36,9 @@ function Checkmark() {
   )
 }
 
-function DayColumn({ label, date, tasks, onAdd, onToggle, onRemove, isToday }) {
+function DayColumn({ label, date, tasks, onAdd, onToggle, onRemove, onDropTask, isToday }) {
   const [input, setInput] = useState('')
+  const [dragOver, setDragOver] = useState(false)
 
   function add() {
     const text = input.trim()
@@ -47,7 +48,12 @@ function DayColumn({ label, date, tasks, onAdd, onToggle, onRemove, isToday }) {
   }
 
   return (
-    <div className={`${styles.col} ${isToday ? styles.today : ''}`}>
+    <div
+      className={`${styles.col} ${isToday ? styles.today : ''} ${dragOver ? styles.dropTarget : ''}`}
+      onDragOver={e => { e.preventDefault(); setDragOver(true) }}
+      onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget)) setDragOver(false) }}
+      onDrop={() => { setDragOver(false); onDropTask() }}
+    >
       <div className={styles.colHeader}>
         <span className={styles.dayName}>{label}</span>
         <span className={styles.dateNum}>{date.getDate()}</span>
@@ -88,6 +94,8 @@ function DayColumn({ label, date, tasks, onAdd, onToggle, onRemove, isToday }) {
 export default function GoalsCard() {
   const [week, setWeek] = useSyncedStorage('week_planner_tasks', EMPTY_WEEK)
   const [clearConfirm, setClearConfirm] = useState(false)
+  const [longTodos, setLongTodos] = useSyncedStorage('todos-longterm', [])
+  const draggingText = useRef(null)
 
   const weekDates = getWeekDates()
   const todayIdx = (new Date().getDay() + 6) % 7 // Mon=0 … Sun=6
@@ -119,30 +127,70 @@ export default function GoalsCard() {
     setClearConfirm(false)
   }
 
+  function toggleTodo(id) {
+    setLongTodos(prev => prev.map(t => t.id === id ? { ...t, done: !t.done } : t))
+  }
+
   return (
     <Card title="Week Planner">
-      <div className={styles.toolbar}>
-        <button
-          className={`${styles.clearBtn} ${clearConfirm ? styles.confirm : ''}`}
-          onClick={handleClear}
-          onBlur={() => setClearConfirm(false)}
-        >
-          {clearConfirm ? 'Confirm clear?' : 'Clear Week'}
-        </button>
-      </div>
-      <div className={styles.cols}>
-        {DAYS.map((d, i) => (
-          <DayColumn
-            key={d.key}
-            label={d.label}
-            date={weekDates[i]}
-            tasks={week[d.key] || []}
-            onAdd={text => addTask(d.key, text)}
-            onToggle={id => toggleTask(d.key, id)}
-            onRemove={id => removeTask(d.key, id)}
-            isToday={i === todayIdx}
-          />
-        ))}
+      <div className={styles.root}>
+        <div className={styles.weekArea}>
+          <div className={styles.toolbar}>
+            <button
+              className={`${styles.clearBtn} ${clearConfirm ? styles.confirm : ''}`}
+              onClick={handleClear}
+              onBlur={() => setClearConfirm(false)}
+            >
+              {clearConfirm ? 'Confirm clear?' : 'Clear Week'}
+            </button>
+          </div>
+          <div className={styles.cols}>
+            {DAYS.map((d, i) => (
+              <DayColumn
+                key={d.key}
+                label={d.label}
+                date={weekDates[i]}
+                tasks={week[d.key] || []}
+                onAdd={text => addTask(d.key, text)}
+                onToggle={id => toggleTask(d.key, id)}
+                onRemove={id => removeTask(d.key, id)}
+                onDropTask={() => {
+                  if (draggingText.current && !(week[d.key] || []).some(t => t.text === draggingText.current))
+                    addTask(d.key, draggingText.current)
+                }}
+                isToday={i === todayIdx}
+              />
+            ))}
+          </div>
+        </div>
+
+        <aside className={styles.todoPanel}>
+          <h3 className={styles.todoPanelTitle}>Long Term</h3>
+          {longTodos.length === 0 ? (
+            <p className={styles.todoEmpty}>No long term tasks</p>
+          ) : (
+            <ul className={styles.todoList}>
+              {longTodos.map(t => (
+                <li
+                  key={t.id}
+                  className={`${styles.todoItem} ${t.done ? styles.todoDone : ''}`}
+                  draggable
+                  onDragStart={() => { draggingText.current = t.text }}
+                  onDragEnd={() => { draggingText.current = null }}
+                >
+                  <button
+                    className={styles.todoCheckbox}
+                    onClick={() => toggleTodo(t.id)}
+                    aria-label={t.done ? 'Mark incomplete' : 'Mark complete'}
+                  >
+                    {t.done && <Checkmark />}
+                  </button>
+                  <span className={styles.todoText}>{t.text}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </aside>
       </div>
     </Card>
   )
