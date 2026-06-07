@@ -34,7 +34,14 @@ function TodoItem({ item, onToggle, onDelete, onDragStart }) {
 }
 
 
-export default function TodoCard() {
+const IArrow = (p) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"
+       strokeLinecap="round" strokeLinejoin="round" width="12" height="12" {...p}>
+    <path d="M5 12h14M13 6l6 6-6 6" />
+  </svg>
+)
+
+export default function TodoCard({ onChange }) {
   const [todayTodos, setTodayTodos] = useLocalStorage('todos-today', [])
   const [longTodos, setLongTodos] = useLocalStorage('todos-longterm', [])
   const dragging = useRef(null) // { id, from: 'today' | 'long' }
@@ -91,8 +98,14 @@ export default function TodoCard() {
     ))
   }
 
+  const plannerBtn = onChange && (
+    <button className={styles.plannerLink} onClick={() => onChange('goals')}>
+      Week Planner <IArrow />
+    </button>
+  )
+
   return (
-    <Card title="To-Do">
+    <Card title="To-Do" action={plannerBtn}>
       <div className={styles.columns}>
         <SectionShell
           title="Today"

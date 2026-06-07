@@ -34,7 +34,7 @@ button.badge:hover {
 }
 
 .online {
-  background: #10b981;
+  background: oklch(0.72 0.085 160);
   box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
 }
 

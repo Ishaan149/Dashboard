@@ -17,6 +17,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.1",
+    "firebase-admin": "^13.10.0",
     "gh-pages": "^6.1.1",
     "vite": "^5.4.2"
   }

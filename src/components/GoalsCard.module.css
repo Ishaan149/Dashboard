@@ -1,3 +1,25 @@
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ink-3);
+  background: none;
+  border: none;
+  border-radius: 7px;
+  padding: 3px 6px;
+  margin: -3px -6px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s;
+}
+
+.backLink:hover {
+  color: var(--accent);
+  background: oklch(0.72 0.085 160 / 0.1);
+}
+
 /* ── Root layout: week grid + todo sidebar ── */
 .root {
   display: flex;
@@ -52,16 +74,16 @@
 }
 .todoInput::placeholder { color: rgba(255,255,255,0.22); }
 .todoInput:focus {
-  border-color: #10b981;
-  background: rgba(16,185,129,0.07);
-  box-shadow: 0 0 0 2px rgba(16,185,129,0.15);
+  border-color: oklch(0.72 0.085 160);
+  background: oklch(0.72 0.085 160 / 0.07);
+  box-shadow: 0 0 0 2px oklch(0.72 0.085 160 / 0.15);
 }
 
 .todoAddBtn {
   padding: 6px 9px;
-  background: rgba(16,185,129,0.1);
-  color: #10b981;
-  border: 1px solid rgba(16,185,129,0.2);
+  background: oklch(0.72 0.085 160 / 0.1);
+  color: oklch(0.72 0.085 160);
+  border: 1px solid oklch(0.72 0.085 160 / 0.2);
   border-radius: 7px;
   font-family: inherit;
   font-size: 15px;
@@ -71,7 +93,7 @@
   line-height: 1;
   flex-shrink: 0;
 }
-.todoAddBtn:hover { background: rgba(16,185,129,0.2); }
+.todoAddBtn:hover { background: oklch(0.72 0.085 160 / 0.2); }
 
 .todoEmpty {
   font-size: 12px;
@@ -197,13 +219,13 @@
 }
 
 .col.today {
-  background: rgba(16,185,129,0.06);
-  border-color: rgba(16,185,129,0.2);
+  background: oklch(0.72 0.085 160 / 0.06);
+  border-color: oklch(0.72 0.085 160 / 0.2);
 }
 
 .col.dropTarget {
-  background: rgba(16,185,129,0.12);
-  border-color: rgba(16,185,129,0.45);
+  background: oklch(0.72 0.085 160 / 0.12);
+  border-color: oklch(0.72 0.085 160 / 0.45);
 }
 
 .colHeader {
@@ -220,7 +242,7 @@
   color: rgba(255,255,255,0.55);
 }
 .col.today .dayName {
-  color: #10b981;
+  color: oklch(0.72 0.085 160);
 }
 .dateNum {
   font-size: 18px;
@@ -229,7 +251,7 @@
   line-height: 1;
 }
 .col.today .dateNum {
-  color: rgba(16,185,129,0.5);
+  color: oklch(0.72 0.085 160 / 0.5);
 }
 
 /* ── Add row ── */
@@ -254,16 +276,16 @@
 }
 .input::placeholder { color: rgba(255,255,255,0.22); }
 .input:focus {
-  border-color: #10b981;
-  background: rgba(16,185,129,0.07);
-  box-shadow: 0 0 0 2px rgba(16,185,129,0.15);
+  border-color: oklch(0.72 0.085 160);
+  background: oklch(0.72 0.085 160 / 0.07);
+  box-shadow: 0 0 0 2px oklch(0.72 0.085 160 / 0.15);
 }
 
 .addBtn {
   padding: 6px 9px;
-  background: rgba(16,185,129,0.1);
-  color: #10b981;
-  border: 1px solid rgba(16,185,129,0.2);
+  background: oklch(0.72 0.085 160 / 0.1);
+  color: oklch(0.72 0.085 160);
+  border: 1px solid oklch(0.72 0.085 160 / 0.2);
   border-radius: 7px;
   font-family: inherit;
   font-size: 15px;
@@ -273,7 +295,7 @@
   line-height: 1;
   flex-shrink: 0;
 }
-.addBtn:hover { background: rgba(16,185,129,0.2); }
+.addBtn:hover { background: oklch(0.72 0.085 160 / 0.2); }
 
 /* ── Task list ── */
 .list {

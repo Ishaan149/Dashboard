@@ -18,7 +18,7 @@
   text-align: center;
   transition: border-color 0.2s;
 }
-.emojiInput:focus { border-color: #10b981; }
+.emojiInput:focus { border-color: oklch(0.72 0.085 160); }
 
 .input {
   flex: 1;
@@ -35,16 +35,16 @@
 }
 .input::placeholder { color: rgba(255,255,255,0.28); }
 .input:focus {
-  border-color: #10b981;
-  background: rgba(16,185,129,0.08);
-  box-shadow: 0 0 0 3px rgba(16,185,129,0.18);
+  border-color: oklch(0.72 0.085 160);
+  background: oklch(0.72 0.085 160 / 0.08);
+  box-shadow: 0 0 0 3px oklch(0.72 0.085 160 / 0.18);
 }
 
 .addBtn {
   padding: 8px 14px;
-  background: rgba(16,185,129,0.12);
-  color: #10b981;
-  border: 1px solid rgba(16,185,129,0.22);
+  background: oklch(0.72 0.085 160 / 0.12);
+  color: oklch(0.72 0.085 160);
+  border: 1px solid oklch(0.72 0.085 160 / 0.22);
   border-radius: 10px;
   font-family: inherit;
   font-size: 18px;
@@ -55,8 +55,8 @@
   line-height: 1;
 }
 .addBtn:hover {
-  background: rgba(16,185,129,0.22);
-  box-shadow: 0 0 10px rgba(16,185,129,0.25);
+  background: oklch(0.72 0.085 160 / 0.22);
+  box-shadow: 0 0 10px oklch(0.72 0.085 160 / 0.25);
 }
 
 .sectionHeader {
@@ -71,15 +71,15 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #10b981;
+  color: oklch(0.72 0.085 160);
 }
 
 .badge {
   font-size: 10px;
   font-weight: 700;
-  color: #10b981;
-  background: rgba(16,185,129,0.12);
-  border: 1px solid rgba(16,185,129,0.2);
+  color: oklch(0.72 0.085 160);
+  background: oklch(0.72 0.085 160 / 0.12);
+  border: 1px solid oklch(0.72 0.085 160 / 0.2);
   border-radius: 20px;
   padding: 2px 9px;
   letter-spacing: 0.04em;
@@ -107,8 +107,8 @@
   border-color: rgba(255,255,255,0.08);
 }
 .item.done {
-  background: rgba(16,185,129,0.06);
-  border-color: rgba(16,185,129,0.15);
+  background: oklch(0.72 0.085 160 / 0.06);
+  border-color: oklch(0.72 0.085 160 / 0.15);
 }
 
 @keyframes pop {
@@ -135,11 +135,11 @@
   padding: 0;
   position: relative;
 }
-.checkbox:hover { border-color: #10b981; }
+.checkbox:hover { border-color: oklch(0.72 0.085 160); }
 .checkbox.checked {
-  background: #10b981;
-  border-color: #10b981;
-  box-shadow: 0 0 8px rgba(16,185,129,0.4);
+  background: oklch(0.72 0.085 160);
+  border-color: oklch(0.72 0.085 160);
+  box-shadow: 0 0 8px oklch(0.72 0.085 160 / 0.4);
 }
 .checkbox.checked::after {
   content: '';
@@ -227,11 +227,11 @@
   transform: scale(1.4);
 }
 .dot.dotFilled {
-  background: #10b981;
-  box-shadow: 0 0 5px rgba(16,185,129,0.45);
+  background: oklch(0.72 0.085 160);
+  box-shadow: 0 0 5px oklch(0.72 0.085 160 / 0.45);
 }
 .dot.dotFilled:hover {
-  background: rgba(16,185,129,0.6);
+  background: oklch(0.72 0.085 160 / 0.6);
 }
 
 .empty {

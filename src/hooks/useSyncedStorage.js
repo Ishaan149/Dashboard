@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { doc, onSnapshot, setDoc } from 'firebase/firestore'
 import { db } from '../firebase'
-import { useAuth } from '../context/AuthContext'
 
 export function useSyncedStorage(key, initialValue) {
   // Seed from localStorage synchronously — instant render, no flicker
@@ -14,8 +13,6 @@ export function useSyncedStorage(key, initialValue) {
     }
   })
 
-  const { user } = useAuth()
-
   // Prevents write-echo loop: Firestore → state → Firestore → ...
   const fromFirestore = useRef(false)
 
@@ -23,7 +20,7 @@ export function useSyncedStorage(key, initialValue) {
   const valueRef = useRef(value)
 
   // Blocks writes until the first Firestore snapshot has been received,
-  // preventing local stale data from overwriting newer remote data on sign-in
+  // preventing local stale data from overwriting newer remote data on load
   const hydrated = useRef(false)
 
   // Keep valueRef in sync so the snapshot handler always compares against current value
@@ -36,38 +33,38 @@ export function useSyncedStorage(key, initialValue) {
     } catch {}
   }, [key, value])
 
-  // Mirror every state change to Firestore (when signed in)
+  // Mirror every state change to Firestore.
   // Skip if the change originated from a Firestore snapshot, or if the
   // initial snapshot hasn't arrived yet (would overwrite newer remote data).
   // Debounced to avoid a write per keystroke in text-heavy fields.
   useEffect(() => {
-    if (!user) return
     if (!hydrated.current) return
     if (fromFirestore.current) {
       fromFirestore.current = false
       return
     }
-    const ref = doc(db, 'users', user.uid, 'dashboard', key)
+    const ref = doc(db, 'dashboard', key)
     const timer = setTimeout(() => {
-      setDoc(ref, { value }).catch((err) => console.error(`useSyncedStorage: failed to write "${key}" to Firestore`, err))
+      setDoc(ref, { value, _secret: import.meta.env.VITE_FIRESTORE_SECRET }).catch((err) =>
+        console.error(`useSyncedStorage: failed to write "${key}" to Firestore`, err)
+      )
     }, 1000)
     return () => clearTimeout(timer)
-  }, [key, value, user])
+  }, [key, value])
 
   // Subscribe to real-time Firestore updates for cross-device sync
   // Intentionally omits 'value' from deps — resubscribing on every keystroke
   // would be catastrophic for BrainDump. The snapshot handler closes over
   // 'value' at subscribe time but JSON comparison still works correctly.
   useEffect(() => {
-    if (!user) return
     hydrated.current = false
-    const ref = doc(db, 'users', user.uid, 'dashboard', key)
+    const ref = doc(db, 'dashboard', key)
     const unsub = onSnapshot(
       ref,
       (snap) => {
         if (!snap.exists()) {
           // No remote document yet — seed Firestore from local state and unblock writes
-          setDoc(ref, { value: valueRef.current }).catch((err) =>
+          setDoc(ref, { value: valueRef.current, _secret: import.meta.env.VITE_FIRESTORE_SECRET }).catch((err) =>
             console.error(`useSyncedStorage: failed to seed "${key}" to Firestore`, err)
           )
           hydrated.current = true
@@ -87,7 +84,7 @@ export function useSyncedStorage(key, initialValue) {
     )
     return unsub
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, user])
+  }, [key])
 
   return [value, setValueState]
 }

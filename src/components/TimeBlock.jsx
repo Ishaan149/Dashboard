@@ -1,5 +1,5 @@
 const CATEGORY_COLORS = {
-  work: '#10b981',
+  work: 'oklch(0.72 0.085 160)',
   gym:  '#f59e0b',
   uni:  '#6366f1',
   rest: '#6b7280',

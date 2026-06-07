@@ -3,6 +3,13 @@ import { useSyncedStorage } from '../hooks/useSyncedStorage'
 import Card from './Card'
 import styles from './GoalsCard.module.css'
 
+const IArrowLeft = (p) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"
+       strokeLinecap="round" strokeLinejoin="round" width="12" height="12" {...p}>
+    <path d="M19 12H5M11 18l-6-6 6-6" />
+  </svg>
+)
+
 const DAYS = [
   { key: 'mon', label: 'Mon' },
   { key: 'tue', label: 'Tue' },
@@ -91,7 +98,7 @@ function DayColumn({ label, date, tasks, onAdd, onToggle, onRemove, onDropTask, 
   )
 }
 
-export default function GoalsCard() {
+export default function GoalsCard({ onChange }) {
   const [week, setWeek] = useSyncedStorage('week_planner_tasks', EMPTY_WEEK)
   const [clearConfirm, setClearConfirm] = useState(false)
   const [longTodos, setLongTodos] = useSyncedStorage('todos-longterm', [])
@@ -131,8 +138,14 @@ export default function GoalsCard() {
     setLongTodos(prev => prev.map(t => t.id === id ? { ...t, done: !t.done } : t))
   }
 
+  const backBtn = onChange && (
+    <button className={styles.backLink} onClick={() => onChange('todo')}>
+      <IArrowLeft /> To-Do
+    </button>
+  )
+
   return (
-    <Card title="Week Planner">
+    <Card title="Week Planner" action={backBtn}>
       <div className={styles.root}>
         <div className={styles.weekArea}>
           <div className={styles.toolbar}>

@@ -1,9 +1,12 @@
 import styles from './Card.module.css'
 
-export default function Card({ title, children, fullWidth = false }) {
+export default function Card({ title, action, children, fullWidth = false }) {
   return (
     <div className={`${styles.card} ${fullWidth ? styles.full : ''}`}>
-      <p className={styles.title}>{title}</p>
+      <div className={styles.header}>
+        <p className={styles.title}>{title}</p>
+        {action}
+      </div>
       {children}
     </div>
   )

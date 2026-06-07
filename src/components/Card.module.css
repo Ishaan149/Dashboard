@@ -24,11 +24,17 @@
 
 .full { grid-column: 1 / -1; }
 
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
 .title {
   font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: rgba(255,255,255,0.32);
-  margin-bottom: 18px;
 }

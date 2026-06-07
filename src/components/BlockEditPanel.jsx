@@ -1,7 +1,7 @@
 import styles from './DayPlanner.module.css'
 
 const CATEGORIES = [
-  { id: 'work', label: 'Work', color: '#10b981' },
+  { id: 'work', label: 'Work', color: 'oklch(0.72 0.085 160)' },
   { id: 'gym',  label: 'Gym',  color: '#f59e0b' },
   { id: 'uni',  label: 'Uni',  color: '#6366f1' },
   { id: 'rest', label: 'Rest', color: '#6b7280' },

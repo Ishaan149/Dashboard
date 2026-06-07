@@ -19,7 +19,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(16,185,129,0.09) 0%, rgba(5,150,105,0.06) 100%);
+  background: linear-gradient(135deg, oklch(0.72 0.085 160 / 0.09) 0%, oklch(0.55 0.085 160 / 0.06) 100%);
   pointer-events: none;
 }
 
@@ -92,7 +92,7 @@
   font-weight: 700;
   letter-spacing: 0.09em;
   text-transform: uppercase;
-  color: #10b981;
+  color: oklch(0.72 0.085 160);
 }
 
 @media (max-width: 640px) {

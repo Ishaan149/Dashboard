@@ -1,37 +1,45 @@
 .wrap {
-  position: sticky;
-  top: 0;
   z-index: 50;
-  background: rgba(8, 8, 16, 0.75);
-  backdrop-filter: blur(20px) saturate(150%);
-  -webkit-backdrop-filter: blur(20px) saturate(150%);
-  border-bottom: 1px solid rgba(255,255,255,0.07);
+  padding: 0 48px;
 }
 
 .bar {
+  max-width: 1100px;
+  margin: 0 auto;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 16px 36px;
+  padding: 24px 0 8px;
   gap: 16px;
 }
 
 .left {
   display: flex;
   align-items: baseline;
-  gap: 14px;
+  gap: 10px;
+  flex: 1;
 }
 
-.title {
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: -0.4px;
-  color: rgba(255,255,255,0.92);
+.day {
+  font-size: 40px;
+  font-weight: 680;
+  letter-spacing: -0.014em;
+  color: var(--ink);
+  line-height: 1;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.15s;
+}
+
+.day:hover {
+  opacity: 0.7;
 }
 
 .date {
   font-size: 13px;
-  color: rgba(255,255,255,0.3);
+  color: var(--ink-3);
   font-weight: 400;
 }
 
@@ -42,42 +50,148 @@
 }
 
 .clock {
-  font-size: 18px;
-  font-weight: 600;
-  letter-spacing: -0.3px;
-  background: linear-gradient(135deg, #fff, rgba(255,255,255,0.55));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  font-size: 28px;
+  font-weight: 680;
+  letter-spacing: -0.014em;
+  color: var(--ink);
   font-variant-numeric: tabular-nums;
+  line-height: 1;
 }
 
 .ampm {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
-  opacity: 0.6;
+  color: var(--ink-3);
 }
 
-.quoteStrip {
-  padding: 0 36px 12px;
+/* ── hamburger button ──────────────────────────────────────────────────────── */
+.menuWrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.menuBtn {
   display: flex;
-  align-items: baseline;
-  gap: 8px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4.5px;
+  width: 36px;
+  height: 36px;
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
 }
 
-.quoteText {
-  font-size: 12px;
-  font-style: italic;
-  color: rgba(255,255,255,0.28);
-  line-height: 1.5;
+.menuBtn:hover {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.09);
 }
 
-.quoteAuthor {
-  font-size: 11px;
+.menuBtnOpen {
+  background: oklch(0.72 0.085 160 / 0.1);
+  border-color: oklch(0.72 0.085 160 / 0.22);
+}
+
+.menuBtnBar {
+  display: block;
+  width: 100%;
+  height: 1.5px;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.65);
+  transition: background 0.15s;
+}
+
+.menuBtnOpen .menuBtnBar {
+  background: oklch(0.72 0.085 160);
+}
+
+/* ── dropdown ──────────────────────────────────────────────────────────────── */
+.dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 180px;
+  background: rgba(14, 15, 22, 0.96);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 14px;
+  padding: 6px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.05) inset;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  animation: dropIn 0.14s cubic-bezier(0.3, 0.7, 0.4, 1);
+}
+
+@keyframes dropIn {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+.dropItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  color: rgba(255,255,255,0.5);
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s, color 0.12s;
+}
+
+.dropItem:hover {
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.85);
+}
+
+.dropItemActive {
+  background: oklch(0.72 0.085 160 / 0.12);
+  color: rgba(255,255,255,0.95);
   font-weight: 600;
-  color: #10b981;
-  opacity: 0.7;
-  white-space: nowrap;
-  letter-spacing: 0.03em;
+}
+
+.dropItemActive:hover {
+  background: oklch(0.72 0.085 160 / 0.18);
+}
+
+.dropIcon {
+  display: flex;
+  align-items: center;
+  opacity: 0.65;
+  flex-shrink: 0;
+}
+
+.dropItemActive .dropIcon {
+  opacity: 1;
+  color: oklch(0.72 0.085 160);
+}
+
+.dropDivider {
+  height: 1px;
+  background: rgba(255,255,255,0.07);
+  margin: 4px 0;
+}
+
+.dropItemLock {
+  color: rgba(239, 68, 68, 0.65);
+}
+
+.dropItemLock:hover {
+  background: rgba(239, 68, 68, 0.08);
+  color: rgba(239, 68, 68, 0.9);
+}
+
+@media (max-width: 700px) {
+  .wrap { padding: 0 20px; }
 }
