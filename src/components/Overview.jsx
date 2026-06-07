@@ -451,12 +451,12 @@ export default function Overview({ onChange }) {
         <BrainDumpCard note={activeNote} onChange={updateBrainDump} onNavigate={onChange} />
       </div>
       <div className={styles.col}>
-        <TasksCard tasks={todayTodos} onToggle={toggleTask} onNavigate={onChange} />
         <JobsCard today={jobsToday} week={jobsWeek} spark={jobSpark} onAdjust={adjustJobs} onNavigate={onChange} />
+        <TasksCard tasks={todayTodos} onToggle={toggleTask} onNavigate={onChange} />
       </div>
       <div className={styles.col}>
-        <ScheduleCard blocks={sortedBlocks} nowMin={nowMinutes} onNavigate={onChange} />
         <HabitsCard habits={habits} todayDone={todayDone} onToggle={toggleHabit} onNavigate={onChange} />
+        <ScheduleCard blocks={sortedBlocks} nowMin={nowMinutes} onNavigate={onChange} />
       </div>
     </div>
   )

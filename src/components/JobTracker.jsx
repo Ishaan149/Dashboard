@@ -3,8 +3,15 @@ import { useSyncedStorage as useLocalStorage } from '../hooks/useSyncedStorage'
 import Card from './Card'
 import styles from './JobTracker.module.css'
 
+function toLocalDateStr(date) {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
 function getToday() {
-  return new Date().toISOString().slice(0, 10)
+  return toLocalDateStr(new Date())
 }
 
 function formatDate(dateStr) {
@@ -26,7 +33,7 @@ function getWeekStart() {
   const diff = (day === 0 ? -6 : 1 - day)
   const monday = new Date(now)
   monday.setDate(now.getDate() + diff)
-  return monday.toISOString().slice(0, 10)
+  return toLocalDateStr(monday)
 }
 
 function getMonthStart() {
