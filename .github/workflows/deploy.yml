@@ -29,6 +29,8 @@ jobs:
           VITE_FIREBASE_STORAGE_BUCKET:      ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
           VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
           VITE_FIREBASE_APP_ID:              ${{ secrets.VITE_FIREBASE_APP_ID }}
+          VITE_PASSWORD_HASH:                ${{ secrets.VITE_PASSWORD_HASH }}
+          VITE_FIRESTORE_SECRET:             ${{ secrets.VITE_FIRESTORE_SECRET }}
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v4
