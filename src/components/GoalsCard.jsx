@@ -101,7 +101,7 @@ function DayColumn({ label, date, tasks, onAdd, onToggle, onRemove, onDropTask, 
 export default function GoalsCard({ onChange }) {
   const [week, setWeek] = useSyncedStorage('week_planner_tasks', EMPTY_WEEK)
   const [clearConfirm, setClearConfirm] = useState(false)
-  const [longTodos, setLongTodos] = useSyncedStorage('todos-longterm', [])
+  const [longTodos, setLongTodos] = useSyncedStorage('todos-thisweek', [])
   const draggingText = useRef(null)
 
   const weekDates = getWeekDates()
@@ -178,9 +178,9 @@ export default function GoalsCard({ onChange }) {
         </div>
 
         <aside className={styles.todoPanel}>
-          <h3 className={styles.todoPanelTitle}>Long Term</h3>
+          <h3 className={styles.todoPanelTitle}>This Week</h3>
           {longTodos.length === 0 ? (
-            <p className={styles.todoEmpty}>No long term tasks</p>
+            <p className={styles.todoEmpty}>No tasks this week</p>
           ) : (
             <ul className={styles.todoList}>
               {longTodos.map(t => (

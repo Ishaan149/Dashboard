@@ -20,7 +20,7 @@ const VIEWS = {
   dayplanner: DayPlanner,
 }
 
-const FULL_WIDTH_VIEWS = new Set(['dayplanner', 'goals', 'overview'])
+const FULL_WIDTH_VIEWS = new Set(['dayplanner', 'goals', 'overview', 'todo'])
 
 export default function App() {
   const [view, setView] = useState('overview')
