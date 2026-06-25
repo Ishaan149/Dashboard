@@ -461,6 +461,28 @@ export default function Overview({ onChange }) {
     setNotes(prev => prev.map(n => n.id === activeNote.id ? { ...n, content: val } : n))
   }
 
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 1024)
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 1024px)')
+    const handler = e => setIsMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+
+  if (isMobile) {
+    return (
+      <div className={styles.mobileGrid}>
+        <QuoteCard quote={quote} />
+        <ScheduleCard blocks={sortedBlocks} categories={categories} nowMin={nowMinutes} onNavigate={onChange} />
+        <TasksCard tasks={todayTodos} onToggle={toggleTask} onNavigate={onChange} />
+        <HabitsCard habits={habits} todayDone={todayDone} onToggle={toggleHabit} onNavigate={onChange} />
+        <JobsCard today={jobsToday} week={jobsWeek} spark={jobSpark} onAdjust={adjustJobs} onNavigate={onChange} />
+        <WeatherCard weather={weather} />
+        <BrainDumpCard note={activeNote} onChange={updateBrainDump} onNavigate={onChange} />
+      </div>
+    )
+  }
+
   return (
     <div className={styles.grid}>
       <div className={styles.col}>

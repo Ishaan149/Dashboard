@@ -13,6 +13,12 @@
   min-width: 0;
 }
 
+.mobileGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
 /* ── card base ───────────────────────────────────────────────────────────────── */
 .card {
   background: var(--glass);
