@@ -1,6 +1,7 @@
 import { useSyncedStorage } from '../hooks/useSyncedStorage'
 import { useState, useEffect, useRef } from 'react'
 import { getDailyQuote } from '../data/quotes'
+import { DEFAULT_CATEGORIES } from '../data/categories'
 import styles from './Overview.module.css'
 
 // ── icons ─────────────────────────────────────────────────────────────────────
@@ -73,10 +74,17 @@ function fmtMin(min, compact = false) {
   return `${h12}:${String(m).padStart(2, '0')} ${ampm}`
 }
 
+function toLocalDateStr(date) {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
 function getDateKey(daysAgo = 0) {
   const d = new Date()
   d.setDate(d.getDate() - daysAgo)
-  return d.toISOString().slice(0, 10)
+  return toLocalDateStr(d)
 }
 
 function getWeekStart() {
@@ -85,7 +93,7 @@ function getWeekStart() {
   const diff = day === 0 ? -6 : 1 - day
   const mon  = new Date(now)
   mon.setDate(now.getDate() + diff)
-  return mon.toISOString().slice(0, 10)
+  return toLocalDateStr(mon)
 }
 
 // ── sub-components ────────────────────────────────────────────────────────────
@@ -257,17 +265,16 @@ function HabitsCard({ habits, todayDone, onToggle, onNavigate }) {
   )
 }
 
-const BLOCK_COLORS = {
-  work:    'oklch(0.72 0.085 160)',
-  uni:     '#6366f1',
-  gym:     '#f59e0b',
-  rest:    '#6b7280',
-  meeting: '#f59e0b',
-}
-
-function ScheduleCard({ blocks, nowMin, onNavigate }) {
-  const shown = blocks.slice(0, 6)
-  const extra = blocks.length - shown.length
+function ScheduleCard({ blocks, categories, nowMin, onNavigate }) {
+  const past    = blocks.filter(b => nowMin >= b.endMinutes)
+  const current = blocks.find(b => nowMin >= b.startMinutes && nowMin < b.endMinutes)
+  const future  = blocks.filter(b => b.startMinutes > nowMin)
+  const shown   = [
+    ...past.slice(-2),
+    ...(current ? [current] : []),
+    ...future.slice(0, 3),
+  ]
+  const extra = Math.max(0, future.length - 3)
 
   return (
     <div className={styles.card}>
@@ -279,8 +286,9 @@ function ScheduleCard({ blocks, nowMin, onNavigate }) {
           {shown.map(b => {
             const isNow  = nowMin >= b.startMinutes && nowMin < b.endMinutes
             const isPast = nowMin >= b.endMinutes
-            const color  = BLOCK_COLORS[b.category] ?? BLOCK_COLORS.work
-            const title  = b.label || (b.category.charAt(0).toUpperCase() + b.category.slice(1))
+            const cat    = categories.find(c => c.id === b.category) ?? categories[0]
+            const color  = cat?.color ?? 'oklch(0.72 0.085 160)'
+            const title  = b.label || cat?.label || 'Untitled'
             return (
               <div
                 key={b.id}
@@ -311,6 +319,8 @@ function ScheduleCard({ blocks, nowMin, onNavigate }) {
   )
 }
 
+const DAY_ABBR = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
 function JobsCard({ today, week, spark, onAdjust, onNavigate }) {
   const max = Math.max(...spark, 1)
   return (
@@ -328,13 +338,20 @@ function JobsCard({ today, week, spark, onAdjust, onNavigate }) {
         </div>
       </div>
       <div className={styles.spark}>
-        {spark.map((v, i) => (
-          <div
-            key={i}
-            className={`${styles.sparkBar} ${v === max && v > 0 ? styles.sparkBarTall : ''}`}
-            style={{ height: `${(v / max) * 100}%` }}
-          />
-        ))}
+        {spark.map((v, i) => {
+          const d = new Date()
+          d.setDate(d.getDate() - (6 - i))
+          const label = DAY_ABBR[d.getDay()]
+          return (
+            <div key={i} className={styles.sparkWrap}>
+              <span className={styles.sparkTip}>{label}: {v} app</span>
+              <div
+                className={`${styles.sparkBar} ${v === max && v > 0 ? styles.sparkBarTall : ''}`}
+                style={{ height: `${(v / max) * 100}%` }}
+              />
+            </div>
+          )
+        })}
       </div>
       <div className={styles.jobsStepper}>
         <button
@@ -361,6 +378,7 @@ export default function Overview({ onChange }) {
   const [habits]                    = useSyncedStorage('habits', [])
   const [habitLogs, setHabitLogs]   = useSyncedStorage('habit_logs', {})
   const [blocks]                    = useSyncedStorage('dayplanner-blocks', [])
+  const [categories]                = useSyncedStorage('dayplanner-categories', DEFAULT_CATEGORIES)
   const [dpSettings]                = useSyncedStorage('dayplanner-settings', { startHour: 10, endHour: 27 })
   const [notes, setNotes]           = useSyncedStorage('brainDumpNotes', [{ id: '1', title: 'Note 1', content: '' }])
   const [activeNoteId]              = useSyncedStorage('brainDumpActiveId', null)
@@ -456,7 +474,7 @@ export default function Overview({ onChange }) {
       </div>
       <div className={styles.col}>
         <HabitsCard habits={habits} todayDone={todayDone} onToggle={toggleHabit} onNavigate={onChange} />
-        <ScheduleCard blocks={sortedBlocks} nowMin={nowMinutes} onNavigate={onChange} />
+        <ScheduleCard blocks={sortedBlocks} categories={categories} nowMin={nowMinutes} onNavigate={onChange} />
       </div>
     </div>
   )

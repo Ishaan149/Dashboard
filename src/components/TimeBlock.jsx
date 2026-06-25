@@ -1,21 +1,8 @@
-const CATEGORY_COLORS = {
-  work: 'oklch(0.72 0.085 160)',
-  gym:  '#f59e0b',
-  uni:  '#6366f1',
-  rest: '#6b7280',
-}
-
-const CATEGORY_LABELS = {
-  work: 'Work',
-  gym:  'Gym',
-  uni:  'Uni',
-  rest: 'Rest',
-}
-
-export default function TimeBlock({ block, isSelected, onSelect, onResizeStart, onDragStart, pixelsPerMin, startHour }) {
+export default function TimeBlock({ block, categories, isSelected, onSelect, onResizeStart, onDragStart, pixelsPerMin, startHour }) {
   const top    = (block.startMinutes - startHour * 60) * pixelsPerMin
   const height = Math.max((block.endMinutes - block.startMinutes) * pixelsPerMin, 20)
-  const color  = CATEGORY_COLORS[block.category] ?? CATEGORY_COLORS.work
+  const cat    = categories.find(c => c.id === block.category) ?? categories[0]
+  const color  = cat?.color ?? 'oklch(0.72 0.085 160)'
 
   return (
     <div
@@ -26,9 +13,7 @@ export default function TimeBlock({ block, isSelected, onSelect, onResizeStart, 
         height: `${height}px`,
         left:   '68px',
         right:  '12px',
-        background: `${color}22`,
-        border: `1.5px solid ${color}88`,
-        borderLeft: `3px solid ${color}`,
+        background: `color-mix(in srgb, ${color} 13%, transparent)`,
         borderRadius: '6px',
         padding: '4px 8px',
         cursor: 'grab',
@@ -40,17 +25,17 @@ export default function TimeBlock({ block, isSelected, onSelect, onResizeStart, 
         userSelect: 'none',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', minWidth: 0 }}>
-        <span style={{ width: 7, height: 7, borderRadius: '50%', background: color, flexShrink: 0 }} />
+      <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: '3px', background: color }} />
+      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', minWidth: 0, paddingTop: '2px', paddingLeft: '5px' }}>
         <span style={{
-          fontSize: '12px',
+          fontSize: '13.5px',
           fontWeight: 500,
           color: '#e2e8f0',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
         }}>
-          {block.label || CATEGORY_LABELS[block.category] || 'Untitled'}
+          {block.label || cat?.label || 'Untitled'}
         </span>
       </div>
 
@@ -69,7 +54,7 @@ export default function TimeBlock({ block, isSelected, onSelect, onResizeStart, 
           justifyContent: 'center',
         }}
       >
-        <div style={{ width: 24, height: 2, borderRadius: 1, background: `${color}66` }} />
+        <div style={{ width: 24, height: 2, borderRadius: 1, background: `color-mix(in srgb, ${color} 40%, transparent)` }} />
       </div>
     </div>
   )

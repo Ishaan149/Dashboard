@@ -1,11 +1,6 @@
+import { useState } from 'react'
+import { COLOR_PRESETS } from '../data/categories'
 import styles from './DayPlanner.module.css'
-
-const CATEGORIES = [
-  { id: 'work', label: 'Work', color: 'oklch(0.72 0.085 160)' },
-  { id: 'gym',  label: 'Gym',  color: '#f59e0b' },
-  { id: 'uni',  label: 'Uni',  color: '#6366f1' },
-  { id: 'rest', label: 'Rest', color: '#6b7280' },
-]
 
 function buildTimeOptions(startHour, endHour) {
   const opts = []
@@ -22,10 +17,23 @@ function buildTimeOptions(startHour, endHour) {
   return opts
 }
 
-export default function BlockEditPanel({ block, onUpdate, onDelete, onClose, startHour, endHour }) {
+export default function BlockEditPanel({ block, categories, onAddCategory, onRemoveCategory, onUpdate, onDelete, onClose, startHour, endHour }) {
+  const [isAdding, setIsAdding] = useState(false)
+  const [newName,  setNewName]  = useState('')
+  const [newColor, setNewColor] = useState(COLOR_PRESETS[0])
+
   if (!block) return null
 
   const TIME_OPTIONS = buildTimeOptions(startHour, endHour)
+
+  function handleAdd() {
+    const name = newName.trim()
+    if (!name) return
+    onAddCategory({ id: `cat-${Date.now()}`, label: name, color: newColor })
+    setNewName('')
+    setNewColor(COLOR_PRESETS[0])
+    setIsAdding(false)
+  }
 
   return (
     <div className={styles.panel}>
@@ -50,7 +58,7 @@ export default function BlockEditPanel({ block, onUpdate, onDelete, onClose, sta
 
         <label className={styles.fieldLabel}>Category</label>
         <div className={styles.categoryRow}>
-          {CATEGORIES.map(cat => (
+          {categories.map(cat => (
             <button
               key={cat.id}
               className={`${styles.catBtn} ${block.category === cat.id ? styles.catBtnActive : ''}`}
@@ -59,9 +67,48 @@ export default function BlockEditPanel({ block, onUpdate, onDelete, onClose, sta
             >
               <span className={styles.catDot} style={{ background: cat.color }} />
               {cat.label}
+              {categories.length > 1 && (
+                <span
+                  className={styles.catRemove}
+                  onClick={e => { e.stopPropagation(); onRemoveCategory(cat.id) }}
+                  title={`Remove ${cat.label}`}
+                >×</span>
+              )}
             </button>
           ))}
+          <button
+            className={`${styles.catBtn} ${styles.catAddBtn}`}
+            onClick={() => setIsAdding(v => !v)}
+            title="New category"
+          >+</button>
         </div>
+
+        {isAdding && (
+          <div className={styles.newCatForm}>
+            <input
+              className={styles.fieldInput}
+              placeholder="Category name"
+              value={newName}
+              onChange={e => setNewName(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleAdd(); if (e.key === 'Escape') setIsAdding(false) }}
+              autoFocus
+            />
+            <div className={styles.colorPresets}>
+              {COLOR_PRESETS.map(c => (
+                <span
+                  key={c}
+                  className={`${styles.colorSwatch} ${newColor === c ? styles.colorSwatchActive : ''}`}
+                  style={{ background: c }}
+                  onClick={() => setNewColor(c)}
+                />
+              ))}
+            </div>
+            <div className={styles.newCatActions}>
+              <button className={styles.cancelCatBtn} onClick={() => setIsAdding(false)}>Cancel</button>
+              <button className={styles.addCatBtn} onClick={handleAdd} disabled={!newName.trim()}>Add</button>
+            </div>
+          </div>
+        )}
 
         <div className={styles.timeRow}>
           <div className={styles.timeField}>

@@ -2,14 +2,16 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { useSyncedStorage } from '../hooks/useSyncedStorage'
 import TimeBlock from './TimeBlock'
 import BlockEditPanel from './BlockEditPanel'
+import { DEFAULT_CATEGORIES } from '../data/categories'
 import styles from './DayPlanner.module.css'
 
 const HOUR_HEIGHT  = 64        // px per hour
 const PX_PER_MIN   = HOUR_HEIGHT / 60
 
 export default function DayPlanner() {
-  const [blocks, setBlocks] = useSyncedStorage('dayplanner-blocks', [])
-  const [settings, setSettings] = useSyncedStorage('dayplanner-settings', { startHour: 10, endHour: 27 })
+  const [blocks, setBlocks]         = useSyncedStorage('dayplanner-blocks', [])
+  const [settings, setSettings]     = useSyncedStorage('dayplanner-settings', { startHour: 10, endHour: 27 })
+  const [categories, setCategories] = useSyncedStorage('dayplanner-categories', DEFAULT_CATEGORIES)
   const [selectedId, setSelectedId] = useState(null)
   const [showClearConfirm, setShowClearConfirm] = useState(false)
 
@@ -163,6 +165,18 @@ export default function DayPlanner() {
     setSelectedId(null)
   }
 
+  // ── Category management ───────────────────────────────────────────────
+  function addCategory(cat) {
+    setCategories(prev => [...prev, cat])
+  }
+
+  function removeCategory(id) {
+    const remaining = categories.filter(c => c.id !== id)
+    const fallback  = remaining[0]?.id ?? 'work'
+    setCategories(remaining)
+    setBlocks(prev => prev.map(b => b.category === id ? { ...b, category: fallback } : b))
+  }
+
   // ── Hour labels ────────────────────────────────────────────────────────
   function formatHourLabel(h) {
     const actual = h % 24
@@ -256,6 +270,7 @@ export default function DayPlanner() {
               <TimeBlock
                 key={block.id}
                 block={block}
+                categories={categories}
                 isSelected={block.id === selectedId}
                 onSelect={setSelectedId}
                 onResizeStart={handleResizeStart}
@@ -270,6 +285,9 @@ export default function DayPlanner() {
         {/* Edit panel */}
         <BlockEditPanel
           block={selectedBlock}
+          categories={categories}
+          onAddCategory={addCategory}
+          onRemoveCategory={removeCategory}
           onUpdate={handleUpdate}
           onDelete={handleDelete}
           onClose={() => setSelectedId(null)}
