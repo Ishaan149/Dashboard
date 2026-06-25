@@ -1,5 +1,6 @@
 # How the App Works
 
+
 ## Architecture overview
 
 The app is a single-page React app. There is no backend server — all data is stored in two places simultaneously:
