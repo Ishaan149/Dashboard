@@ -380,8 +380,7 @@ export default function Overview({ onChange }) {
   const [blocks]                    = useSyncedStorage('dayplanner-blocks', [])
   const [categories]                = useSyncedStorage('dayplanner-categories', DEFAULT_CATEGORIES)
   const [dpSettings]                = useSyncedStorage('dayplanner-settings', { startHour: 10, endHour: 27 })
-  const [notes, setNotes]           = useSyncedStorage('brainDumpNotes', [{ id: '1', title: 'Note 1', content: '' }])
-  const [activeNoteId]              = useSyncedStorage('brainDumpActiveId', null)
+  const [pinnedNote, setPinnedNote] = useSyncedStorage('brainDumpPinnedNote', { title: 'Pinned', content: '' })
 
   const today     = getDateKey(0)
   const weekStart = getWeekStart()
@@ -455,10 +454,9 @@ export default function Overview({ onChange }) {
     })
   }
 
-  const activeNote = notes.find(n => n.id === activeNoteId) ?? notes[0]
+  const activeNote = { ...pinnedNote }
   function updateBrainDump(val) {
-    if (!activeNote) return
-    setNotes(prev => prev.map(n => n.id === activeNote.id ? { ...n, content: val } : n))
+    setPinnedNote(prev => ({ ...prev, content: val }))
   }
 
   const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 1024)

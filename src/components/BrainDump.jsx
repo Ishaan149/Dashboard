@@ -3,22 +3,25 @@ import { useSyncedStorage as useLocalStorage } from '../hooks/useSyncedStorage'
 import Card from './Card'
 import styles from './BrainDump.module.css'
 
-function makeNote(title = 'Note') {
+const PINNED_ID = '__pinned__'
+
+function makeNote(title = 'Untitled') {
   return { id: Date.now().toString(), title, content: '' }
 }
 
 export default function BrainDump() {
-  const [notes, setNotes] = useLocalStorage('brainDumpNotes', [makeNote('Note 1')])
-  const [activeId, setActiveId] = useLocalStorage('brainDumpActiveId', null)
-  const [status, setStatus] = useState('idle')
-  const [editingId, setEditingId] = useState(null)
-  const [editingTitle, setEditingTitle] = useState('')
-  const timerRef = useRef(null)
+  const [notes, setNotes]           = useLocalStorage('brainDumpNotes', [makeNote('Note 1')])
+  const [activeId, setActiveId]     = useLocalStorage('brainDumpActiveId', null)
+  const [pinnedNote, setPinnedNote] = useLocalStorage('brainDumpPinnedNote', { title: 'Pinned', content: '' })
+  const [status, setStatus]         = useState('idle')
+  const timerRef                    = useRef(null)
 
-  const activeNote = notes.find(n => n.id === activeId) ?? notes[0]
+  const isEditingPinned = activeId === PINNED_ID
+  const activeNote = isEditingPinned
+    ? { id: PINNED_ID, ...pinnedNote }
+    : (notes.find(n => n.id === activeId) ?? notes[0])
 
-  function updateContent(val) {
-    setNotes(prev => prev.map(n => n.id === activeNote.id ? { ...n, content: val } : n))
+  function triggerStatus() {
     setStatus('saving')
     clearTimeout(timerRef.current)
     timerRef.current = setTimeout(() => {
@@ -27,30 +30,36 @@ export default function BrainDump() {
     }, 600)
   }
 
+  function updateContent(val) {
+    if (isEditingPinned) {
+      setPinnedNote(prev => ({ ...prev, content: val }))
+    } else {
+      setNotes(prev => prev.map(n => n.id === activeNote.id ? { ...n, content: val } : n))
+    }
+    triggerStatus()
+  }
+
+  function updateTitle(val) {
+    if (isEditingPinned) {
+      setPinnedNote(prev => ({ ...prev, title: val }))
+    } else {
+      setNotes(prev => prev.map(n => n.id === activeNote.id ? { ...n, title: val } : n))
+    }
+  }
+
   function addNote() {
-    const note = makeNote(`Note ${notes.length + 1}`)
-    setNotes(prev => [...prev, note])
+    const note = makeNote('Untitled')
+    setNotes(prev => [note, ...prev])
     setActiveId(note.id)
   }
 
-  function deleteNote(id) {
+  function deleteNote(id, e) {
+    e.stopPropagation()
     if (notes.length === 1) return
     if (!confirm('Delete this note?')) return
     const remaining = notes.filter(n => n.id !== id)
     setNotes(remaining)
     if (activeNote?.id === id) setActiveId(remaining[0].id)
-  }
-
-  function startRename(note, e) {
-    e.stopPropagation()
-    setEditingId(note.id)
-    setEditingTitle(note.title)
-  }
-
-  function commitRename(id) {
-    const trimmed = editingTitle.trim()
-    if (trimmed) setNotes(prev => prev.map(n => n.id === id ? { ...n, title: trimmed } : n))
-    setEditingId(null)
   }
 
   function clearNote() {
@@ -61,74 +70,77 @@ export default function BrainDump() {
     setStatus('idle')
   }
 
-  const statusText = status === 'saving' ? 'Saving…' : status === 'saved' ? 'Saved' : 'Auto-saves as you type'
+  const statusText = status === 'saving' ? 'Saving…' : status === 'saved' ? 'Saved' : 'Auto-saves'
 
   return (
-    <Card title="Brain Dump">
-      <div className={styles.tabs}>
-        {notes.map(note => (
-          <div
-            key={note.id}
-            className={`${styles.tab} ${note.id === activeNote?.id ? styles.tabActive : ''}`}
-            onClick={() => setActiveId(note.id)}
-          >
-            {editingId === note.id ? (
-              <input
-                className={styles.tabInput}
-                value={editingTitle}
-                autoFocus
-                onChange={e => setEditingTitle(e.target.value)}
-                onBlur={() => commitRename(note.id)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter') commitRename(note.id)
-                  if (e.key === 'Escape') setEditingId(null)
-                }}
-                onClick={e => e.stopPropagation()}
-              />
-            ) : (
-              <>
-                <span className={styles.tabLabel} onDoubleClick={e => startRename(note, e)}>
-                  {note.title}
-                </span>
-                <button
-                  className={styles.tabRename}
-                  onClick={e => startRename(note, e)}
-                  title="Rename note"
-                >
-                  ✎
-                </button>
-              </>
-            )}
-            {notes.length > 1 && (
-              <button
-                className={styles.tabClose}
-                onClick={e => { e.stopPropagation(); deleteNote(note.id) }}
-                title="Delete note"
+    <Card title="Notes">
+      <div className={styles.layout}>
+        <div className={styles.sidebar}>
+          <button className={styles.newBtn} onClick={addNote}>+ New Note</button>
+          <div className={styles.noteList}>
+
+            {/* Permanent pinned note */}
+            <div
+              className={`${styles.noteItem} ${styles.pinnedItem} ${activeId === PINNED_ID ? styles.noteItemActive : ''}`}
+              onClick={() => setActiveId(PINNED_ID)}
+            >
+              <div className={styles.noteItemTitle}>{pinnedNote.title || 'Pinned'}</div>
+              <div className={styles.noteItemPreview}>
+                {pinnedNote.content ? pinnedNote.content.slice(0, 55).replace(/\n/g, ' ') : 'Empty note'}
+              </div>
+            </div>
+
+            <div className={styles.divider} />
+
+            {/* Regular notes */}
+            {notes.map(note => (
+              <div
+                key={note.id}
+                className={`${styles.noteItem} ${note.id === activeNote?.id ? styles.noteItemActive : ''}`}
+                onClick={() => setActiveId(note.id)}
               >
-                ×
-              </button>
-            )}
+                <div className={styles.noteItemTitle}>{note.title || 'Untitled'}</div>
+                <div className={styles.noteItemPreview}>
+                  {note.content ? note.content.slice(0, 55).replace(/\n/g, ' ') : 'Empty note'}
+                </div>
+                {notes.length > 1 && (
+                  <button
+                    className={styles.noteItemDelete}
+                    onClick={e => deleteNote(note.id, e)}
+                    title="Delete note"
+                  >×</button>
+                )}
+              </div>
+            ))}
           </div>
-        ))}
-        <button className={styles.addBtn} onClick={addNote} title="New note">+</button>
-      </div>
+        </div>
 
-      <textarea
-        key={activeNote?.id}
-        className={styles.area}
-        value={activeNote?.content ?? ''}
-        onChange={e => updateContent(e.target.value)}
-        placeholder="Just start typing — anything on your mind, ideas, half-thoughts, reminders…"
-      />
-
-      <div className={styles.footer}>
-        <span className={`${styles.status} ${status === 'saved' ? styles.saved : ''}`}>
-          {status === 'saved' && <span className={styles.dot} />}
-          {statusText}
-        </span>
-        <div className={styles.meta}>
-          <span className={styles.count}>{(activeNote?.content.length ?? 0) > 0 ? `${activeNote.content.length} chars` : ''}</span>
-          <button className={styles.clearBtn} onClick={clearNote}>Clear note</button>
+        <div className={styles.editor}>
+          <input
+            className={styles.titleInput}
+            value={activeNote?.title ?? ''}
+            onChange={e => updateTitle(e.target.value)}
+            placeholder="Untitled"
+          />
+          <textarea
+            key={activeNote?.id}
+            className={styles.area}
+            value={activeNote?.content ?? ''}
+            onChange={e => updateContent(e.target.value)}
+            placeholder="Start writing…"
+          />
+          <div className={styles.footer}>
+            <span className={`${styles.status} ${status === 'saved' ? styles.saved : ''}`}>
+              {status === 'saved' && <span className={styles.dot} />}
+              {statusText}
+            </span>
+            <div className={styles.meta}>
+              <span className={styles.count}>
+                {(activeNote?.content.length ?? 0) > 0 ? `${activeNote.content.length} chars` : ''}
+              </span>
+              <button className={styles.clearBtn} onClick={clearNote}>Clear</button>
+            </div>
+          </div>
         </div>
       </div>
     </Card>
