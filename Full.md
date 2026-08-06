@@ -8,7 +8,7 @@ The app is a single-page React app. There is no backend server — all data is s
 - **localStorage** — used as an instant cache so the UI renders immediately with no flicker on load
 - **Firestore** — the source of truth, used for real-time cross-device sync
 
-A single custom hook, `useSyncedStorage`, handles both layers for every piece of data in the app. Everything that persists — todos, habits, job counts, brain dump notes, schedule blocks, week planner tasks — goes through it.
+A single custom hook, `useSyncedStorage`, handles both layers for every piece of data in the app. Everything that persists — todos, habits, job counts, brain dump notes, and schedule blocks — goes through it.
 
 ---
 
@@ -46,47 +46,36 @@ The app uses a simple password gate rather than OAuth. On first visit, the user 
 
 ## Views and navigation
 
-`App.jsx` owns the current view in a single `useState('overview')`. The top bar renders navigation links that call `setView`. The active component is looked up from a static `VIEWS` map and rendered directly — there is no router. Some views (Overview, Day Planner, Week Planner) use `styles.viewFull` for full-width layout; others use a narrower centered column.
+`App.jsx` owns the current view in a single `useState('overview')`. The top bar renders navigation links that call `setView`. The active component is looked up from a static `VIEWS` map and rendered directly — there is no router. Overview, To-Do, Brain Dump, and Day Planner use `styles.viewFull` for full-width layout; the remaining views use a narrower centered column.
 
 ---
 
 ## Todo
 
-**Storage keys:** `todos-today` (array), `todos-longterm` (array)
+**Storage keys:** `todos-daily` (date-keyed object), `todos-thisweek` (array), `todos-longterm` (array)
 
-Each task is an object: `{ id: number, text: string, done: boolean }`. IDs are `Date.now()` timestamps.
+Each plain task is an object: `{ id: number, text: string, done: boolean }`. IDs are `Date.now()` timestamps.
 
-**Today vs Long Term** are two separate lists shown side by side. Tasks can be dragged between the two columns — drag state is tracked in a `useRef` (not state, so dragging doesn't cause re-renders). When dropped on the other column, the item is removed from the source list and appended to the destination list.
+The unified To-Do page opens to the current Monday-through-Sunday week and shows all seven dated day columns together. Previous, Today, and Next controls navigate between stored weeks. Daily tasks are stored under local `YYYY-MM-DD` keys in `todos-daily`, so past and future weeks coexist without rollover.
 
----
+The global **This Week** and **Long Term** lists appear side by side below the board and do not change when the selected week changes. Tasks can be moved or reordered between any visible day, This Week, the Long Term root, and Long Term folders. A move transfers the original task object, including its completion state, and dropping on a task inserts at that position.
 
-## Week Planner (Goals)
-
-**Storage keys:** `week_planner_tasks` (object), `todos-longterm` (array, shared with Todo)
-
-The week planner stores tasks as an object keyed by day abbreviation:
-```js
-{ mon: [...tasks], tue: [...tasks], ..., sun: [...tasks] }
-```
-
-Each task is `{ id, text, done }`. The current week's Monday is computed on render from `new Date()` to align day columns with real calendar dates. Today's column is highlighted.
-
-A sidebar panel shows the Long Term list from Todo (same `todos-longterm` Firestore key). Items from the sidebar can be dragged onto any day column to copy them into the week plan. The drag transfers the task's text, not the object, so the week planner creates a new task with a new ID.
+**Folders (Long Term only):** Long Term items can also be folders: `{ id, name, isFolder: true, collapsed: boolean, items: [...tasks] }`. Folders can be created, collapsed/expanded, reordered, and deleted (which removes their contents). Tasks can be dragged into a folder, out to the Long Term root, or between folders. Folders themselves cannot leave Long Term.
 
 ---
 
 ## Brain Dump
 
-**Storage keys:** `brainDumpNotes` (array of note objects), `brainDumpActiveId` (string)
+**Storage keys:** `brainDumpNotes` (array of note objects), `brainDumpActiveId` (string), `brainDumpPinnedNote` (object)
 
 Notes are stored as:
 ```js
 [{ id: string, title: string, content: string }, ...]
 ```
 
-Multiple notes are supported via a tab bar. The active note's ID is stored separately in `brainDumpActiveId` so it persists across sessions. Double-clicking a tab title or clicking the pencil icon enters rename mode (an inline input). The content textarea debounces a "Saved" status indicator by 600 ms — this is a local UI debounce separate from the Firestore write debounce in `useSyncedStorage`.
+The UI is a sidebar (note list) + editor layout, not a tab bar. The sidebar always shows one **permanent pinned note** at the top (`brainDumpPinnedNote`, shape `{ title, content }`) above a divider, followed by the regular `brainDumpNotes` list. The pinned note can't be deleted and isn't part of the `brainDumpNotes` array — it's a separate synced key selected via a sentinel active ID (`'__pinned__'`). Regular notes can be created (`+ New Note`) and deleted (if more than one remains); the active note/pinned selection is stored in `brainDumpActiveId` so it persists across sessions. The content textarea debounces a "Saved" status indicator by 600 ms — this is a local UI debounce separate from the Firestore write debounce in `useSyncedStorage`.
 
-The Overview page shows a read-write preview of the currently active note (same Firestore keys), so edits in either place sync instantly.
+The Overview page shows a read-write preview of the **pinned note** (same `brainDumpPinnedNote` Firestore key), so edits in either place sync instantly.
 
 ---
 
@@ -134,7 +123,9 @@ A freeform notes textarea (`job_note`) stores any job-search-related text (links
 
 ## Day Planner
 
-**Storage keys:** `dayplanner-blocks` (array), `dayplanner-settings` (object)
+**Storage keys:** `dayplanner-blocks` (array), `dayplanner-settings` (object), `dayplanner-categories` (array)
+
+Categories are user-editable, not a fixed enum. `dayplanner-categories` is seeded from `DEFAULT_CATEGORIES` (`src/data/categories.js`) and can have entries added or removed from the block edit panel. Removing a category reassigns any blocks using it to a fallback (the first remaining category, or `"work"`).
 
 Settings store the visible time range:
 ```js
@@ -145,8 +136,9 @@ Hours above 24 represent next-day time (e.g. `endHour: 27` = 3 AM). This lets ni
 
 Each block is:
 ```js
-{ id: string, label: string, category: "work"|"uni"|"gym"|"rest"|"meeting", startMinutes: number, endMinutes: number }
+{ id: string, label: string, category: string, startMinutes: number, endMinutes: number }
 ```
+`category` is an id referencing an entry in `dayplanner-categories`, not a hardcoded set of values.
 
 Times are stored in absolute minutes from midnight (e.g. `startMinutes: 600` = 10:00 AM, `startMinutes: 1560` = 2:00 AM next day).
 
@@ -162,11 +154,11 @@ When the start/end hour settings change, existing blocks are clamped to fit with
 
 ## Overview
 
-The Overview is a read-only (mostly) dashboard that pulls live data from six different Firestore keys simultaneously and renders it as a grid of cards. It does not have its own storage — it reads the same keys as the individual views. The exceptions are:
+The Overview is a read-only (mostly) dashboard that pulls live data from several Firestore keys simultaneously and renders it as a grid of cards. It does not have its own storage — it reads the same keys as the individual views. The exceptions are:
 
-- **BrainDumpCard**: writable — edits sync back to `brainDumpNotes`
+- **BrainDumpCard**: writable — edits sync back to `brainDumpPinnedNote` (the pinned note, not the `brainDumpNotes` list)
 - **HabitsCard**: toggle marks habits done for today, writes to `habit_logs`
-- **TasksCard**: toggle marks tasks done, writes to `todos-today`
+- **TasksCard**: shows only `todos-daily[today]`; toggles write back to that same date entry
 - **JobsCard**: +/− buttons write to `job_applications`
 
 **Weather** is fetched once on mount from the Open-Meteo public API for Tempe, AZ (lat 33.4255, lon -111.9400). No API key needed. The result is kept in local React state (not synced to Firestore) and re-fetched on each page load.
@@ -179,14 +171,16 @@ The Overview is a read-only (mostly) dashboard that pulls live data from six dif
 
 | Key | Type | Used by |
 |---|---|---|
-| `todos-today` | array | Todo (today column), Overview tasks card |
-| `todos-longterm` | array | Todo (long term column), Week Planner sidebar |
-| `week_planner_tasks` | object | Week Planner |
-| `brainDumpNotes` | array | Brain Dump, Overview brain card |
-| `brainDumpActiveId` | string | Brain Dump, Overview brain card |
+| `todos-daily` | object keyed by local date | To-Do weekly board, Overview tasks card |
+| `todos-thisweek` | array | To-Do global This Week list |
+| `todos-longterm` | array | To-Do global Long Term list, including folders |
+| `brainDumpNotes` | array | Brain Dump (regular notes) |
+| `brainDumpActiveId` | string | Brain Dump (selected note/pinned) |
+| `brainDumpPinnedNote` | object | Brain Dump (pinned note), Overview brain card |
 | `habits` | array | Habit Tracker, Overview habits card |
 | `habit_logs` | object | Habit Tracker, Overview habits card |
 | `job_applications` | array | Job Tracker, Overview jobs card |
 | `job_note` | string | Job Tracker |
 | `dayplanner-blocks` | array | Day Planner, Overview schedule card |
 | `dayplanner-settings` | object | Day Planner, Overview schedule card |
+| `dayplanner-categories` | array | Day Planner, Overview schedule card |

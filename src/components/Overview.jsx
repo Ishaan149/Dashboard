@@ -373,7 +373,7 @@ function JobsCard({ today, week, spark, onAdjust, onNavigate }) {
 
 // ── main ──────────────────────────────────────────────────────────────────────
 export default function Overview({ onChange }) {
-  const [todayTodos, setTodayTodos] = useSyncedStorage('todos-today', [])
+  const [dailyTasks, setDailyTasks] = useSyncedStorage('todos-daily', {})
   const [jobRecords, setJobRecords] = useSyncedStorage('job_applications', [])
   const [habits]                    = useSyncedStorage('habits', [])
   const [habitLogs, setHabitLogs]   = useSyncedStorage('habit_logs', {})
@@ -383,6 +383,7 @@ export default function Overview({ onChange }) {
   const [pinnedNote, setPinnedNote] = useSyncedStorage('brainDumpPinnedNote', { title: 'Pinned', content: '' })
 
   const today     = getDateKey(0)
+  const todayTodos = dailyTasks[today] || []
   const weekStart = getWeekStart()
 
   const [weather, setWeather] = useState(null)
@@ -441,7 +442,10 @@ export default function Overview({ onChange }) {
   }
 
   function toggleTask(id) {
-    setTodayTodos(prev => prev.map(t => t.id === id ? { ...t, done: !t.done } : t))
+    setDailyTasks(prev => ({
+      ...prev,
+      [today]: (prev[today] || []).map(t => t.id === id ? { ...t, done: !t.done } : t),
+    }))
   }
 
   function toggleHabit(id) {

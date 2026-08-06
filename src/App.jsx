@@ -2,7 +2,6 @@ import { useState } from 'react'
 import TopBar from './components/TopBar'
 import Overview from './components/Overview'
 import TodoCard from './components/TodoCard'
-import GoalsCard from './components/GoalsCard'
 import BrainDump from './components/BrainDump'
 import JobTracker from './components/JobTracker'
 import HabitTracker from './components/HabitTracker'
@@ -13,14 +12,13 @@ import styles from './App.module.css'
 const VIEWS = {
   overview:   Overview,
   todo:       TodoCard,
-  goals:      GoalsCard,
   braindump:  BrainDump,
   jobs:       JobTracker,
   habits:     HabitTracker,
   dayplanner: DayPlanner,
 }
 
-const FULL_WIDTH_VIEWS = new Set(['dayplanner', 'goals', 'overview', 'todo', 'braindump'])
+const FULL_WIDTH_VIEWS = new Set(['dayplanner', 'overview', 'todo', 'braindump'])
 
 export default function App() {
   const [view, setView] = useState('overview')
@@ -42,13 +40,16 @@ export default function App() {
 
   const ActiveView = VIEWS[view]
   const isFullWidth = FULL_WIDTH_VIEWS.has(view)
+  const viewClassName = isFullWidth
+    ? `${styles.viewFull} ${view === 'todo' ? styles.viewTodo : ''}`
+    : styles.view
 
   return (
     <div className={styles.layout}>
       <div className={styles.main}>
         <TopBar view={view} onChange={setView} onLock={handleLock} />
         <div className={styles.content}>
-          <div className={isFullWidth ? styles.viewFull : styles.view} key={view}>
+          <div className={viewClassName} key={view}>
             <ActiveView onChange={setView} />
           </div>
         </div>
