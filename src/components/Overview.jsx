@@ -2,6 +2,8 @@ import { useSyncedStorage } from '../hooks/useSyncedStorage'
 import { useState, useEffect, useRef } from 'react'
 import { getDailyQuote } from '../data/quotes'
 import { DEFAULT_CATEGORIES } from '../data/categories'
+import { getDateKey, getWeekStartKey } from '../utils/date'
+import { formatMinutes, getScheduleMinutes } from '../utils/time'
 import styles from './Overview.module.css'
 
 // ── icons ─────────────────────────────────────────────────────────────────────
@@ -65,37 +67,6 @@ const ICase   = (p) => (
 const HABIT_ICONS = [IDrop, IBook, ILotus, ISpark, IMoon, ICase]
 
 // ── helpers ───────────────────────────────────────────────────────────────────
-function fmtMin(min, compact = false) {
-  const h   = Math.floor(min / 60) % 24
-  const m   = min % 60
-  const ampm = h >= 12 ? 'PM' : 'AM'
-  const h12  = h % 12 || 12
-  if (compact && m === 0) return `${h12} ${ampm}`
-  return `${h12}:${String(m).padStart(2, '0')} ${ampm}`
-}
-
-function toLocalDateStr(date) {
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  return `${y}-${m}-${d}`
-}
-
-function getDateKey(daysAgo = 0) {
-  const d = new Date()
-  d.setDate(d.getDate() - daysAgo)
-  return toLocalDateStr(d)
-}
-
-function getWeekStart() {
-  const now  = new Date()
-  const day  = now.getDay()
-  const diff = day === 0 ? -6 : 1 - day
-  const mon  = new Date(now)
-  mon.setDate(now.getDate() + diff)
-  return toLocalDateStr(mon)
-}
-
 // ── sub-components ────────────────────────────────────────────────────────────
 function CardHead({ title, action, onAction }) {
   return (
@@ -128,6 +99,8 @@ function QuoteCard({ quote }) {
 }
 
 function WeatherCard({ weather }) {
+  const statusText = weather === undefined ? 'Loading…' : 'Unavailable'
+
   return (
     <div className={styles.card}>
       <CardHead title="Weather" />
@@ -138,7 +111,7 @@ function WeatherCard({ weather }) {
         </div>
         <div className={styles.weatherMeta}>
           <div className={styles.weatherCond}>
-            {weather ? `${weather.low}° – ${weather.high}°` : 'Loading…'}
+            {weather ? `${weather.low}° – ${weather.high}°` : statusText}
           </div>
           <div className={styles.weatherPlace}>Tempe, AZ</div>
           {weather && <div className={styles.weatherRain}>{weather.rain}% rain</div>}
@@ -152,6 +125,8 @@ function BrainDumpCard({ note, onChange, onNavigate }) {
   const [saved, setSaved] = useState(true)
   const timer = useRef(null)
   const content = note?.content ?? ''
+
+  useEffect(() => () => clearTimeout(timer.current), [])
 
   function handle(e) {
     onChange(e.target.value)
@@ -299,8 +274,8 @@ function ScheduleCard({ blocks, categories, nowMin, onNavigate }) {
                 ].join(' ')}
               >
                 <div className={styles.blockTime}>
-                  <b>{fmtMin(b.startMinutes, true)}</b>
-                  {fmtMin(b.endMinutes, true)}
+                  <b>{formatMinutes(b.startMinutes, { compact: true })}</b>
+                  {formatMinutes(b.endMinutes, { compact: true })}
                 </div>
                 <div className={styles.blockBody}>
                   <span className={styles.blockBar} style={{ background: color }} />
@@ -384,33 +359,43 @@ export default function Overview({ onChange }) {
 
   const today     = getDateKey(0)
   const todayTodos = dailyTasks[today] || []
-  const weekStart = getWeekStart()
+  const weekStart = getWeekStartKey()
 
-  const [weather, setWeather] = useState(null)
+  const [weather, setWeather] = useState()
   useEffect(() => {
-    fetch('https://api.open-meteo.com/v1/forecast?latitude=33.4255&longitude=-111.9400&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=America%2FPhoenix&forecast_days=1')
-      .then(r => r.json())
-      .then(d => setWeather({
-        high: Math.round(d.daily.temperature_2m_max[0]),
-        low:  Math.round(d.daily.temperature_2m_min[0]),
-        rain: d.daily.precipitation_probability_max[0],
-      }))
-      .catch(() => {})
+    const controller = new AbortController()
+
+    async function loadWeather() {
+      try {
+        const response = await fetch('https://api.open-meteo.com/v1/forecast?latitude=33.4255&longitude=-111.9400&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=America%2FPhoenix&forecast_days=1', {
+          signal: controller.signal,
+        })
+        if (!response.ok) throw new Error(`Weather request failed with ${response.status}`)
+
+        const { daily } = await response.json()
+        if (!daily?.temperature_2m_max?.length || !daily?.temperature_2m_min?.length) {
+          throw new Error('Weather response did not include a daily forecast')
+        }
+
+        setWeather({
+          high: Math.round(daily.temperature_2m_max[0]),
+          low: Math.round(daily.temperature_2m_min[0]),
+          rain: daily.precipitation_probability_max?.[0] ?? 0,
+        })
+      } catch (error) {
+        if (error.name !== 'AbortError') setWeather(null)
+      }
+    }
+
+    loadWeather()
+    return () => controller.abort()
   }, [])
 
-  const [nowMinutes, setNowMinutes] = useState(() => {
-    const d   = new Date()
-    const raw = d.getHours() * 60 + d.getMinutes()
-    return dpSettings.endHour > 24 && raw < (dpSettings.endHour - 24) * 60 ? raw + 1440 : raw
-  })
+  const [nowMinutes, setNowMinutes] = useState(() => getScheduleMinutes(dpSettings.endHour))
   useEffect(() => {
-    const id = setInterval(() => {
-      const d   = new Date()
-      const raw = d.getHours() * 60 + d.getMinutes()
-      setNowMinutes(dpSettings.endHour > 24 && raw < (dpSettings.endHour - 24) * 60 ? raw + 1440 : raw)
-    }, 60_000)
+    setNowMinutes(getScheduleMinutes(dpSettings.endHour))
+    const id = setInterval(() => setNowMinutes(getScheduleMinutes(dpSettings.endHour)), 60_000)
     return () => clearInterval(id)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dpSettings.endHour])
 
   const quote       = getDailyQuote()
@@ -458,7 +443,6 @@ export default function Overview({ onChange }) {
     })
   }
 
-  const activeNote = { ...pinnedNote }
   function updateBrainDump(val) {
     setPinnedNote(prev => ({ ...prev, content: val }))
   }
@@ -480,7 +464,7 @@ export default function Overview({ onChange }) {
         <HabitsCard habits={habits} todayDone={todayDone} onToggle={toggleHabit} onNavigate={onChange} />
         <JobsCard today={jobsToday} week={jobsWeek} spark={jobSpark} onAdjust={adjustJobs} onNavigate={onChange} />
         <WeatherCard weather={weather} />
-        <BrainDumpCard note={activeNote} onChange={updateBrainDump} onNavigate={onChange} />
+        <BrainDumpCard note={pinnedNote} onChange={updateBrainDump} onNavigate={onChange} />
       </div>
     )
   }
@@ -490,7 +474,7 @@ export default function Overview({ onChange }) {
       <div className={styles.col}>
         <QuoteCard quote={quote} />
         <WeatherCard weather={weather} />
-        <BrainDumpCard note={activeNote} onChange={updateBrainDump} onNavigate={onChange} />
+        <BrainDumpCard note={pinnedNote} onChange={updateBrainDump} onNavigate={onChange} />
       </div>
       <div className={styles.col}>
         <JobsCard today={jobsToday} week={jobsWeek} spark={jobSpark} onAdjust={adjustJobs} onNavigate={onChange} />

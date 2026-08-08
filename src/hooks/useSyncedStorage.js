@@ -13,11 +13,13 @@ export function useSyncedStorage(key, initialValue) {
     }
   })
 
-  // Prevents write-echo loop: Firestore → state → Firestore → ...
-  const fromFirestore = useRef(false)
-
   // Tracks latest value for snapshot comparison without causing resubscription
   const valueRef = useRef(value)
+
+  // Tracks the last remote payload so snapshot-driven updates are not echoed
+  // back to Firestore. Unlike a boolean flag, this still handles a local edit
+  // that lands immediately after a remote update.
+  const remoteValueRef = useRef(null)
 
   // Blocks writes until the first Firestore snapshot has been received,
   // preventing local stale data from overwriting newer remote data on load
@@ -34,15 +36,14 @@ export function useSyncedStorage(key, initialValue) {
   }, [key, value])
 
   // Mirror every state change to Firestore.
-  // Skip if the change originated from a Firestore snapshot, or if the
-  // initial snapshot hasn't arrived yet (would overwrite newer remote data).
+  // Skip values that match the latest Firestore snapshot, or if the initial
+  // snapshot hasn't arrived yet (which could overwrite newer remote data).
   // Debounced to avoid a write per keystroke in text-heavy fields.
   useEffect(() => {
     if (!hydrated.current) return
-    if (fromFirestore.current) {
-      fromFirestore.current = false
-      return
-    }
+    const serializedValue = JSON.stringify(value)
+    if (serializedValue === remoteValueRef.current) return
+
     const ref = doc(db, 'dashboard', key)
     const timer = setTimeout(() => {
       setDoc(ref, { value, _secret: import.meta.env.VITE_FIRESTORE_SECRET }).catch((err) =>
@@ -53,11 +54,11 @@ export function useSyncedStorage(key, initialValue) {
   }, [key, value])
 
   // Subscribe to real-time Firestore updates for cross-device sync
-  // Intentionally omits 'value' from deps — resubscribing on every keystroke
-  // would be catastrophic for BrainDump. The snapshot handler closes over
-  // 'value' at subscribe time but JSON comparison still works correctly.
+  // `valueRef` gives the snapshot handler current state without resubscribing
+  // on every local edit.
   useEffect(() => {
     hydrated.current = false
+    remoteValueRef.current = null
     const ref = doc(db, 'dashboard', key)
     const unsub = onSnapshot(
       ref,
@@ -70,9 +71,16 @@ export function useSyncedStorage(key, initialValue) {
           hydrated.current = true
           return
         }
-        const remote = snap.data().value
-        if (JSON.stringify(remote) !== JSON.stringify(valueRef.current)) {
-          fromFirestore.current = true
+        const data = snap.data()
+        if (!Object.hasOwn(data, 'value')) {
+          hydrated.current = true
+          return
+        }
+
+        const remote = data.value
+        const serializedRemote = JSON.stringify(remote)
+        remoteValueRef.current = serializedRemote
+        if (serializedRemote !== JSON.stringify(valueRef.current)) {
           setValueState(remote)
         }
         hydrated.current = true
@@ -83,7 +91,6 @@ export function useSyncedStorage(key, initialValue) {
       }
     )
     return unsub
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key])
 
   return [value, setValueState]

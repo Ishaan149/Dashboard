@@ -1,18 +1,12 @@
 import { useState } from 'react'
 import { COLOR_PRESETS } from '../data/categories'
+import { formatMinutes } from '../utils/time'
 import styles from './DayPlanner.module.css'
 
 function buildTimeOptions(startHour, endHour) {
   const opts = []
   for (let mins = startHour * 60; mins <= endHour * 60; mins += 15) {
-    const h = Math.floor(mins / 60)
-    const actual = h % 24
-    const m = mins % 60
-    const ampm = actual >= 12 ? 'PM' : 'AM'
-    const h12  = actual % 12 || 12
-    const suffix = h >= 24 ? ' +' : ''
-    const label = `${h12}:${String(m).padStart(2, '0')} ${ampm}${suffix}`
-    opts.push({ value: mins, label })
+    opts.push({ value: mins, label: formatMinutes(mins, { markNextDay: true }) })
   }
   return opts
 }
