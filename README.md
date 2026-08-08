@@ -1,20 +1,19 @@
 # Personal Dashboard
 
-A personal productivity dashboard built with React and Firebase. Tracks daily tasks, habits, job applications, a day planner, goals, and a brain dump — all synced in real time across devices via Firestore.
+A personal productivity dashboard built with React and Firebase. Tracks tasks, habits, job applications, a day planner, and notes, with real-time Firestore sync and a local cache.
 
 Live at: [ishaan149.github.io/Dashboard](https://Ishaan149.github.io/Dashboard)
 
 ## Features
 
 - **Overview** — at-a-glance summary of tasks, habits, today's schedule, job application count, weather (Tempe, AZ), brain dump preview, and a daily quote
-- **Todo** — daily task list with completion tracking
-- **Goals** — long-term goal tracking
-- **Brain Dump** — freeform scratch pad with multiple notes
+- **To-Do** — a navigable seven-day board plus global This Week and folder-based Long Term lists
+- **Brain Dump** — a pinned note and multiple freeform notes
 - **Habit Tracker** — define habits and log them daily with streak history
 - **Day Planner** — time-block calendar with configurable hours and categories (work, uni, gym, rest, meeting)
 - **Job Tracker** — log job applications by day, view a 7-day sparkline
 
-All data syncs across devices via Firestore with localStorage as an instant-render cache. Changes are debounced (1 s) before writing to Firestore to avoid per-keystroke writes.
+Persisted data syncs across devices via Firestore with `localStorage` as an instant-render cache. Changes are debounced for 1 second before writing to Firestore. Authenticated views are loaded on demand after the password gate is cleared.
 
 ## Tech stack
 
@@ -54,8 +53,16 @@ All data syncs across devices via Firestore with localStorage as an instant-rend
    | `VITE_FIREBASE_STORAGE_BUCKET` | same |
    | `VITE_FIREBASE_MESSAGING_SENDER_ID` | same |
    | `VITE_FIREBASE_APP_ID` | same |
-   | `VITE_PASSWORD_HASH` | bcrypt hash of your dashboard password |
-   | `VITE_FIRESTORE_SECRET` | any secret string used to authorize Firestore writes |
+   | `VITE_PASSWORD_HASH` | lowercase SHA-256 hex digest of the dashboard password |
+   | `VITE_FIRESTORE_SECRET` | compatibility value expected by the current Firestore rules |
+
+   Generate the password digest with:
+
+   ```bash
+   printf '%s' 'your-password' | shasum -a 256
+   ```
+
+   The password gate is not security authentication: the hash and every other `VITE_*` value are included in the browser bundle. Protect sensitive data with Firebase Authentication and Firestore rules based on authenticated identity.
 
 3. Start the dev server:
 

@@ -1,57 +1,30 @@
 import { useState } from 'react'
-import { useSyncedStorage as useLocalStorage } from '../hooks/useSyncedStorage'
+import { useSyncedStorage } from '../hooks/useSyncedStorage'
+import { getMonthStartKey, getWeekStartKey, parseLocalDateKey, toLocalDateKey } from '../utils/date'
 import Card from './Card'
 import styles from './JobTracker.module.css'
 
-function toLocalDateStr(date) {
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  return `${y}-${m}-${d}`
-}
-
 function getToday() {
-  return toLocalDateStr(new Date())
+  return toLocalDateKey(new Date())
 }
 
 function formatDate(dateStr) {
-  const [year, month, day] = dateStr.split('-').map(Number)
-  return new Date(year, month - 1, day).toLocaleDateString('en-US', {
+  return parseLocalDateKey(dateStr)?.toLocaleDateString('en-US', {
     weekday: 'short', month: 'short', day: 'numeric', year: 'numeric',
-  })
-}
-
-function formatToday() {
-  return new Date().toLocaleDateString('en-US', {
-    weekday: 'long', month: 'long', day: 'numeric',
-  })
-}
-
-function getWeekStart() {
-  const now = new Date()
-  const day = now.getDay()
-  const diff = (day === 0 ? -6 : 1 - day)
-  const monday = new Date(now)
-  monday.setDate(now.getDate() + diff)
-  return toLocalDateStr(monday)
-}
-
-function getMonthStart() {
-  const now = new Date()
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
+  }) ?? dateStr
 }
 
 export default function JobTracker() {
   const today = getToday()
-  const [records, setRecords] = useLocalStorage('job_applications', [])
-  const [note, setNote] = useLocalStorage('job_note', '')
+  const [records, setRecords] = useSyncedStorage('job_applications', [])
+  const [note, setNote] = useSyncedStorage('job_note', '')
   const [selectedDate, setSelectedDate] = useState(today)
 
   const selectedRecord = records.find(r => r.date === selectedDate)
   const todayCount = selectedRecord ? selectedRecord.count : 0
 
-  const weekStart = getWeekStart()
-  const monthStart = getMonthStart()
+  const weekStart = getWeekStartKey()
+  const monthStart = getMonthStartKey()
   const weekCount = records.filter(r => r.date >= weekStart).reduce((sum, r) => sum + r.count, 0)
   const monthCount = records.filter(r => r.date >= monthStart).reduce((sum, r) => sum + r.count, 0)
 
@@ -65,7 +38,7 @@ export default function JobTracker() {
             : r
         )
       }
-      return [...prev, { date: selectedDate, count: Math.max(0, delta) }]
+      return delta > 0 ? [...prev, { date: selectedDate, count: delta }] : prev
     })
   }
 

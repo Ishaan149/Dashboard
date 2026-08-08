@@ -3,6 +3,7 @@ import { useSyncedStorage } from '../hooks/useSyncedStorage'
 import TimeBlock from './TimeBlock'
 import BlockEditPanel from './BlockEditPanel'
 import { DEFAULT_CATEGORIES } from '../data/categories'
+import { formatMinutes, getScheduleMinutes } from '../utils/time'
 import styles from './DayPlanner.module.css'
 
 const HOUR_HEIGHT  = 64        // px per hour
@@ -32,28 +33,17 @@ export default function DayPlanner() {
       if (clampedStart === b.startMinutes && clampedEnd === b.endMinutes) return b
       return { ...b, startMinutes: clampedStart, endMinutes: clampedEnd }
     }))
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings.startHour, settings.endHour])
+  }, [settings.startHour, settings.endHour, setBlocks])
 
   // ── Selected block object ──────────────────────────────────────────────
   const selectedBlock = blocks.find(b => b.id === selectedId) ?? null
 
   // ── "Now" line ────────────────────────────────────────────────────────
-  function calcNowMinutes() {
-    const d = new Date()
-    const raw = d.getHours() * 60 + d.getMinutes()
-    // If schedule spans midnight and current time is in the next-day portion, offset by 1440
-    if (settings.endHour > 24 && raw < (settings.endHour - 24) * 60) {
-      return raw + 1440
-    }
-    return raw
-  }
-
-  const [nowMinutes, setNowMinutes] = useState(calcNowMinutes)
+  const [nowMinutes, setNowMinutes] = useState(() => getScheduleMinutes(settings.endHour))
   useEffect(() => {
-    const id = setInterval(() => setNowMinutes(calcNowMinutes()), 60_000)
+    setNowMinutes(getScheduleMinutes(settings.endHour))
+    const id = setInterval(() => setNowMinutes(getScheduleMinutes(settings.endHour)), 60_000)
     return () => clearInterval(id)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings.endHour])
   const nowTop = (nowMinutes - settings.startHour * 60) * PX_PER_MIN
   const showNow = nowMinutes >= settings.startHour * 60 && nowMinutes <= settings.endHour * 60
@@ -61,16 +51,14 @@ export default function DayPlanner() {
   // ── Resize handlers ───────────────────────────────────────────────────
   const handleResizeMove = useCallback((e) => {
     if (!resizeRef.current) return
-    const { blockId, startY, originalEndMinutes } = resizeRef.current
-    const block = blocks.find(b => b.id === blockId)
-    if (!block) return
+    const { blockId, startY, originalEndMinutes, startMinutes } = resizeRef.current
 
     const deltaMin = (e.clientY - startY) / PX_PER_MIN
     const snapped  = Math.round((originalEndMinutes + deltaMin) / 15) * 15
-    const clamped  = Math.max(block.startMinutes + 15, Math.min(snapped, settings.endHour * 60))
+    const clamped  = Math.max(startMinutes + 15, Math.min(snapped, settings.endHour * 60))
 
     setBlocks(prev => prev.map(b => b.id === blockId ? { ...b, endMinutes: clamped } : b))
-  }, [blocks, settings.endHour, setBlocks])
+  }, [settings.endHour, setBlocks])
 
   const handleResizeEnd = useCallback(() => {
     if (resizeRef.current) suppressClick.current = true
@@ -84,7 +72,12 @@ export default function DayPlanner() {
     e.preventDefault()
     const block = blocks.find(b => b.id === blockId)
     if (!block) return
-    resizeRef.current = { blockId, startY: e.clientY, originalEndMinutes: block.endMinutes }
+    resizeRef.current = {
+      blockId,
+      startY: e.clientY,
+      originalEndMinutes: block.endMinutes,
+      startMinutes: block.startMinutes,
+    }
     document.body.style.cursor = 'ns-resize'
     window.addEventListener('mousemove', handleResizeMove)
     window.addEventListener('mouseup', handleResizeEnd)
@@ -93,7 +86,7 @@ export default function DayPlanner() {
   // ── Drag-to-move handlers ─────────────────────────────────────────────
   const handleDragMove = useCallback((e) => {
     if (!dragRef.current) return
-    const { blockId, startY, originalStart, originalEnd, duration } = dragRef.current
+    const { blockId, startY, originalStart, duration } = dragRef.current
     const deltaMin = (e.clientY - startY) / PX_PER_MIN
 
     if (Math.abs(e.clientY - startY) > 4) dragRef.current.moved = true
@@ -106,7 +99,7 @@ export default function DayPlanner() {
     setBlocks(prev => prev.map(b => b.id === blockId ? { ...b, startMinutes: clampedStart, endMinutes: clampedEnd } : b))
   }, [settings.startHour, settings.endHour, setBlocks])
 
-  const handleDragEnd = useCallback((e) => {
+  const handleDragEnd = useCallback(() => {
     if (!dragRef.current) return
     const { blockId, moved } = dragRef.current
     suppressClick.current = true
@@ -147,7 +140,7 @@ export default function DayPlanner() {
     const newBlock = {
       id:           Date.now().toString(),
       label:        '',
-      category:     'work',
+      category:     categories[0]?.id ?? 'work',
       startMinutes,
       endMinutes,
     }
@@ -179,10 +172,7 @@ export default function DayPlanner() {
 
   // ── Hour labels ────────────────────────────────────────────────────────
   function formatHourLabel(h) {
-    const actual = h % 24
-    const ampm = actual >= 12 ? 'PM' : 'AM'
-    const h12  = actual % 12 || 12
-    return `${h12} ${ampm}`
+    return formatMinutes(h * 60, { compact: true })
   }
 
   const hours = []
@@ -272,7 +262,6 @@ export default function DayPlanner() {
                 block={block}
                 categories={categories}
                 isSelected={block.id === selectedId}
-                onSelect={setSelectedId}
                 onResizeStart={handleResizeStart}
                 onDragStart={handleDragStart}
                 pixelsPerMin={PX_PER_MIN}

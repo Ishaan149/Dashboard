@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react'
-import { useSyncedStorage as useLocalStorage } from '../hooks/useSyncedStorage'
+import { useEffect, useRef, useState } from 'react'
+import { useSyncedStorage } from '../hooks/useSyncedStorage'
 import Card from './Card'
 import styles from './BrainDump.module.css'
 
@@ -10,11 +10,17 @@ function makeNote(title = 'Untitled') {
 }
 
 export default function BrainDump() {
-  const [notes, setNotes]           = useLocalStorage('brainDumpNotes', [makeNote('Note 1')])
-  const [activeId, setActiveId]     = useLocalStorage('brainDumpActiveId', null)
-  const [pinnedNote, setPinnedNote] = useLocalStorage('brainDumpPinnedNote', { title: 'Pinned', content: '' })
+  const [notes, setNotes]           = useSyncedStorage('brainDumpNotes', [makeNote('Note 1')])
+  const [activeId, setActiveId]     = useSyncedStorage('brainDumpActiveId', null)
+  const [pinnedNote, setPinnedNote] = useSyncedStorage('brainDumpPinnedNote', { title: 'Pinned', content: '' })
   const [status, setStatus]         = useState('idle')
-  const timerRef                    = useRef(null)
+  const saveTimerRef                = useRef(null)
+  const idleTimerRef                = useRef(null)
+
+  useEffect(() => () => {
+    clearTimeout(saveTimerRef.current)
+    clearTimeout(idleTimerRef.current)
+  }, [])
 
   const isEditingPinned = activeId === PINNED_ID
   const activeNote = isEditingPinned
@@ -23,10 +29,11 @@ export default function BrainDump() {
 
   function triggerStatus() {
     setStatus('saving')
-    clearTimeout(timerRef.current)
-    timerRef.current = setTimeout(() => {
+    clearTimeout(saveTimerRef.current)
+    clearTimeout(idleTimerRef.current)
+    saveTimerRef.current = setTimeout(() => {
       setStatus('saved')
-      setTimeout(() => setStatus('idle'), 2000)
+      idleTimerRef.current = setTimeout(() => setStatus('idle'), 2000)
     }, 600)
   }
 
@@ -66,7 +73,8 @@ export default function BrainDump() {
     if (!activeNote?.content) return
     if (!confirm('Clear this note?')) return
     updateContent('')
-    clearTimeout(timerRef.current)
+    clearTimeout(saveTimerRef.current)
+    clearTimeout(idleTimerRef.current)
     setStatus('idle')
   }
 

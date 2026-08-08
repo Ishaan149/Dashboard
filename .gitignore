@@ -11,6 +11,7 @@ dist/
 
 # Vite
 *.local
+.playwright-mcp/
 
 # Editor
 .vscode/

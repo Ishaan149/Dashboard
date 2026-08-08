@@ -1,13 +1,8 @@
 import { useState } from 'react'
-import { useSyncedStorage as useLocalStorage } from '../hooks/useSyncedStorage'
+import { useSyncedStorage } from '../hooks/useSyncedStorage'
+import { addDays, getDateKey } from '../utils/date'
 import Card from './Card'
 import styles from './HabitTracker.module.css'
-
-function getDateKey(daysAgo = 0) {
-  const d = new Date()
-  d.setDate(d.getDate() - daysAgo)
-  return d.toISOString().slice(0, 10)
-}
 
 function getStreak(id, logs) {
   const todayKey = getDateKey(0)
@@ -34,8 +29,8 @@ function getLast7(id, logs) {
 }
 
 export default function HabitTracker() {
-  const [habits, setHabits] = useLocalStorage('habits', [])
-  const [logs, setLogs]     = useLocalStorage('habit_logs', {})
+  const [habits, setHabits] = useSyncedStorage('habits', [])
+  const [logs, setLogs]     = useSyncedStorage('habit_logs', {})
   const [nameInput, setNameInput] = useState('')
 
   const todayKey  = getDateKey(0)
@@ -45,8 +40,7 @@ export default function HabitTracker() {
   function getDayLabel(daysAgo) {
     if (daysAgo === 0) return 'Today'
     if (daysAgo === 1) return 'Yesterday'
-    const d = new Date()
-    d.setDate(d.getDate() - daysAgo)
+    const d = addDays(new Date(), -daysAgo)
     return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
   }
 
@@ -112,7 +106,7 @@ export default function HabitTracker() {
                     onClick={() => toggleDay(habit.id, 0)}
                     aria-label="Toggle today"
                   />
-<span className={styles.name}>{habit.name}</span>
+                  <span className={styles.name}>{habit.name}</span>
                   <div className={styles.right}>
                     {streak > 0 && (
                       <span className={styles.streak}>🔥 {streak}</span>

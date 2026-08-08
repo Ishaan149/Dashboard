@@ -1,21 +1,15 @@
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import TopBar from './components/TopBar'
-import Overview from './components/Overview'
-import TodoCard from './components/TodoCard'
-import BrainDump from './components/BrainDump'
-import JobTracker from './components/JobTracker'
-import HabitTracker from './components/HabitTracker'
-import DayPlanner from './components/DayPlanner'
 import PasswordGate from './components/PasswordGate'
 import styles from './App.module.css'
 
 const VIEWS = {
-  overview:   Overview,
-  todo:       TodoCard,
-  braindump:  BrainDump,
-  jobs:       JobTracker,
-  habits:     HabitTracker,
-  dayplanner: DayPlanner,
+  overview:   lazy(() => import('./components/Overview')),
+  todo:       lazy(() => import('./components/TodoCard')),
+  braindump:  lazy(() => import('./components/BrainDump')),
+  jobs:       lazy(() => import('./components/JobTracker')),
+  habits:     lazy(() => import('./components/HabitTracker')),
+  dayplanner: lazy(() => import('./components/DayPlanner')),
 }
 
 const FULL_WIDTH_VIEWS = new Set(['dayplanner', 'overview', 'todo', 'braindump'])
@@ -50,7 +44,9 @@ export default function App() {
         <TopBar view={view} onChange={setView} onLock={handleLock} />
         <div className={styles.content}>
           <div className={viewClassName} key={view}>
-            <ActiveView onChange={setView} />
+            <Suspense fallback={<p className={styles.loading} role="status">Loading view…</p>}>
+              <ActiveView onChange={setView} />
+            </Suspense>
           </div>
         </div>
       </div>

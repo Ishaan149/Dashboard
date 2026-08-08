@@ -39,6 +39,12 @@
   width: 100%;
 }
 
+.loading {
+  padding: 48px 0;
+  color: var(--ink-3);
+  text-align: center;
+}
+
 @keyframes fadeSlide {
   from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }

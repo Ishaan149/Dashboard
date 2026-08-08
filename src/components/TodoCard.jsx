@@ -1,29 +1,10 @@
 import { useMemo, useRef, useState } from 'react'
 import { useSyncedStorage } from '../hooks/useSyncedStorage'
+import { addDays, getMonday, toLocalDateKey } from '../utils/date'
 import Card from './Card'
 import styles from './TodoCard.module.css'
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-
-function dateKey(date) {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
-
-function mondayOf(date) {
-  const value = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12)
-  const offset = (value.getDay() + 6) % 7
-  value.setDate(value.getDate() - offset)
-  return value
-}
-
-function addDays(date, count) {
-  const next = new Date(date)
-  next.setDate(next.getDate() + count)
-  return next
-}
 
 function createTask(text) {
   return { id: Date.now() + Math.floor(Math.random() * 1000), text, done: false }
@@ -123,16 +104,16 @@ export default function TodoCard() {
   const [dailyTasks, setDailyTasks] = useSyncedStorage('todos-daily', {})
   const [weekTasks, setWeekTasks] = useSyncedStorage('todos-thisweek', [])
   const [longTasks, setLongTasks] = useSyncedStorage('todos-longterm', [])
-  const [weekStart, setWeekStart] = useState(() => mondayOf(new Date()))
+  const [weekStart, setWeekStart] = useState(() => getMonday())
   const [dragTarget, setDragTarget] = useState(null)
   const [folderName, setFolderName] = useState('')
   const [showFolderForm, setShowFolderForm] = useState(false)
   const dragging = useRef(null)
 
-  const todayKey = dateKey(new Date())
+  const todayKey = toLocalDateKey(new Date())
   const days = useMemo(() => Array.from({ length: 7 }, (_, index) => {
     const date = addDays(weekStart, index)
-    return { date, key: dateKey(date), name: DAY_NAMES[index] }
+    return { date, key: toLocalDateKey(date), name: DAY_NAMES[index] }
   }), [weekStart])
 
   const rangeLabel = `${weekStart.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} – ${addDays(weekStart, 6).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`
@@ -333,7 +314,7 @@ export default function TodoCard() {
     <div className={styles.weekControls}>
       <span className={styles.range}>{rangeLabel}</span>
       <button onClick={() => setWeekStart(previous => addDays(previous, -7))} aria-label="Previous week">‹</button>
-      <button className={styles.todayButton} onClick={() => setWeekStart(mondayOf(new Date()))}>Today</button>
+      <button className={styles.todayButton} onClick={() => setWeekStart(getMonday())}>Today</button>
       <button onClick={() => setWeekStart(previous => addDays(previous, 7))} aria-label="Next week">›</button>
     </div>
   )

@@ -1,4 +1,4 @@
-export default function TimeBlock({ block, categories, isSelected, onSelect, onResizeStart, onDragStart, pixelsPerMin, startHour }) {
+export default function TimeBlock({ block, categories, isSelected, onResizeStart, onDragStart, pixelsPerMin, startHour }) {
   const top    = (block.startMinutes - startHour * 60) * pixelsPerMin
   const height = Math.max((block.endMinutes - block.startMinutes) * pixelsPerMin, 20)
   const cat    = categories.find(c => c.id === block.category) ?? categories[0]
