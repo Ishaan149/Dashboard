@@ -1,10 +1,18 @@
 import { useMemo, useRef, useState } from 'react'
 import { useSyncedStorage } from '../hooks/useSyncedStorage'
 import { addDays, getMonday, toLocalDateKey } from '../utils/date'
+import {
+  getRecurringOccurrences,
+  makeOccurrenceId,
+  setOccurrenceCompleted,
+  skipOccurrence,
+  toIsoWeekday,
+} from '../domain/recurringTasks'
 import Card from './Card'
 import styles from './TodoCard.module.css'
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+const DAY_SHORT_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
 function createTask(text) {
   return { id: Date.now() + Math.floor(Math.random() * 1000), text, done: false }
@@ -47,6 +55,70 @@ function TaskRow({ task, nested = false, dragOver = false, onToggle, onDelete, o
       <span className={styles.taskText}>{task.text}</span>
       <button className={styles.delete} onClick={onDelete} aria-label={`Delete ${task.text}`}>×</button>
     </li>
+  )
+}
+
+function RecurringOccurrenceRow({ occurrence, onToggle, onSkip }) {
+  return (
+    <li className={`${styles.task} ${styles.recurringOccurrence} ${occurrence.done ? styles.done : ''}`}>
+      <span className={styles.recurringMark} aria-hidden="true">↻</span>
+      <button className={styles.checkbox} onClick={onToggle} aria-label={occurrence.done ? `Mark ${occurrence.text} incomplete` : `Mark ${occurrence.text} complete`}>
+        {occurrence.done && <Checkmark />}
+      </button>
+      <span className={styles.taskText}>{occurrence.text}</span>
+      <button className={styles.skip} onClick={onSkip} aria-label={`Skip ${occurrence.text}`}>Skip</button>
+    </li>
+  )
+}
+
+function SeriesForm({ initial, onSave, onCancel }) {
+  const [text, setText] = useState(initial.text)
+  const [weekdays, setWeekdays] = useState(initial.weekdays)
+  const trimmed = text.trim()
+  const valid = Boolean(trimmed && weekdays.length)
+
+  function submit(event) {
+    event.preventDefault()
+    if (valid) onSave(trimmed, [...weekdays].sort((a, b) => a - b))
+  }
+
+  return (
+    <form className={styles.seriesForm} onSubmit={submit}>
+      <input
+        value={text}
+        onChange={event => setText(event.target.value)}
+        placeholder="Task title…"
+        aria-label="Recurring task title"
+        aria-invalid={!trimmed}
+        maxLength={200}
+        autoFocus
+      />
+      <div className={styles.weekdayControls} aria-label="Repeat on weekdays">
+        {DAY_SHORT_NAMES.map((name, index) => {
+          const weekday = index + 1
+          const selected = weekdays.includes(weekday)
+          return (
+            <button
+              key={weekday}
+              type="button"
+              className={selected ? styles.weekdaySelected : ''}
+              aria-label={`${name}, ${selected ? 'selected' : 'not selected'}`}
+              aria-pressed={selected}
+              onClick={() => setWeekdays(previous => selected ? previous.filter(day => day !== weekday) : [...previous, weekday])}
+            >
+              {name.slice(0, 1)}
+            </button>
+          )
+        })}
+      </div>
+      <div className={styles.seriesFormActions}>
+        <span className={styles.validation} role="status">
+          {[!trimmed ? 'Enter a title.' : '', weekdays.length === 0 ? 'Select at least one weekday.' : ''].filter(Boolean).join(' ')}
+        </span>
+        <button type="button" className={styles.secondaryButton} onClick={onCancel}>Cancel</button>
+        <button type="submit" className={styles.saveButton} disabled={!valid}>Save</button>
+      </div>
+    </form>
   )
 }
 
@@ -104,10 +176,14 @@ export default function TodoCard() {
   const [dailyTasks, setDailyTasks] = useSyncedStorage('todos-daily', {})
   const [weekTasks, setWeekTasks] = useSyncedStorage('todos-thisweek', [])
   const [longTasks, setLongTasks] = useSyncedStorage('todos-longterm', [])
+  const [recurringSeries, setRecurringSeries] = useSyncedStorage('todos-recurring', [])
+  const [recurringState, setRecurringState] = useSyncedStorage('todos-recurring-state', {})
   const [weekStart, setWeekStart] = useState(() => getMonday())
   const [dragTarget, setDragTarget] = useState(null)
   const [folderName, setFolderName] = useState('')
   const [showFolderForm, setShowFolderForm] = useState(false)
+  const [showSeriesForm, setShowSeriesForm] = useState(false)
+  const [editingSeriesId, setEditingSeriesId] = useState(null)
   const dragging = useRef(null)
 
   const todayKey = toLocalDateKey(new Date())
@@ -226,6 +302,93 @@ export default function TodoCard() {
     )
   }
 
+  function toggleRecurringOccurrence(occurrence) {
+    setRecurringState(previous => setOccurrenceCompleted(previous, occurrence.seriesId, occurrence.dateKey, !occurrence.done))
+  }
+
+  function renderRecurringOccurrence(occurrence) {
+    return (
+      <RecurringOccurrenceRow
+        key={occurrence.id}
+        occurrence={occurrence}
+        onToggle={() => toggleRecurringOccurrence(occurrence)}
+        onSkip={() => setRecurringState(previous => skipOccurrence(previous, occurrence.seriesId, occurrence.dateKey))}
+      />
+    )
+  }
+
+  function createSeries(text, weekdays) {
+    setRecurringSeries(previous => [...(Array.isArray(previous) ? previous : []), {
+      id: crypto.randomUUID(),
+      text,
+      createdDate: todayKey,
+      archivedDate: null,
+      scheduleRevisions: [{ effectiveFrom: todayKey, weekdays }],
+    }])
+    setShowSeriesForm(false)
+  }
+
+  function updateSeries(series, text, weekdays) {
+    const currentOccurrence = getRecurringOccurrences([series], recurringState, todayKey)[0]
+    if (currentOccurrence?.done && !weekdays.includes(toIsoWeekday(todayKey))) {
+      const id = makeOccurrenceId(series.id, todayKey)
+      setRecurringState(previous => ({ ...previous, [id]: { status: 'done', preserveOccurrence: true } }))
+    }
+    setRecurringSeries(previous => (Array.isArray(previous) ? previous : []).map(item => item.id !== series.id ? item : {
+      ...item,
+      text,
+      scheduleRevisions: [
+        ...(Array.isArray(item.scheduleRevisions) ? item.scheduleRevisions : []).filter(revision => revision?.effectiveFrom !== todayKey),
+        { effectiveFrom: todayKey, weekdays },
+      ].sort((a, b) => a.effectiveFrom.localeCompare(b.effectiveFrom)),
+    }))
+    setEditingSeriesId(null)
+  }
+
+  function archiveSeries(series) {
+    const confirmed = window.confirm(`Archive “${series.text}”? Today’s occurrence will remain, but future occurrences will stop.`)
+    if (!confirmed) return
+    setRecurringSeries(previous => (Array.isArray(previous) ? previous : []).map(item => item.id === series.id ? { ...item, archivedDate: todayKey } : item))
+    setEditingSeriesId(null)
+  }
+
+  function startSeriesDrag(event, id) {
+    dragging.current = { kind: 'series', id }
+    event.dataTransfer.effectAllowed = 'move'
+    event.dataTransfer.setData('text/plain', id)
+  }
+
+  function dropOnSeries(event, targetId) {
+    event.preventDefault()
+    const source = dragging.current
+    if (source?.kind === 'series' && source.id !== targetId) {
+      setRecurringSeries(previous => {
+        const moved = previous.find(series => series.id === source.id)
+        if (!moved) return previous
+        const result = previous.filter(series => series.id !== source.id)
+        const targetIndex = result.findIndex(series => series.id === targetId)
+        result.splice(targetIndex < 0 ? result.length : targetIndex, 0, moved)
+        return result
+      })
+    }
+    endDrag()
+  }
+
+  function moveSeriesBy(id, direction) {
+    setRecurringSeries(previous => {
+      if (!Array.isArray(previous)) return []
+      const activeIndices = previous.flatMap((series, index) => series?.archivedDate == null ? [index] : [])
+      const activeIndex = activeIndices.findIndex(index => previous[index]?.id === id)
+      const targetActiveIndex = activeIndex + direction
+      if (activeIndex < 0 || targetActiveIndex < 0 || targetActiveIndex >= activeIndices.length) return previous
+      const index = activeIndices[activeIndex]
+      const target = activeIndices[targetActiveIndex]
+      const result = [...previous]
+      ;[result[index], result[target]] = [result[target], result[index]]
+      return result
+    })
+  }
+
   function addFolder() {
     const name = folderName.trim()
     if (!name) return
@@ -326,6 +489,7 @@ export default function TodoCard() {
           {days.map(day => {
             const location = { type: 'day', date: day.key }
             const tasks = dailyTasks[day.key] || []
+            const occurrences = getRecurringOccurrences(recurringSeries, recurringState, day.key)
             const isToday = day.key === todayKey
             return (
               <section className={`${styles.dayColumn} ${isToday ? styles.todayColumn : ''}`} key={day.key} aria-label={`${day.name}, ${day.date.toLocaleDateString()}`}>
@@ -335,6 +499,7 @@ export default function TodoCard() {
                   {isToday && <span className={styles.todayPill}>Today</span>}
                 </header>
                 <DropList className={styles.dayBody} location={location} dragging={dragging} onDropAtEnd={dropAtEnd}>
+                  <ul className={styles.list}>{occurrences.map(renderRecurringOccurrence)}</ul>
                   <ul className={styles.list}>{tasks.map(task => renderTask(task, location))}</ul>
                   <AddTask compact onAdd={text => addTask(location, text)} />
                 </DropList>
@@ -369,6 +534,71 @@ export default function TodoCard() {
           </DropList>
         </Card>
       </div>
+
+      <Card
+        title="Recurring Tasks"
+        action={!showSeriesForm && <button className={styles.newSeriesButton} onClick={() => { setEditingSeriesId(null); setShowSeriesForm(true) }}>+ New recurring task</button>}
+      >
+        <div className={styles.recurringManagement}>
+          {showSeriesForm && (
+            <SeriesForm
+              initial={{ text: '', weekdays: [toIsoWeekday(new Date())] }}
+              onSave={createSeries}
+              onCancel={() => setShowSeriesForm(false)}
+            />
+          )}
+          <ul className={styles.seriesList}>
+            {(Array.isArray(recurringSeries) ? recurringSeries : []).filter(series => series?.archivedDate == null).map(series => {
+              const latest = Array.isArray(series.scheduleRevisions) ? series.scheduleRevisions.reduce((selected, revision) => {
+                if (!revision?.effectiveFrom || revision.effectiveFrom > todayKey) return selected
+                return !selected || revision.effectiveFrom >= selected.effectiveFrom ? revision : selected
+              }, null) : null
+              const weekdays = Array.isArray(latest?.weekdays) ? latest.weekdays : []
+              if (editingSeriesId === series.id) {
+                return (
+                  <li className={styles.seriesEditRow} key={series.id}>
+                    <SeriesForm
+                      initial={{ text: series.text || '', weekdays }}
+                      onSave={(text, nextWeekdays) => updateSeries(series, text, nextWeekdays)}
+                      onCancel={() => setEditingSeriesId(null)}
+                    />
+                  </li>
+                )
+              }
+              return (
+                <li
+                  className={styles.seriesRow}
+                  key={series.id}
+                  draggable
+                  onDragStart={event => startSeriesDrag(event, series.id)}
+                  onDragEnd={endDrag}
+                  onDragOver={event => event.preventDefault()}
+                  onDrop={event => dropOnSeries(event, series.id)}
+                >
+                  <button
+                    className={styles.seriesDragHandle}
+                    aria-label={`Reorder ${series.text}; use arrow keys`}
+                    title="Drag or use arrow keys to reorder"
+                    onKeyDown={event => {
+                      if (event.key === 'ArrowUp') { event.preventDefault(); moveSeriesBy(series.id, -1) }
+                      if (event.key === 'ArrowDown') { event.preventDefault(); moveSeriesBy(series.id, 1) }
+                    }}
+                  >⠿</button>
+                  <span className={styles.seriesDetails}>
+                    <span className={styles.seriesTitle}>{series.text}</span>
+                    <span className={styles.seriesSchedule}>{weekdays.map(day => DAY_SHORT_NAMES[day - 1]).filter(Boolean).join(', ')}</span>
+                  </span>
+                  <button className={styles.seriesAction} onClick={() => { setShowSeriesForm(false); setEditingSeriesId(series.id) }}>Edit</button>
+                  <button className={`${styles.seriesAction} ${styles.archiveAction}`} onClick={() => archiveSeries(series)}>Archive</button>
+                </li>
+              )
+            })}
+          </ul>
+          {!showSeriesForm && !editingSeriesId && (Array.isArray(recurringSeries) ? recurringSeries : []).every(series => series?.archivedDate != null) && (
+            <p className={styles.emptySeries}>No recurring tasks yet.</p>
+          )}
+        </div>
+      </Card>
     </div>
   )
 }

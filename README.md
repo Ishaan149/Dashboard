@@ -7,7 +7,7 @@ Live at: [ishaan149.github.io/Dashboard](https://Ishaan149.github.io/Dashboard)
 ## Features
 
 - **Overview** — at-a-glance summary of tasks, habits, today's schedule, job application count, weather (Tempe, AZ), brain dump preview, and a daily quote
-- **To-Do** — a navigable seven-day board plus global This Week and folder-based Long Term lists
+- **To-Do** — a navigable seven-day board with recurring weekday tasks, per-date completion and skipping, plus global This Week and folder-based Long Term lists
 - **Brain Dump** — a pinned note and multiple freeform notes
 - **Habit Tracker** — define habits and log them daily with streak history
 - **Day Planner** — time-block calendar with configurable hours and categories (work, uni, gym, rest, meeting)
@@ -69,6 +69,14 @@ Persisted data syncs across devices via Firestore with `localStorage` as an inst
    ```bash
    npm run dev
    ```
+
+### Tests
+
+Recurring-task calendar behavior is covered by deterministic Vitest domain tests:
+
+```bash
+npm test
+```
 
 ## Deployment
 

@@ -4,6 +4,11 @@ import { getDailyQuote } from '../data/quotes'
 import { DEFAULT_CATEGORIES } from '../data/categories'
 import { getDateKey, getWeekStartKey } from '../utils/date'
 import { formatMinutes, getScheduleMinutes } from '../utils/time'
+import {
+  getRecurringOccurrences,
+  mergeDailyTasks,
+  setOccurrenceCompleted,
+} from '../domain/recurringTasks'
 import styles from './Overview.module.css'
 
 // ── icons ─────────────────────────────────────────────────────────────────────
@@ -66,7 +71,6 @@ const ICase   = (p) => (
 
 const HABIT_ICONS = [IDrop, IBook, ILotus, ISpark, IMoon, ICase]
 
-// ── helpers ───────────────────────────────────────────────────────────────────
 // ── sub-components ────────────────────────────────────────────────────────────
 function CardHead({ title, action, onAction }) {
   return (
@@ -175,7 +179,11 @@ function TasksCard({ tasks, onToggle, onNavigate }) {
               <div
                 key={t.id}
                 className={`${styles.task} ${t.done ? styles.taskDone : ''}`}
-                onClick={() => onToggle(t.id)}
+                onClick={() => onToggle(t)}
+                onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onToggle(t) } }}
+                role="button"
+                tabIndex={0}
+                aria-label={t.done ? `Mark ${t.text} incomplete` : `Mark ${t.text} complete`}
               >
                 <span className={styles.check}>
                   <ICheck width={12} height={12} />
@@ -349,6 +357,8 @@ function JobsCard({ today, week, spark, onAdjust, onNavigate }) {
 // ── main ──────────────────────────────────────────────────────────────────────
 export default function Overview({ onChange }) {
   const [dailyTasks, setDailyTasks] = useSyncedStorage('todos-daily', {})
+  const [recurringSeries]           = useSyncedStorage('todos-recurring', [])
+  const [recurringState, setRecurringState] = useSyncedStorage('todos-recurring-state', {})
   const [jobRecords, setJobRecords] = useSyncedStorage('job_applications', [])
   const [habits]                    = useSyncedStorage('habits', [])
   const [habitLogs, setHabitLogs]   = useSyncedStorage('habit_logs', {})
@@ -358,7 +368,10 @@ export default function Overview({ onChange }) {
   const [pinnedNote, setPinnedNote] = useSyncedStorage('brainDumpPinnedNote', { title: 'Pinned', content: '' })
 
   const today     = getDateKey(0)
-  const todayTodos = dailyTasks[today] || []
+  const todayTodos = mergeDailyTasks(
+    getRecurringOccurrences(recurringSeries, recurringState, today),
+    dailyTasks[today] || [],
+  )
   const weekStart = getWeekStartKey()
 
   const [weather, setWeather] = useState()
@@ -426,10 +439,14 @@ export default function Overview({ onChange }) {
     })
   }
 
-  function toggleTask(id) {
+  function toggleTask(task) {
+    if (task.recurring) {
+      setRecurringState(previous => setOccurrenceCompleted(previous, task.seriesId, task.dateKey, !task.done))
+      return
+    }
     setDailyTasks(prev => ({
       ...prev,
-      [today]: (prev[today] || []).map(t => t.id === id ? { ...t, done: !t.done } : t),
+      [today]: (prev[today] || []).map(t => t.id === task.id ? { ...t, done: !t.done } : t),
     }))
   }
 

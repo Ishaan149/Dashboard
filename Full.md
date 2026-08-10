@@ -132,7 +132,9 @@ Storage keys:
 
 - `todos-daily`: object keyed by local calendar date;
 - `todos-thisweek`: global task array;
-- `todos-longterm`: global array of tasks and folders.
+- `todos-longterm`: global array of tasks and folders;
+- `todos-recurring`: ordered recurring-series array;
+- `todos-recurring-state`: completion and skip state keyed by series/date occurrence ID.
 
 A task is:
 
@@ -155,6 +157,8 @@ Long Term folders have this shape:
 ```
 
 Native HTML drag and drop moves the original task object between visible days, This Week, the Long Term root, and Long Term folders. Dropping on a task inserts before it; dropping on list space appends. Folders can only be reordered within Long Term. Deleting a folder also deletes its contents.
+
+Recurring series store a title, creation/archive dates, and dated weekday-schedule revisions. Occurrences are derived by `src/domain/recurringTasks.js` rather than copied into `todos-daily`, so edits preserve historical schedules without generating future records. Each occurrence has a deterministic `<seriesId>:<YYYY-MM-DD>` identity and independent completion or skip state. Recurring occurrences appear above manual tasks in daily columns and today's occurrences are also merged into Overview. Series can be created, edited, reordered, or archived from the Recurring Tasks card.
 
 ### Brain Dump
 
@@ -217,6 +221,8 @@ Categories begin with `DEFAULT_CATEGORIES` but are editable. Removing a category
 | `todos-daily` | object of task arrays | To-Do, Overview |
 | `todos-thisweek` | task array | To-Do |
 | `todos-longterm` | task/folder array | To-Do |
+| `todos-recurring` | ordered series array | To-Do, Overview |
+| `todos-recurring-state` | occurrence-state object | To-Do, Overview |
 | `brainDumpNotes` | note array | Brain Dump |
 | `brainDumpActiveId` | string or null | Brain Dump |
 | `brainDumpPinnedNote` | note object | Brain Dump, Overview |
@@ -254,10 +260,11 @@ printf '%s' 'your-password' | shasum -a 256
 ```bash
 npm install
 npm run dev
+npm test
 npm run build
 npm run preview
 ```
 
 Vite uses `/Dashboard/` as its production base path. `npm run deploy` publishes `dist` with `gh-pages`. The GitHub Actions workflow installs with `npm ci`, injects repository secrets at build time, builds on Node 20, and publishes `main` to GitHub Pages.
 
-There is currently no automated component or browser test suite. The minimum verification before deployment is a clean production build plus manual checks of unlocking, navigation, persistence, drag/drop, Day Planner resize, and cross-device Firestore updates.
+The recurring-task domain behavior has deterministic Vitest coverage. There is currently no automated component or browser suite, so deployment verification also includes a clean production build and manual checks of unlocking, navigation, persistence, drag/drop, Day Planner resize, recurring-task management, and cross-device Firestore updates.
