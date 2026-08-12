@@ -1,0 +1,112 @@
+.shell {
+  width: 100%;
+  height: 100dvh;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.workspace {
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.main {
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-padding-block: var(--space-5);
+}
+
+.main:focus { outline: none; }
+
+.skipLink {
+  position: fixed;
+  top: var(--space-2);
+  left: var(--space-2);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: #0b1511;
+  font-size: 14px;
+  font-weight: 720;
+  text-decoration: none;
+  transform: translateY(calc(-100% - 16px));
+  z-index: calc(var(--z-toast) + 1);
+}
+
+.skipLink:focus { transform: translateY(0); }
+
+.quickNoteWidget {
+  position: fixed;
+  right: 24px;
+  bottom: max(24px, env(safe-area-inset-bottom));
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--accent) 72%, white);
+  border-radius: 50%;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--accent) 88%, white), var(--accent));
+  color: #0b1511;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.42), 0 0 0 5px color-mix(in srgb, var(--accent) 9%, transparent);
+  cursor: pointer;
+  z-index: calc(var(--z-nav) + 1);
+  transition: transform var(--motion-fast), box-shadow var(--motion-fast), filter var(--motion-fast);
+}
+
+.quickNoteWidget:hover {
+  transform: translateY(-2px) scale(1.04);
+  filter: brightness(1.06);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.48), 0 0 0 7px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.quickNoteWidget:active { transform: translateY(0) scale(0.97); }
+
+.quickNoteWidget::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  right: calc(100% + 10px);
+  padding: 7px 10px;
+  border: 1px solid var(--border-hi);
+  border-radius: var(--radius-sm);
+  background: #0e0f14;
+  box-shadow: var(--shadow-popover);
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(4px);
+  transition: opacity var(--motion-fast), transform var(--motion-fast);
+}
+
+.quickNoteWidget:hover::before,
+.quickNoteWidget:focus-visible::before { opacity: 1; transform: translateX(0); }
+
+@media (max-width: 767px) {
+  .main {
+    scroll-padding-bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom) + var(--space-4));
+  }
+
+  .quickNoteWidget {
+    right: 16px;
+    bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom) + 12px);
+    width: 50px;
+    height: 50px;
+  }
+}
+
+@media (forced-colors: active) {
+  .shell, .quickNoteWidget { border: 1px solid CanvasText; }
+}

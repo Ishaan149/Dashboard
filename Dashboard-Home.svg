@@ -1,0 +1,166 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <defs>
+    <style>
+      text { font-family: 'Hanken Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+      .ink { fill:#e9eae6 } .muted { fill:#8b8e85 } .sub { fill:#a6a8a0 }
+      .eyebrow { fill:#8b8e85; font-size:11px; font-weight:600; letter-spacing:1.25px }
+      .body { fill:#e9eae6; font-size:14px; font-weight:500 }
+      .small { fill:#8b8e85; font-size:11px; font-weight:500 }
+      .nav { fill:#a6a8a0; font-size:13px; font-weight:560 }
+      .stroke { stroke:#a6a8a0; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; fill:none }
+      .divider { stroke:rgba(255,255,255,.10); stroke-width:1 }
+    </style>
+    <filter id="cardShadow" x="-20%" y="-20%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#000" flood-opacity=".28"/>
+    </filter>
+  </defs>
+
+  <g id="Dashboard Home — Desktop">
+    <rect id="Page background" width="1280" height="720" fill="#131419"/>
+
+    <g id="Navigation rail">
+      <rect width="216" height="720" fill="#0a0b0f" fill-opacity=".92"/>
+      <line x1="215.5" y1="0" x2="215.5" y2="720" stroke="#ffffff" stroke-opacity=".10"/>
+      <g id="Brand">
+        <rect x="20" y="23" width="34" height="34" rx="12" fill="#82bfa0" fill-opacity=".12" stroke="#82bfa0" stroke-opacity=".38"/>
+        <text x="37" y="45" text-anchor="middle" fill="#82bfa0" font-size="15" font-weight="700">D</text>
+        <text x="67" y="46" class="ink" font-size="15" font-weight="700">Dashboard</text>
+      </g>
+
+      <g id="Nav items">
+        <g id="Today — active">
+          <rect x="12" y="88" width="191" height="44" rx="12" fill="#82bfa0" fill-opacity=".12" stroke="#82bfa0" stroke-opacity=".28"/>
+          <rect x="17" y="100" width="3" height="20" rx="2" fill="#82bfa0"/>
+          <g transform="translate(27 101)" stroke="#82bfa0" stroke-width="1.8" fill="none">
+            <rect width="7" height="7" rx="1"/><rect x="11" width="7" height="7" rx="1"/><rect y="11" width="7" height="7" rx="1"/><rect x="11" y="11" width="7" height="7" rx="1"/>
+          </g>
+          <text x="59" y="115" class="ink" font-size="13" font-weight="680">Today</text>
+        </g>
+        <g id="To-Do" transform="translate(0 48)">
+          <path d="M28 155h15v15H28zM31 162l3 3 8-9" class="stroke"/><text x="59" y="167" class="nav">To-Do</text>
+        </g>
+        <g id="Brain Dump" transform="translate(0 96)">
+          <path d="M36 151a7 7 0 0 0-7 7c0 2.4 1.2 4.5 3 5.8v2.2h8v-2.2a7 7 0 0 0-4-12.8zm-3 18h6" class="stroke"/><text x="59" y="167" class="nav">Brain Dump</text>
+        </g>
+        <g id="Job Applications" transform="translate(0 144)">
+          <rect x="27" y="153" width="17" height="14" rx="2" class="stroke"/><path d="M32 153v-2h7v2m-12 6h17" class="stroke"/><text x="59" y="167" class="nav">Job Applications</text>
+        </g>
+        <g id="Habits" transform="translate(0 192)">
+          <circle cx="36" cy="159" r="8.5" class="stroke"/><path d="M32 159l3 3 5-6" class="stroke"/><text x="59" y="167" class="nav">Habits</text>
+        </g>
+        <g id="Day Planner" transform="translate(0 240)">
+          <rect x="28" y="152" width="16" height="17" rx="2" class="stroke"/><path d="M32 150v4m8-4v4m-12 5h16m-11 4h.01m5 0h.01" class="stroke"/><text x="59" y="167" class="nav">Day Planner</text>
+        </g>
+      </g>
+
+      <g id="Lock" transform="translate(0 520)">
+        <rect x="28" y="155" width="16" height="13" rx="2" fill="none" stroke="#d76a65" stroke-width="1.8"/><path d="M31.5 155v-3a4.5 4.5 0 0 1 9 0v3" fill="none" stroke="#d76a65" stroke-width="1.8"/><text x="59" y="167" fill="#d76a65" font-size="13">Lock</text>
+      </g>
+    </g>
+
+    <g id="Header">
+      <rect x="216" width="1064" height="108" fill="#131419"/>
+      <line x1="216" y1="107.5" x2="1280" y2="107.5" stroke="#ffffff" stroke-opacity=".08"/>
+      <text x="248" y="54" class="ink" font-size="38" font-weight="700" letter-spacing="-1">Today</text>
+      <text x="248" y="82" class="muted" font-size="13">Tuesday, August 11, 2026</text>
+      <text x="1216" y="67" class="ink" font-size="26" font-weight="680" text-anchor="end" letter-spacing="-.6">1:09</text>
+      <text x="1247" y="67" class="muted" font-size="12" font-weight="600" text-anchor="end">PM</text>
+    </g>
+
+    <g id="Content grid" transform="translate(248 128)">
+      <!-- Column 1 -->
+      <g id="Daily quote card" filter="url(#cardShadow)">
+        <rect width="322" height="178" rx="20" fill="#ffffff" fill-opacity=".055" stroke="#ffffff" stroke-opacity=".10"/>
+        <circle cx="22" cy="27" r="3" fill="#82bfa0"/><text x="33" y="31" class="eyebrow">DAILY QUOTE</text>
+        <text x="19" y="58" fill="#82bfa0" fill-opacity=".5" font-family="Georgia" font-size="28">“</text>
+        <text x="18" y="99" class="ink" font-size="21" font-weight="680"><tspan x="18">Act as if what you do makes a</tspan><tspan x="18" dy="28">difference. It does.</tspan></text>
+        <text x="18" y="157" class="muted" font-size="13">— William James</text>
+      </g>
+
+      <g id="Weather card" transform="translate(0 192)" filter="url(#cardShadow)">
+        <rect width="322" height="126" rx="20" fill="#ffffff" fill-opacity=".055" stroke="#ffffff" stroke-opacity=".10"/>
+        <circle cx="22" cy="27" r="3" fill="#82bfa0"/><text x="33" y="31" class="eyebrow">WEATHER</text>
+        <g id="Sun" transform="translate(22 61)" stroke="#f4aa36" stroke-width="2" fill="none" stroke-linecap="round">
+          <circle cx="16" cy="16" r="7"/><path d="M16 0v5m0 22v5M0 16h5m22 0h5M4.7 4.7l3.5 3.5m15.6 15.6 3.5 3.5m0-22.6-3.5 3.5M8.2 23.8l-3.5 3.5"/>
+        </g>
+        <text x="74" y="94" class="ink" font-size="46" font-weight="680">41°</text>
+        <text x="155" y="66" class="ink" font-size="14">27° – 41°</text><text x="155" y="86" class="muted" font-size="12">Tempe, AZ</text><text x="155" y="103" class="muted" font-size="12">36% rain</text>
+      </g>
+
+      <g id="Pinned brain dump card" transform="translate(0 332)" filter="url(#cardShadow)">
+        <rect width="322" height="240" rx="20" fill="#ffffff" fill-opacity=".055" stroke="#ffffff" stroke-opacity=".10"/>
+        <circle cx="22" cy="27" r="3" fill="#82bfa0"/><text x="33" y="31" class="eyebrow">PINNED</text>
+        <text x="258" y="31" class="small">Open →</text>
+        <text x="18" y="66" class="body">Dashboard:</text>
+        <text x="18" y="112" class="body"><tspan x="18">brain dump</tspan><tspan x="18" dy="23">command palette</tspan><tspan x="18" dy="23">quick note</tspan><tspan x="18" dy="23">improve mobile ui</tspan></text>
+        <rect x="297" y="48" width="6" height="130" rx="3" fill="#ffffff" fill-opacity=".07"/><rect x="297" y="48" width="6" height="82" rx="3" fill="#ffffff" fill-opacity=".16"/>
+        <line x1="18" y1="198" x2="304" y2="198" class="divider"/>
+        <circle cx="21" cy="216" r="3" fill="#82bfa0"/><text x="30" y="220" class="small">Saved</text><text x="304" y="220" class="small" text-anchor="end">117 chars</text>
+      </g>
+
+      <!-- Column 2 -->
+      <g id="Job applications card" transform="translate(336 0)" filter="url(#cardShadow)">
+        <rect width="322" height="223" rx="20" fill="#ffffff" fill-opacity=".055" stroke="#ffffff" stroke-opacity=".10"/>
+        <circle cx="22" cy="27" r="3" fill="#82bfa0"/><text x="33" y="31" class="eyebrow">JOB APPLICATIONS</text><text x="249" y="31" class="small">Tracker →</text>
+        <text x="18" y="74" class="ink" font-size="34" font-weight="680">0</text><text x="18" y="98" class="small">sent today</text>
+        <line x1="160" y1="48" x2="160" y2="101" class="divider"/>
+        <text x="170" y="74" class="ink" font-size="34" font-weight="680">7</text><text x="170" y="98" class="small">this week</text>
+        <g id="Spark chart" transform="translate(18 120)">
+          <rect x="0" y="25" width="38" height="3" rx="2" fill="#82bfa0" fill-opacity=".18"/><rect x="42" y="25" width="38" height="3" rx="2" fill="#82bfa0" fill-opacity=".18"/><rect x="84" y="0" width="38" height="28" rx="3" fill="#82bfa0"/><rect x="126" y="25" width="38" height="3" rx="2" fill="#82bfa0" fill-opacity=".18"/><rect x="168" y="25" width="38" height="3" rx="2" fill="#82bfa0" fill-opacity=".18"/><rect x="210" y="7" width="38" height="21" rx="3" fill="#82bfa0" fill-opacity=".22"/><rect x="252" y="25" width="36" height="3" rx="2" fill="#82bfa0" fill-opacity=".18"/>
+        </g>
+        <line x1="18" y1="161" x2="304" y2="161" class="divider"/>
+        <rect x="18" y="175" width="30" height="30" rx="9" fill="#ffffff" fill-opacity=".03" stroke="#ffffff" stroke-opacity=".08"/><text x="33" y="197" class="muted" font-size="18" text-anchor="middle">−</text>
+        <text x="58" y="196" class="sub" font-size="13">Log an application</text>
+        <rect x="274" y="175" width="30" height="30" rx="9" fill="#ffffff" fill-opacity=".055" stroke="#ffffff" stroke-opacity=".20"/><text x="289" y="197" class="ink" font-size="18" text-anchor="middle">+</text>
+      </g>
+
+      <g id="Pending tasks card" transform="translate(336 237)" filter="url(#cardShadow)">
+        <rect width="322" height="267" rx="20" fill="#ffffff" fill-opacity=".055" stroke="#ffffff" stroke-opacity=".10"/>
+        <circle cx="22" cy="27" r="3" fill="#82bfa0"/><text x="33" y="31" class="eyebrow">PENDING TASKS</text><text x="244" y="31" class="small">All tasks →</text>
+        <g id="Task rows" transform="translate(26 62)">
+          <g><rect x="0" y="-12" width="18" height="18" rx="6" fill="none" stroke="#ffffff" stroke-opacity=".22" stroke-width="1.8"/><text x="28" y="2" class="body">10 Job application</text></g>
+          <g transform="translate(0 35)"><rect x="0" y="-12" width="18" height="18" rx="6" fill="none" stroke="#ffffff" stroke-opacity=".22" stroke-width="1.8"/><text x="28" y="2" class="body">Update data resume</text></g>
+          <g transform="translate(0 70)"><rect x="0" y="-12" width="18" height="18" rx="6" fill="none" stroke="#ffffff" stroke-opacity=".22" stroke-width="1.8"/><text x="28" y="2" class="body">Update Portfolio</text></g>
+          <g transform="translate(0 105)"><rect x="0" y="-12" width="18" height="18" rx="6" fill="none" stroke="#ffffff" stroke-opacity=".22" stroke-width="1.8"/><text x="28" y="2" class="body">Check refund</text></g>
+          <g transform="translate(0 140)"><rect x="0" y="-12" width="18" height="18" rx="6" fill="none" stroke="#ffffff" stroke-opacity=".22" stroke-width="1.8"/><text x="28" y="2" class="body">Masters check</text></g>
+        </g>
+        <line x1="18" y1="225" x2="304" y2="225" stroke="#ffffff" stroke-opacity=".10" stroke-dasharray="2 3"/>
+        <text x="26" y="248" class="small">All shown</text><text x="294" y="248" class="small" text-anchor="end">5 left today</text>
+      </g>
+
+      <!-- Column 3 -->
+      <g id="Today's habits card" transform="translate(672 0)" filter="url(#cardShadow)">
+        <rect width="322" height="158" rx="20" fill="#ffffff" fill-opacity=".055" stroke="#ffffff" stroke-opacity=".10"/>
+        <circle cx="22" cy="27" r="3" fill="#82bfa0"/><text x="33" y="31" class="eyebrow">TODAY'S HABITS</text><text x="240" y="31" class="small">All habits →</text>
+        <g id="Habit tiles" transform="translate(18 47)">
+          <g><rect width="65" height="65" rx="11" fill="#ffffff" fill-opacity=".035" stroke="#ffffff" stroke-opacity=".10"/><path d="M33 16c0 0-5 5-5 9a5 5 0 0 0 10 0c0-4-5-9-5-9z" class="stroke" stroke="#6f7269"/><text x="33" y="50" class="small" font-size="9" text-anchor="middle">Creatine</text></g>
+          <g transform="translate(73 0)"><rect width="65" height="65" rx="11" fill="#ffffff" fill-opacity=".035" stroke="#ffffff" stroke-opacity=".10"/><path d="M22 18h10v18H22zm11 0h10v18H33" class="stroke" stroke="#6f7269"/><text x="33" y="50" class="small" font-size="9" text-anchor="middle">Multi-Vita...</text></g>
+          <g transform="translate(146 0)"><rect width="65" height="65" rx="11" fill="#ffffff" fill-opacity=".035" stroke="#ffffff" stroke-opacity=".10"/><path d="M33 17c2 3 3 6 3 9m-3-9c-2 3-3 6-3 9m-6-3c4 0 7 2 9 6 2-4 5-6 9-6-2 6-5 9-9 9s-7-3-9-9z" class="stroke" stroke="#6f7269"/><text x="33" y="50" class="small" font-size="9" text-anchor="middle">Morning ...</text></g>
+          <g transform="translate(219 0)"><rect width="65" height="65" rx="11" fill="#ffffff" fill-opacity=".035" stroke="#ffffff" stroke-opacity=".10"/><path d="M35 16l-3 9h5l-8 12 3-9h-5z" class="stroke" stroke="#6f7269"/><text x="33" y="50" class="small" font-size="9" text-anchor="middle">Night wash</text></g>
+        </g>
+        <rect x="18" y="131" width="221" height="5" rx="3" fill="#ffffff" fill-opacity=".06" stroke="#ffffff" stroke-opacity=".10"/><text x="299" y="137" class="ink" font-size="13" text-anchor="end">0<tspan class="muted">/4 done</tspan></text>
+      </g>
+
+      <g id="Today's schedule card" transform="translate(672 172)" filter="url(#cardShadow)">
+        <rect width="322" height="288" rx="20" fill="#ffffff" fill-opacity=".055" stroke="#ffffff" stroke-opacity=".10"/>
+        <circle cx="22" cy="27" r="3" fill="#82bfa0"/><text x="33" y="31" class="eyebrow">TODAY'S SCHEDULE</text><text x="240" y="31" class="small">Calendar →</text>
+        <g id="Schedule rows" transform="translate(18 57)">
+          <g opacity=".4"><text x="0" y="10" class="small">12 PM</text><text x="0" y="26" class="small">1 PM</text><rect x="69" width="3" height="34" rx="2" fill="#82bfa0"/><text x="81" y="20" class="body">Wake Up</text></g>
+          <line x1="0" y1="40" x2="286" y2="40" class="divider"/>
+          <g transform="translate(0 50)"><text x="0" y="10" class="sub" font-size="11" font-weight="600">2 PM</text><text x="0" y="26" class="small">4 PM</text><rect x="69" width="3" height="34" rx="2" fill="#ff5e66"/><text x="81" y="20" class="body">Work 1</text></g>
+          <line x1="0" y1="90" x2="286" y2="90" class="divider"/>
+          <g transform="translate(0 100)"><text x="0" y="10" class="sub" font-size="11" font-weight="600">5:15 PM</text><text x="0" y="26" class="small">7 PM</text><rect x="69" width="3" height="34" rx="2" fill="#ff5e66"/><text x="81" y="20" class="body">Work 2</text></g>
+          <line x1="0" y1="140" x2="286" y2="140" class="divider"/>
+          <g transform="translate(0 150)"><text x="0" y="10" class="sub" font-size="11" font-weight="600">8 PM</text><text x="0" y="26" class="small">9 PM</text><rect x="69" width="3" height="34" rx="2" fill="#ff5e66"/><text x="81" y="20" class="body">Work 3</text></g>
+          <text x="0" y="212" class="small">+1 more blocks</text>
+        </g>
+      </g>
+    </g>
+
+    <g id="Quick Note floating button">
+      <circle cx="1229" cy="669" r="29" fill="#82bfa0" fill-opacity=".10"/>
+      <circle cx="1229" cy="669" r="26" fill="#82bfa0" stroke="#d9f0e3" stroke-opacity=".55"/>
+      <path d="M1223 660h10l4 4v14h-14zm10 0v5h4m-10 7h6m-3-3v6" fill="none" stroke="#0b1511" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+</svg>

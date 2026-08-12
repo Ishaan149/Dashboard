@@ -9,6 +9,7 @@ import {
   mergeDailyTasks,
   setOccurrenceCompleted,
 } from '../domain/recurringTasks'
+import { updatePinnedNote } from '../domain/brainDump'
 import styles from './Overview.module.css'
 
 // ── icons ─────────────────────────────────────────────────────────────────────
@@ -461,7 +462,8 @@ export default function Overview({ onChange }) {
   }
 
   function updateBrainDump(val) {
-    setPinnedNote(prev => ({ ...prev, content: val }))
+    const now = Date.now()
+    setPinnedNote(previous => updatePinnedNote(previous, { content: val }, now))
   }
 
   const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 1024)

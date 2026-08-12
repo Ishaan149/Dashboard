@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef } from 'react'
+import { useCallback, useState, useEffect, useRef } from 'react'
 import { doc, onSnapshot, setDoc } from 'firebase/firestore'
 import { db } from '../firebase'
 
 export function useSyncedStorage(key, initialValue) {
+  const instanceId = useRef(Symbol(key))
   // Seed from localStorage synchronously — instant render, no flicker
   const [value, setValueState] = useState(() => {
     try {
@@ -27,6 +28,34 @@ export function useSyncedStorage(key, initialValue) {
 
   // Keep valueRef in sync so the snapshot handler always compares against current value
   useEffect(() => { valueRef.current = value }, [value])
+
+  // The browser's native storage event does not fire in the tab that made the
+  // write. Broadcast local changes so two mounted consumers of the same key
+  // (for example the command palette and Brain Dump) cannot drift apart.
+  const setValue = useCallback((nextValue) => {
+    const resolved = typeof nextValue === 'function' ? nextValue(valueRef.current) : nextValue
+    valueRef.current = resolved
+    try {
+      localStorage.setItem(key, JSON.stringify(resolved))
+    } catch {}
+    setValueState(resolved)
+    window.dispatchEvent(new CustomEvent('dashboard:storage-change', {
+      detail: { key, value: resolved, source: instanceId.current },
+    }))
+  }, [key])
+
+  useEffect(() => {
+    function handleLocalChange(event) {
+      if (event.detail?.key !== key || event.detail.source === instanceId.current) return
+      const nextValue = event.detail.value
+      if (JSON.stringify(nextValue) === JSON.stringify(valueRef.current)) return
+      valueRef.current = nextValue
+      setValueState(nextValue)
+    }
+
+    window.addEventListener('dashboard:storage-change', handleLocalChange)
+    return () => window.removeEventListener('dashboard:storage-change', handleLocalChange)
+  }, [key])
 
   // Mirror every state change to localStorage
   useEffect(() => {
@@ -93,5 +122,5 @@ export function useSyncedStorage(key, initialValue) {
     return unsub
   }, [key])
 
-  return [value, setValueState]
+  return [value, setValue]
 }

@@ -1,6 +1,8 @@
-import { lazy, Suspense, useState } from 'react'
-import TopBar from './components/TopBar'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
+import AppShell from './components/AppShell'
 import PasswordGate from './components/PasswordGate'
+import { getViewLabel } from './components/navigation'
+import { LoadingState, ToastProvider } from './components/ui'
 import styles from './App.module.css'
 
 const VIEWS = {
@@ -14,11 +16,20 @@ const VIEWS = {
 
 const FULL_WIDTH_VIEWS = new Set(['dayplanner', 'overview', 'todo', 'braindump'])
 
+function ViewReady({ onReady, children }) {
+  useEffect(() => {
+    onReady()
+  }, [onReady])
+
+  return children
+}
+
 export default function App() {
   const [view, setView] = useState('overview')
   const [unlocked, setUnlocked] = useState(
     () => localStorage.getItem('dashboard-unlocked') === 'true'
   )
+  const shouldFocusAfterViewChange = useRef(false)
 
   function handleUnlock() {
     localStorage.setItem('dashboard-unlocked', 'true')
@@ -30,6 +41,26 @@ export default function App() {
     setUnlocked(false)
   }
 
+  const focusMain = useCallback(() => {
+    requestAnimationFrame(() => document.getElementById('main-content')?.focus())
+  }, [])
+
+  const handleViewReady = useCallback(() => {
+    if (!shouldFocusAfterViewChange.current) return
+    shouldFocusAfterViewChange.current = false
+    focusMain()
+  }, [focusMain])
+
+  function handleNavigate(nextView) {
+    if (!VIEWS[nextView]) return
+    if (nextView === view) {
+      focusMain()
+    } else {
+      shouldFocusAfterViewChange.current = true
+    }
+    setView(nextView)
+  }
+
   if (!unlocked) return <PasswordGate onUnlock={handleUnlock} />
 
   const ActiveView = VIEWS[view]
@@ -39,17 +70,18 @@ export default function App() {
     : styles.view
 
   return (
-    <div className={styles.layout}>
-      <div className={styles.main}>
-        <TopBar view={view} onChange={setView} onLock={handleLock} />
+    <ToastProvider>
+      <AppShell activeView={view} onNavigate={handleNavigate} onLock={handleLock}>
         <div className={styles.content}>
           <div className={viewClassName} key={view}>
-            <Suspense fallback={<p className={styles.loading} role="status">Loading view…</p>}>
-              <ActiveView onChange={setView} />
+            <Suspense fallback={<LoadingState label={getViewLabel(view)} />}>
+              <ViewReady onReady={handleViewReady}>
+                <ActiveView onChange={handleNavigate} />
+              </ViewReady>
             </Suspense>
           </div>
         </div>
-      </div>
-    </div>
+      </AppShell>
+    </ToastProvider>
   )
 }

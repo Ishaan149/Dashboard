@@ -1,0 +1,58 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  padding: var(--space-4);
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.68);
+  z-index: var(--z-modal);
+  animation: backdropIn var(--motion-normal) ease-out;
+}
+
+.dialog, .sheet {
+  width: min(100%, 480px);
+  max-height: min(82dvh, 680px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--border-hi);
+  border-radius: var(--radius-lg);
+  background: #15171d;
+  box-shadow: var(--shadow-modal);
+  color: var(--ink);
+  animation: modalIn var(--motion-normal) ease-out;
+}
+
+.header {
+  padding: var(--space-5) var(--space-5) var(--space-3);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.title { font-size: 20px; line-height: 1.2; letter-spacing: -0.015em; }
+.description { margin-top: var(--space-2); color: var(--ink-2); font-size: 14px; line-height: 1.45; }
+.body, .sheetBody { padding: 0 var(--space-5) var(--space-5); overflow: auto; overscroll-behavior: contain; }
+.footer { padding: var(--space-4) var(--space-5); display: flex; justify-content: flex-end; gap: var(--space-2); border-top: 1px solid var(--border); }
+.handle { display: none; }
+
+@keyframes backdropIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modalIn { from { opacity: 0; transform: translateY(8px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+@media (max-width: 767px) {
+  .backdrop { padding: 0; place-items: end center; }
+  .dialog { margin: var(--space-4); width: calc(100% - (2 * var(--space-4))); }
+  .sheet { width: 100%; max-width: none; max-height: min(88dvh, 760px); border-radius: var(--radius-lg) var(--radius-lg) 0 0; padding-bottom: env(safe-area-inset-bottom); animation-name: sheetIn; }
+  .handle { width: 40px; height: 4px; margin: 8px auto 0; display: block; border-radius: 999px; background: var(--border-hi); }
+  .header { padding: var(--space-4) var(--space-4) var(--space-3); }
+  .body, .sheetBody { padding: 0 var(--space-4) var(--space-4); }
+  .footer { padding: var(--space-3) var(--space-4); }
+}
+
+@keyframes sheetIn { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+
+@media (forced-colors: active) {
+  .backdrop { background: Canvas; }
+  .dialog, .sheet, .footer { border-color: CanvasText; }
+}

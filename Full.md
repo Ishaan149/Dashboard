@@ -4,7 +4,7 @@
 
 Dashboard is a client-only React single-page application for personal planning. It has six views:
 
-- Overview
+- Today (internal view ID: `overview`)
 - To-Do
 - Brain Dump
 - Job Applications
@@ -20,7 +20,17 @@ There is no application server. Persisted values are cached in browser `localSto
 - whether the password gate is unlocked;
 - which view is active.
 
-Navigation is state-based rather than URL-based; there is no router. `TopBar` changes the active view and clears the unlock flag when Lock is selected. Each authenticated view is loaded with `React.lazy`, so the password screen does not initialize Firebase and the browser only downloads feature code when it is needed.
+Navigation is state-based rather than URL-based; there is no router. `AppShell` composes the responsive primary navigation, page header, and scrollable main landmark. Navigation keeps the existing IDs and callbacks; the `overview` destination is presented to users as **Today**. Each authenticated view is loaded with `React.lazy`, so the password screen does not initialize Firebase and the browser only downloads feature code when it is needed.
+
+The authenticated shell also lazy-loads a Universal Command Palette. Its floating bottom-right Quick Note widget and global `Cmd+K`/`Ctrl+K` shortcut open navigation commands plus an explicit Quick Note capture form. On mobile, the widget sits above the fixed bottom navigation. Quick Notes are saved as regular Brain Dump records with `quickNote: true`; the palette has no independent persistence key and is never mounted on the password gate.
+
+The authenticated shell has three CSS-driven modes:
+
+- at 1200px and wider, a persistent 216px labelled navigation rail includes all six destinations and Lock;
+- from 768px through 1199px, the rail remains persistent at 64px and exposes labels through accessible names and focus/hover tooltips;
+- below 768px, the rail is replaced by a safe-area-aware fixed 72px bottom navigation with all six destinations. Lock is available from the page-header overflow menu.
+
+The page header displays the active page name, current local date, and clock. Its date control navigates to Today. The shell provides a skip link and a focusable `main#main-content`; after a lazy view has mounted, navigation moves focus to that landmark. Mobile overflow supports Escape, outside click, and focus return. Only the main landmark scrolls, while the rail and header remain in place.
 
 The active view is rendered in one of three layout variants:
 
@@ -33,18 +43,25 @@ The active view is rendered in one of three layout variants:
 | Path | Responsibility |
 |---|---|
 | `src/App.jsx` | Password-gate state, view selection, lazy view loading, and page layout |
+| `src/components/AppShell.jsx` | Authenticated shell landmarks, skip link, header/navigation composition, and main scroll region |
+| `src/components/PrimaryNav.jsx` | Expanded desktop rail, compact tablet rail, mobile bottom navigation, active state, and Lock rail action |
+| `src/components/PageHeader.jsx` | Active page heading, local date/clock, Today shortcut, and mobile Lock overflow menu |
+| `src/components/CommandPalette.jsx` | Authenticated global shortcut, page navigation commands, and Quick Note capture form |
+| `src/components/navigation.jsx` | Stable navigation IDs, user-facing labels, order, and shared navigation icons |
 | `src/firebase.js` | Firebase application initialization and Firestore export |
 | `src/hooks/useSyncedStorage.js` | Shared `localStorage`/Firestore persistence hook |
 | `src/utils/date.js` | Local calendar keys, week/month boundaries, date parsing, and date arithmetic |
 | `src/utils/time.js` | Schedule-aware current time and 12-hour time formatting |
 | `src/data/categories.js` | Default Day Planner categories and category color presets |
 | `src/data/quotes.js` | Static quote catalog and deterministic daily selection |
-| `src/components/TopBar.jsx` | Date, clock, navigation menu, and Lock action |
 | `src/components/PasswordGate.jsx` | Client-side password convenience gate |
 | `src/components/Card.jsx` | Shared card shell for feature pages |
 | `src/components/Overview.jsx` | Cross-feature summary dashboard |
 | `src/components/TodoCard.jsx` | Weekly task board and global task lists |
-| `src/components/BrainDump.jsx` | Pinned and regular notes editor |
+| `src/components/BrainDump.jsx` | Connected note browser, responsive editor, confirmations, and local save-status UI |
+| `src/domain/brainDump.js` | Pure note normalization, creation, write-forward updates, clear/delete guards, ID, and timestamp rules |
+| `src/domain/brainDumpSearch.js` | Pure local note search, ranking, bounded previews, Favorites composition, and Palette provider contract |
+| `src/domain/brainDumpMarkdown.js` | Restricted Marked rendering and DOMPurify sanitization policy |
 | `src/components/HabitTracker.jsx` | Habit definitions, logs, history, and streaks |
 | `src/components/JobTracker.jsx` | Per-date job-application counts and notes |
 | `src/components/DayPlanner.jsx` | Timeline, schedule settings, drag, resize, and category state |
@@ -52,6 +69,19 @@ The active view is rendered in one of three layout variants:
 | `src/components/BlockEditPanel.jsx` | Block and category editor |
 
 Each component stylesheet is a colocated CSS Module. Global tokens, reset rules, body layout, scrollbar styling, and selection color live in `src/index.css`.
+
+## Shell tokens and shared UI
+
+`src/index.css` defines the shell dimensions, spacing scale, content gutters, 44px control target, radii, focus ring, motion durations, shadows, and navigation/popover/modal/toast z-index layers. The responsive boundaries are 1200px, 768px, and 480px. Global rules preserve visible keyboard focus, reduce animation under `prefers-reduced-motion`, and retain native legibility under forced-colors mode. No layout preference is persisted.
+
+Reusable presentation primitives live in `src/components/ui/`:
+
+- `Button` provides primary, secondary, ghost, danger, and icon variants; `IconButton` requires an accessible label.
+- `Dialog` and `BottomSheet` render modal surfaces with labelled semantics, background-scroll locking, Tab focus trapping, Escape handling where allowed, and focus return. Destructive dialogs disable Escape/backdrop dismissal and initially focus the dialog surface unless a safe focus target is supplied.
+- `ToastProvider`, `ToastRegion`, and `useToast` provide one polite live notification region. Success/information messages dismiss after about four seconds by default; errors persist until dismissed.
+- `LoadingState` supplies the named lazy-view loading status used by `App`; `EmptyState` supplies contextual empty copy with an optional action.
+
+These components are presentational and store only ephemeral component state. They do not add localStorage keys, Firestore documents, or persistence mutations.
 
 ## Persistence and synchronization
 
@@ -72,6 +102,7 @@ const [value, setValue] = useSyncedStorage('storage-key', initialValue)
 ### Updates
 
 - Every state change is serialized to `localStorage` immediately.
+- Same-tab consumers of one storage key receive a local custom event, keeping concurrently mounted features such as the palette and Brain Dump synchronized without waiting for Firestore.
 - Firestore writes are delayed by 1 second; another change during that interval cancels the older pending write.
 - The last serialized remote payload is retained in a ref. A state change matching that payload is not echoed back to Firestore.
 - Current state is also retained in a ref, allowing the snapshot subscription to remain stable instead of resubscribing on each keystroke.
@@ -87,6 +118,8 @@ Firestore errors are logged for failed writes. A subscription error unblocks lat
 ### Conflict behavior
 
 This is last-event synchronization, not a transactional merge system. A remote snapshot replaces the whole value stored under that key. Concurrent edits to different fields within the same key can therefore overwrite one another. Data should remain JSON-compatible.
+
+Connected Brain Dump does not eagerly migrate synchronized values. Its selectors treat missing enhanced note fields as runtime defaults without writing. When a user explicitly changes one note, the pure domain updater writes forward only that record, preserves its unknown fields and every sibling record, and supplies missing version-one metadata from that action's single `Date.now()` value. This avoids a mount-time normalization write while the sync hook is waiting for its first Firestore snapshot.
 
 ## Security model
 
@@ -113,9 +146,9 @@ The utility module also centralizes:
 
 ## Features and data shapes
 
-### Overview
+### Today / Overview
 
-Overview reads the same keys as the full feature pages and exposes a few write actions:
+Today (the `overview` view) reads the same keys as the full feature pages and exposes a few write actions:
 
 - toggle today's dated tasks;
 - toggle today's habits;
@@ -168,7 +201,34 @@ Storage keys:
 - `brainDumpActiveId`: selected note ID or `__pinned__`;
 - `brainDumpPinnedNote`: permanent pinned note.
 
-Regular notes are shaped as `{ id: string, title: string, content: string }`. The pinned note is `{ title: string, content: string }` and cannot be deleted. At least one regular note remains. The visible save status is a short local UI timer; Firestore persistence is independently debounced by the sync hook. Timer handles are cleared when the editor unmounts.
+Legacy regular notes remain readable as `{ id: string, title: string, content: string }`. Version-one records add:
+
+```js
+{
+  id: 'crypto-random-uuid',
+  title: 'Project notes',
+  content: '# Markdown source',
+  contentFormat: 'markdown',
+  favorite: false,
+  quickNote: false,
+  createdAt: 1786272000000,
+  updatedAt: 1786272300000
+}
+```
+
+The pinned record keeps `title` and `content` for Overview compatibility and may add `contentFormat`, `createdAt`, and `updatedAt`; it never stores a regular-note ID or favorite flag. The shared `updatePinnedNote` action is used by both Brain Dump and Overview so unknown/enhanced fields survive either editor.
+
+Brain Dump renders cached values immediately and performs no read-time storage normalization. Defensive selectors skip malformed records and later duplicate IDs without deleting or rewriting the source array. Missing favorite/timestamp fields become `false`/`0` only in runtime selectors. New notes use `crypto.randomUUID()`, receive Markdown metadata and action timestamps, and are prepended. Stored array order remains authoritative; selecting or editing never reorders notes.
+
+The browser searches normalized title and Markdown source locally with deterministic exact-title, title-prefix, title-token, then body tiers. Result excerpts are whitespace-collapsed and capped at 160 characters. Search, Favorites, and Quick Notes filters are ephemeral and compose with AND. Pinned is shown above regular results, is always treated as a favorite, and is never treated as a Quick Note. `brainDumpSearchProvider` exposes bounded, write-free note results and `{ view: 'braindump', target: { kind: 'note', id } }` navigation targets for future palette search expansion.
+
+Quick Note capture is available from the authenticated command palette. It accepts required Markdown content up to 10,000 characters and an optional title up to 200 characters. A blank title is derived from the first nonempty content line and capped at 80 characters. Captures are prepended to `brainDumpNotes`, set as the active Brain Dump note, retain `favorite: false`, and add `quickNote: true`. Saving confirms through the shared toast region without forcing a page change.
+
+The editor stores Markdown source in the existing `content` string. Preview uses Marked with GFM disabled and DOMPurify with a narrow tag/attribute allow-list. Raw HTML and image syntax render as inert source text; only `http`, `https`, and `mailto` links become anchors. Edit/Preview mode, character counts, browser-sheet state, queries, and save indicators are never synchronized.
+
+Clear content and eligible regular-note deletion use accessible confirmations. Clear preserves all non-content fields; deletion removes only the selected record, cannot target pinned, and retains final-regular-note protection. Below 768 px, the editor remains primary and the shared accessible bottom sheet contains New note, Search, Favorites, and the note list. Selecting a sheet result closes it and focuses the note title. The layout is usable without horizontal page scrolling at 320 px.
+
+The visible Saving/Saved/Auto-saves state is a short local UI timer and does not claim cloud acknowledgement. Firestore persistence remains independently debounced by the sync hook, and whole-array concurrent edits retain the documented last-write-wins limitation.
 
 ### Habit Tracker
 
@@ -267,4 +327,4 @@ npm run preview
 
 Vite uses `/Dashboard/` as its production base path. `npm run deploy` publishes `dist` with `gh-pages`. The GitHub Actions workflow installs with `npm ci`, injects repository secrets at build time, builds on Node 20, and publishes `main` to GitHub Pages.
 
-The recurring-task domain behavior has deterministic Vitest coverage. There is currently no automated component or browser suite, so deployment verification also includes a clean production build and manual checks of unlocking, navigation, persistence, drag/drop, Day Planner resize, recurring-task management, and cross-device Firestore updates.
+Recurring-task and Connected Brain Dump domain behavior have deterministic Vitest coverage. Brain Dump tests cover legacy normalization without mutation, array order, UUID boundaries, action timestamps, metadata/unknown-field preservation, safe clear/delete behavior, Markdown sanitization, search/ranking/previews, Favorites, malformed/duplicate records, and the future Palette provider. Navigation configuration tests protect destination order, stable IDs, and the `overview` → Today display label. There is no automated end-to-end browser suite, so deployment verification also includes a clean production build and manual checks of unlocking, navigation, responsive shell breakpoints, note-browser focus handoff, offline/local persistence, pinned edits through both surfaces, confirmations, drag/drop, Day Planner resize, recurring-task management, and cross-device Firestore last-write-wins behavior.

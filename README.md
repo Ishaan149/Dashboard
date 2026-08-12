@@ -8,7 +8,8 @@ Live at: [ishaan149.github.io/Dashboard](https://Ishaan149.github.io/Dashboard)
 
 - **Overview** — at-a-glance summary of tasks, habits, today's schedule, job application count, weather (Tempe, AZ), brain dump preview, and a daily quote
 - **To-Do** — a navigable seven-day board with recurring weekday tasks, per-date completion and skipping, plus global This Week and folder-based Long Term lists
-- **Brain Dump** — a pinned note and multiple freeform notes
+- **Brain Dump** — a permanent pinned note plus Markdown notes with local title/body search, bounded previews, favorites, safe Edit/Preview modes, confirmations, editor metadata, and a mobile note browser
+- **Command Palette + Quick Notes** — open from the floating Quick Note widget or with `Cmd/Ctrl+K`, jump to any dashboard page, and capture flagged Quick Notes directly into Brain Dump
 - **Habit Tracker** — define habits and log them daily with streak history
 - **Day Planner** — time-block calendar with configurable hours and categories (work, uni, gym, rest, meeting)
 - **Job Tracker** — log job applications by day, view a 7-day sparkline
@@ -19,6 +20,7 @@ Persisted data syncs across devices via Firestore with `localStorage` as an inst
 
 - React 18 + Vite
 - Firebase Firestore (real-time sync)
+- Marked + DOMPurify (restricted, sanitized Markdown preview)
 - CSS Modules
 - GitHub Actions → GitHub Pages (CI/CD)
 
@@ -72,11 +74,13 @@ Persisted data syncs across devices via Firestore with `localStorage` as an inst
 
 ### Tests
 
-Recurring-task calendar behavior is covered by deterministic Vitest domain tests:
+Recurring-task calendar behavior, Command Palette Quick Note capture, same-tab storage synchronization, and Connected Brain Dump normalization, write-forward updates, search/ranking, filters, deletion/clear protections, Markdown safety, and Palette-provider behavior are covered by deterministic Vitest tests:
 
 ```bash
 npm test
 ```
+
+Command Palette and Brain Dump tests use plain mocked/local values and jsdom. They do not connect to Firebase. Legacy note records are normalized only in memory while reading; enhanced metadata is written forward only for the individual note a user explicitly edits or creates.
 
 ## Deployment
 
