@@ -18,16 +18,12 @@ function createTask(text) {
   return { id: Date.now() + Math.floor(Math.random() * 1000), text, done: false }
 }
 
-function sameLocation(a, b) {
-  return a.type === b.type && a.date === b.date && a.folderId === b.folderId
+function orderByCompletion(items) {
+  return [...items.filter(item => !item.done), ...items.filter(item => item.done)]
 }
 
-function Checkmark() {
-  return (
-    <svg width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-      <polyline points="2,6 5,9 10,3" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
+function sameLocation(a, b) {
+  return a.type === b.type && a.date === b.date && a.folderId === b.folderId
 }
 
 function Chevron({ collapsed }) {
@@ -48,10 +44,7 @@ function TaskRow({ task, nested = false, dragOver = false, onToggle, onDelete, o
       onDragOver={onDragOver}
       onDrop={onDrop}
     >
-      <span className={styles.dragHandle} aria-hidden="true">⠿</span>
-      <button className={styles.checkbox} onClick={onToggle} aria-label={task.done ? `Mark ${task.text} incomplete` : `Mark ${task.text} complete`}>
-        {task.done && <Checkmark />}
-      </button>
+      <button className={styles.checkbox} onClick={onToggle} aria-label={task.done ? `Mark ${task.text} incomplete` : `Mark ${task.text} complete`} />
       <span className={styles.taskText}>{task.text}</span>
       <button className={styles.delete} onClick={onDelete} aria-label={`Delete ${task.text}`}>×</button>
     </li>
@@ -60,13 +53,10 @@ function TaskRow({ task, nested = false, dragOver = false, onToggle, onDelete, o
 
 function RecurringOccurrenceRow({ occurrence, onToggle, onSkip }) {
   return (
-    <li className={`${styles.task} ${styles.recurringOccurrence} ${occurrence.done ? styles.done : ''}`}>
-      <span className={styles.recurringMark} aria-hidden="true">↻</span>
-      <button className={styles.checkbox} onClick={onToggle} aria-label={occurrence.done ? `Mark ${occurrence.text} incomplete` : `Mark ${occurrence.text} complete`}>
-        {occurrence.done && <Checkmark />}
-      </button>
+    <li className={`${styles.task} ${occurrence.done ? styles.done : ''}`}>
+      <button className={styles.checkbox} onClick={onToggle} aria-label={occurrence.done ? `Mark ${occurrence.text} incomplete` : `Mark ${occurrence.text} complete`} />
       <span className={styles.taskText}>{occurrence.text}</span>
-      <button className={styles.skip} onClick={onSkip} aria-label={`Skip ${occurrence.text}`}>Skip</button>
+      <button className={styles.delete} onClick={onSkip} aria-label={`Skip ${occurrence.text} occurrence`}>×</button>
     </li>
   )
 }
@@ -440,7 +430,7 @@ export default function TodoCard() {
   }
 
   function renderLongItems() {
-    return longTasks.map(item => {
+    return orderByCompletion(longTasks).map(item => {
       if (!item.isFolder) return renderTask(item, { type: 'long', folderId: null })
       const folderLocation = { type: 'long', folderId: item.id }
       const folderTarget = dragTarget === `folder:${item.id}`
@@ -464,7 +454,7 @@ export default function TodoCard() {
           </div>
           {!item.collapsed && (
             <DropList className={styles.folderContents} location={folderLocation} dragging={dragging} empty={(item.items || []).length === 0} onDropAtEnd={dropAtEnd}>
-              <ul className={styles.list}>{(item.items || []).map(task => renderTask(task, folderLocation, true))}</ul>
+              <ul className={styles.list}>{orderByCompletion(item.items || []).map(task => renderTask(task, folderLocation, true))}</ul>
               <AddTask compact onAdd={text => addTask(folderLocation, text)} />
             </DropList>
           )}
@@ -492,15 +482,18 @@ export default function TodoCard() {
             const occurrences = getRecurringOccurrences(recurringSeries, recurringState, day.key)
             const isToday = day.key === todayKey
             return (
-              <section className={`${styles.dayColumn} ${isToday ? styles.todayColumn : ''}`} key={day.key} aria-label={`${day.name}, ${day.date.toLocaleDateString()}`}>
+              <section className={styles.dayColumn} key={day.key} aria-label={`${day.name}, ${day.date.toLocaleDateString()}`}>
                 <header className={styles.dayHeader}>
-                  <span className={styles.dayName}>{day.name.slice(0, 3)}</span>
+                  <span className={`${styles.dayName} ${isToday ? styles.todayDayName : ''}`}>{day.name.slice(0, 3)}</span>
                   <span className={styles.dayDate}>{day.date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
-                  {isToday && <span className={styles.todayPill}>Today</span>}
                 </header>
                 <DropList className={styles.dayBody} location={location} dragging={dragging} onDropAtEnd={dropAtEnd}>
-                  <ul className={styles.list}>{occurrences.map(renderRecurringOccurrence)}</ul>
-                  <ul className={styles.list}>{tasks.map(task => renderTask(task, location))}</ul>
+                  <ul className={styles.list}>
+                    {occurrences.filter(occurrence => !occurrence.done).map(renderRecurringOccurrence)}
+                    {tasks.filter(task => !task.done).map(task => renderTask(task, location))}
+                    {occurrences.filter(occurrence => occurrence.done).map(renderRecurringOccurrence)}
+                    {tasks.filter(task => task.done).map(task => renderTask(task, location))}
+                  </ul>
                   <AddTask compact onAdd={text => addTask(location, text)} />
                 </DropList>
               </section>
@@ -512,7 +505,7 @@ export default function TodoCard() {
       <div className={styles.supportGrid}>
         <Card title="This Week">
           <DropList className={styles.supportBody} location={{ type: 'week' }} dragging={dragging} empty={weekTasks.length === 0} onDropAtEnd={dropAtEnd}>
-            <ul className={styles.list}>{weekTasks.map(task => renderTask(task, { type: 'week' }))}</ul>
+            <ul className={styles.list}>{orderByCompletion(weekTasks).map(task => renderTask(task, { type: 'week' }))}</ul>
             <AddTask onAdd={text => addTask({ type: 'week' }, text)} />
           </DropList>
         </Card>
