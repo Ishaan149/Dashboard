@@ -1,5 +1,5 @@
 import { useSyncedStorage } from '../hooks/useSyncedStorage'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { getDailyQuote } from '../data/quotes'
 import { DEFAULT_CATEGORIES } from '../data/categories'
 import { getDateKey, getWeekStartKey } from '../utils/date'
@@ -17,12 +17,6 @@ const ICheck = (p) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.2"
        strokeLinecap="round" strokeLinejoin="round" {...p}>
     <path d="M4 12.5l5 5 11-12" />
-  </svg>
-)
-const IArrow = (p) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"
-       strokeLinecap="round" strokeLinejoin="round" width="12" height="12" {...p}>
-    <path d="M5 12h14M13 6l6 6-6 6" />
   </svg>
 )
 const ISun = (p) => (
@@ -73,19 +67,12 @@ const ICase   = (p) => (
 const HABIT_ICONS = [IDrop, IBook, ILotus, ISpark, IMoon, ICase]
 
 // ── sub-components ────────────────────────────────────────────────────────────
-function CardHead({ title, action, onAction }) {
+function CardHead({ title, separated = true }) {
   return (
-    <div className={styles.cardHead}>
+    <div className={`${styles.cardHead} ${separated ? '' : styles.cardHeadPlain}`}>
       <div className={styles.cardTitle}>
-        <span className={styles.accentDot} />
         {title}
       </div>
-      {action && (
-        <span className={styles.link} onClick={onAction} role="button" tabIndex={0}
-          onKeyDown={e => e.key === 'Enter' && onAction?.()}>
-          {action} <IArrow />
-        </span>
-      )}
     </div>
   )
 }
@@ -93,7 +80,7 @@ function CardHead({ title, action, onAction }) {
 function QuoteCard({ quote }) {
   return (
     <div className={styles.card}>
-      <CardHead title="Daily quote" />
+      <CardHead title="Daily quote" separated={false} />
       <div className={styles.quoteMark}>&ldquo;</div>
       <div>
         <span className={styles.quoteText}>{quote.text}</span>
@@ -108,7 +95,7 @@ function WeatherCard({ weather }) {
 
   return (
     <div className={styles.card}>
-      <CardHead title="Weather" />
+      <CardHead title="Weather" separated={false} />
       <div className={styles.weatherTop}>
         <ISun className={styles.sunIcon} />
         <div className={styles.weatherTemp}>
@@ -126,94 +113,65 @@ function WeatherCard({ weather }) {
   )
 }
 
-function BrainDumpCard({ note, onChange, onNavigate }) {
-  const [saved, setSaved] = useState(true)
-  const timer = useRef(null)
+function BrainDumpCard({ note, onChange }) {
   const content = note?.content ?? ''
-
-  useEffect(() => () => clearTimeout(timer.current), [])
-
-  function handle(e) {
-    onChange(e.target.value)
-    setSaved(false)
-    clearTimeout(timer.current)
-    timer.current = setTimeout(() => setSaved(true), 700)
-  }
 
   return (
     <div className={`${styles.card} ${styles.brainCard}`}>
-      <CardHead title={note?.title ?? 'Brain dump'} action="Open" onAction={() => onNavigate('braindump')} />
+      <CardHead title={note?.title ?? 'Brain dump'} />
       <textarea
         className={styles.brainArea}
         value={content}
-        onChange={handle}
+        onChange={event => onChange(event.target.value)}
         placeholder="Drop any thought, idea, or reminder here…"
         spellCheck
       />
-      <div className={styles.brainFoot}>
-        <span className={styles.saveState}>
-          <span className={`${styles.saveDot} ${saved ? '' : styles.saveDotSaving}`} />
-          {saved ? 'Saved' : 'Saving…'}
-        </span>
-        <span className={styles.charCount}>
-          {content.length ? `${content.length} chars` : 'Empty'}
-        </span>
-      </div>
     </div>
   )
 }
 
-function TasksCard({ tasks, onToggle, onNavigate }) {
+function TasksCard({ tasks, onToggle }) {
   const pending = tasks.filter(t => !t.done)
   const shown   = [...pending, ...tasks.filter(t => t.done)].slice(0, 5)
-  const extra   = tasks.length - 5
 
   return (
     <div className={styles.card}>
-      <CardHead title="Pending tasks" action="All tasks" onAction={() => onNavigate('todo')} />
+      <CardHead title="Pending tasks" />
       {tasks.length === 0 ? (
         <p className={styles.emptyMsg}>All caught up for today</p>
       ) : (
-        <>
-          <div className={styles.taskList}>
-            {shown.map(t => (
-              <div
-                key={t.id}
-                className={`${styles.task} ${t.done ? styles.taskDone : ''}`}
-                onClick={() => onToggle(t)}
-                onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onToggle(t) } }}
-                role="button"
-                tabIndex={0}
-                aria-label={t.done ? `Mark ${t.text} incomplete` : `Mark ${t.text} complete`}
-              >
-                <span className={styles.check}>
-                  <ICheck width={12} height={12} />
-                </span>
-                <span className={styles.taskMain}>
-                  <span className={styles.taskTitle}>{t.text}</span>
-                </span>
-              </div>
-            ))}
-          </div>
-          <div className={styles.moreRow}>
-            {extra > 0
-              ? <span className={styles.morePill}>+{extra} more</span>
-              : <span className={styles.faint}>All shown</span>}
-            <span className={styles.faint}>{pending.length} left today</span>
-          </div>
-        </>
+        <div className={styles.taskList}>
+          {shown.map(t => (
+            <div
+              key={t.id}
+              className={`${styles.task} ${t.done ? styles.taskDone : ''}`}
+              onClick={() => onToggle(t)}
+              onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onToggle(t) } }}
+              role="button"
+              tabIndex={0}
+              aria-label={t.done ? `Mark ${t.text} incomplete` : `Mark ${t.text} complete`}
+            >
+              <span className={styles.check}>
+                <ICheck width={12} height={12} />
+              </span>
+              <span className={styles.taskMain}>
+                <span className={styles.taskTitle}>{t.text}</span>
+              </span>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   )
 }
 
-function HabitsCard({ habits, todayDone, onToggle, onNavigate }) {
+function HabitsCard({ habits, todayDone, onToggle }) {
   const done = habits.filter(h => todayDone.includes(h.id)).length
   const pct  = habits.length ? Math.round((done / habits.length) * 100) : 0
 
   return (
     <div className={styles.card}>
-      <CardHead title="Today's habits" action="All habits" onAction={() => onNavigate('habits')} />
+      <CardHead title="Today's habits" />
       {habits.length === 0 ? (
         <p className={styles.emptyMsg}>No habits set yet</p>
       ) : (
@@ -249,7 +207,7 @@ function HabitsCard({ habits, todayDone, onToggle, onNavigate }) {
   )
 }
 
-function ScheduleCard({ blocks, categories, nowMin, onNavigate }) {
+function ScheduleCard({ blocks, categories, nowMin }) {
   const past    = blocks.filter(b => nowMin >= b.endMinutes)
   const current = blocks.find(b => nowMin >= b.startMinutes && nowMin < b.endMinutes)
   const future  = blocks.filter(b => b.startMinutes > nowMin)
@@ -262,7 +220,7 @@ function ScheduleCard({ blocks, categories, nowMin, onNavigate }) {
 
   return (
     <div className={styles.card}>
-      <CardHead title="Today's schedule" action="Calendar" onAction={() => onNavigate('dayplanner')} />
+      <CardHead title="Today's schedule" />
       {blocks.length === 0 ? (
         <p className={styles.emptyMsg}>No blocks planned yet</p>
       ) : (
@@ -305,11 +263,11 @@ function ScheduleCard({ blocks, categories, nowMin, onNavigate }) {
 
 const DAY_ABBR = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
-function JobsCard({ today, week, spark, onAdjust, onNavigate }) {
+function JobsCard({ today, week, spark, onAdjust }) {
   const max = Math.max(...spark, 1)
   return (
     <div className={styles.card}>
-      <CardHead title="Job applications" action="Tracker" onAction={() => onNavigate('jobs')} />
+      <CardHead title="Job applications" />
       <div className={styles.jobsStats}>
         <div className={styles.jstat}>
           <div className={styles.big}>{today}</div>
@@ -356,7 +314,7 @@ function JobsCard({ today, week, spark, onAdjust, onNavigate }) {
 }
 
 // ── main ──────────────────────────────────────────────────────────────────────
-export default function Overview({ onChange }) {
+export default function Overview() {
   const [dailyTasks, setDailyTasks] = useSyncedStorage('todos-daily', {})
   const [recurringSeries]           = useSyncedStorage('todos-recurring', [])
   const [recurringState, setRecurringState] = useSyncedStorage('todos-recurring-state', {})
@@ -478,12 +436,12 @@ export default function Overview({ onChange }) {
     return (
       <div className={styles.mobileGrid}>
         <QuoteCard quote={quote} />
-        <ScheduleCard blocks={sortedBlocks} categories={categories} nowMin={nowMinutes} onNavigate={onChange} />
-        <TasksCard tasks={todayTodos} onToggle={toggleTask} onNavigate={onChange} />
-        <HabitsCard habits={habits} todayDone={todayDone} onToggle={toggleHabit} onNavigate={onChange} />
-        <JobsCard today={jobsToday} week={jobsWeek} spark={jobSpark} onAdjust={adjustJobs} onNavigate={onChange} />
+        <ScheduleCard blocks={sortedBlocks} categories={categories} nowMin={nowMinutes} />
+        <TasksCard tasks={todayTodos} onToggle={toggleTask} />
+        <HabitsCard habits={habits} todayDone={todayDone} onToggle={toggleHabit} />
+        <JobsCard today={jobsToday} week={jobsWeek} spark={jobSpark} onAdjust={adjustJobs} />
         <WeatherCard weather={weather} />
-        <BrainDumpCard note={pinnedNote} onChange={updateBrainDump} onNavigate={onChange} />
+        <BrainDumpCard note={pinnedNote} onChange={updateBrainDump} />
       </div>
     )
   }
@@ -493,15 +451,15 @@ export default function Overview({ onChange }) {
       <div className={styles.col}>
         <QuoteCard quote={quote} />
         <WeatherCard weather={weather} />
-        <BrainDumpCard note={pinnedNote} onChange={updateBrainDump} onNavigate={onChange} />
+        <BrainDumpCard note={pinnedNote} onChange={updateBrainDump} />
       </div>
       <div className={styles.col}>
-        <JobsCard today={jobsToday} week={jobsWeek} spark={jobSpark} onAdjust={adjustJobs} onNavigate={onChange} />
-        <TasksCard tasks={todayTodos} onToggle={toggleTask} onNavigate={onChange} />
+        <JobsCard today={jobsToday} week={jobsWeek} spark={jobSpark} onAdjust={adjustJobs} />
+        <TasksCard tasks={todayTodos} onToggle={toggleTask} />
       </div>
       <div className={styles.col}>
-        <HabitsCard habits={habits} todayDone={todayDone} onToggle={toggleHabit} onNavigate={onChange} />
-        <ScheduleCard blocks={sortedBlocks} categories={categories} nowMin={nowMinutes} onNavigate={onChange} />
+        <HabitsCard habits={habits} todayDone={todayDone} onToggle={toggleHabit} />
+        <ScheduleCard blocks={sortedBlocks} categories={categories} nowMin={nowMinutes} />
       </div>
     </div>
   )

@@ -1,50 +1,51 @@
 .backdrop {
   position: fixed;
   inset: 0;
-  padding: min(12vh, 96px) var(--space-4) var(--space-4);
+  padding: min(10vh, 76px) var(--space-4) var(--space-4);
   display: grid;
   place-items: start center;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(5, 6, 9, 0.68);
+  backdrop-filter: blur(5px);
   z-index: var(--z-modal);
   animation: backdropIn var(--motion-normal) ease-out;
 }
 
 .palette {
-  width: min(100%, 640px);
-  max-height: min(76dvh, 680px);
+  width: min(100%, 560px);
+  max-height: min(78dvh, 620px);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   border: 1px solid var(--border-hi);
   border-radius: var(--radius-lg);
-  background: #15171d;
+  background: color-mix(in srgb, var(--bg) 92%, white);
   box-shadow: var(--shadow-modal);
   color: var(--ink);
   animation: paletteIn var(--motion-normal) ease-out;
 }
 
 .searchRow {
-  min-height: 64px;
+  min-height: 56px;
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px 12px 8px 18px;
+  padding: 6px 8px 6px 16px;
   border-bottom: 1px solid var(--border);
   color: var(--ink-3);
 }
 
 .searchRow:focus-within { border-bottom-color: var(--border-hi); }
-.searchRow input { min-width: 0; flex: 1; border: 0; outline: 0; box-shadow: none; background: transparent; color: var(--ink); font-size: 17px; }
+.searchRow input { min-width: 0; flex: 1; border: 0; outline: 0; box-shadow: none; background: transparent; color: var(--ink); font-size: 15px; }
 .searchRow input::placeholder { color: var(--ink-3); }
 .closeButton { flex: none; }
-.results { min-height: 180px; overflow-y: auto; padding: 10px 8px; overscroll-behavior: contain; }
+.results { min-height: 160px; overflow-y: auto; padding: 8px; overscroll-behavior: contain; }
 .group + .group { margin-top: 8px; }
-.groupLabel { padding: 7px 10px 5px; color: var(--ink-3); font-size: 10px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
+.groupLabel { padding: 7px 9px 5px; color: var(--ink-3); font-size: 9px; font-weight: 800; letter-spacing: .11em; text-transform: uppercase; }
 
 .option {
   width: 100%;
-  min-height: 46px;
-  padding: 8px 11px;
+  min-height: 44px;
+  padding: 6px 9px;
   display: flex;
   align-items: center;
   gap: 11px;
@@ -56,13 +57,27 @@
   cursor: pointer;
 }
 
-.option:hover, .optionActive { border-color: var(--border-hi); background: var(--glass-hover); }
-.optionIcon { width: 34px; height: 34px; display: grid; place-items: center; flex: none; border-radius: 10px; background: var(--glass); color: var(--ink-2); }
+.option:hover, .optionActive { border-color: color-mix(in srgb, var(--accent) 18%, var(--border)); background: color-mix(in srgb, var(--accent) 7%, var(--glass-hover)); }
+.optionIcon { width: 32px; height: 32px; display: grid; place-items: center; flex: none; border: 1px solid var(--border); border-radius: 9px; background: var(--glass); color: var(--ink-2); }
 .optionIconAction { color: color-mix(in srgb, var(--accent) 48%, var(--ink-2)); }
 .optionText { min-width: 0; flex: 1; }
 .optionText strong { font-size: 13px; }
 .currentBadge { padding: 3px 7px; border-radius: 999px; background: var(--glass); color: var(--ink-2); font-size: 9px; font-weight: 750; text-transform: uppercase; }
 .empty { padding: 42px 16px; color: var(--ink-3); font-size: 13px; text-align: center; }
+
+.paletteFooter {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 14px;
+  border-top: 1px solid var(--border);
+  color: var(--ink-3);
+  font-size: 10px;
+}
+
+.paletteFooter span { display: inline-flex; align-items: center; gap: 5px; }
+.paletteFooter kbd { min-width: 20px; height: 20px; padding: 0 5px; display: inline-grid; place-items: center; border: 1px solid var(--border); border-radius: 5px; background: rgba(0,0,0,.16); color: var(--ink-2); font: inherit; }
 
 .captureForm { padding: 18px 20px 20px; overflow-y: auto; }
 .formHeader { display: flex; align-items: center; justify-content: space-between; }
@@ -90,6 +105,7 @@
   .backdrop { padding: 0; place-items: end center; }
   .palette { width: 100%; max-width: none; max-height: 92dvh; border-radius: var(--radius-lg) var(--radius-lg) 0 0; padding-bottom: env(safe-area-inset-bottom); animation-name: sheetIn; }
   .captureForm { padding: 14px 16px 18px; }
+  .paletteFooter { display: none; }
 }
 
 @keyframes sheetIn { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }

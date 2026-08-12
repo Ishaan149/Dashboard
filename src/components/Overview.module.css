@@ -37,6 +37,13 @@
   justify-content: space-between;
   gap: 10px;
   margin-bottom: 13px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.cardHeadPlain {
+  padding-bottom: 0;
+  border-bottom: none;
 }
 
 .cardTitle {
@@ -49,34 +56,6 @@
   text-transform: uppercase;
   color: var(--ink-3);
   white-space: nowrap;
-}
-
-.accentDot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent);
-  flex: none;
-}
-
-.link {
-  font-size: 11.5px;
-  color: var(--ink-3);
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  border-radius: 7px;
-  padding: 3px 6px;
-  margin: -3px -6px;
-  cursor: pointer;
-  transition: background .15s, color .15s;
-  font-family: 'Hanken Grotesk', var(--font);
-}
-
-.link:hover {
-  color: var(--accent);
-  background: oklch(0.72 0.085 160 / .1);
 }
 
 .emptyMsg {
@@ -180,6 +159,7 @@
   width: 100%;
   min-height: 140px;
   resize: none;
+  scrollbar-width: none;
   border: none;
   outline: none;
   background: transparent;
@@ -190,47 +170,12 @@
   padding: 2px 0;
 }
 
+.brainArea::-webkit-scrollbar {
+  display: none;
+}
+
 .brainArea::placeholder {
   color: var(--ink-3);
-}
-
-.brainFoot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid var(--border);
-}
-
-.saveState {
-  font-size: 12px;
-  color: var(--ink-3);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.saveDot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--accent);
-}
-
-.saveDotSaving {
-  background: #f59e0b;
-  animation: pulse 1s infinite;
-}
-
-@keyframes pulse {
-  50% { opacity: .35; }
-}
-
-.charCount {
-  font-size: 12px;
-  color: var(--ink-3);
-  font-variant-numeric: tabular-nums;
 }
 
 /* ── tasks ───────────────────────────────────────────────────────────────────── */
@@ -302,24 +247,6 @@
   color: var(--ink-3);
   text-decoration: line-through;
   text-decoration-color: var(--subtext);
-}
-
-.moreRow {
-  margin-top: 6px;
-  padding: 8px 8px 0;
-  border-top: 1px dashed var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.morePill {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--accent);
-  background: oklch(0.72 0.085 160 / .12);
-  padding: 3px 10px;
-  border-radius: 999px;
 }
 
 /* ── habits ──────────────────────────────────────────────────────────────────── */

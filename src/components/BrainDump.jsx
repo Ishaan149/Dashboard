@@ -16,7 +16,6 @@ import { renderMarkdownPreview } from '../domain/brainDumpMarkdown'
 import { getBrainDumpPageResults } from '../domain/brainDumpSearch'
 import { useSyncedStorage } from '../hooks/useSyncedStorage'
 import { BottomSheet, Button, Dialog, useToast } from './ui'
-import Card from './Card'
 import styles from './BrainDump.module.css'
 
 function SearchIcon() {
@@ -35,6 +34,10 @@ function BoltIcon({ filled = false }) {
   return <svg viewBox="0 0 24 24" width="17" height="17" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinejoin="round" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>
 }
 
+function MoreIcon() {
+  return <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
+}
+
 function displayTitle(note) {
   if (note.title) return note.title
   return 'Untitled'
@@ -50,11 +53,9 @@ function NoteRow({ note, pinned = false, active, onSelect }) {
     >
       <span className={styles.noteItemTopline}>
         <span className={styles.noteItemTitle}>{displayTitle(note)}</span>
-        {pinned && <span className={styles.systemBadge}>Pinned</span>}
-        {!pinned && note.quickNote && <span className={styles.quickBadge}>Quick</span>}
+        {!pinned && note.quickNote && <span className={styles.quickBadge} aria-label="Quick Note"><BoltIcon /></span>}
         {!pinned && note.favorite && <span className={styles.rowFavorite} aria-label="Favorite"><StarIcon filled /></span>}
       </span>
-      <span className={styles.noteItemPreview}>{note.preview}</span>
     </button>
   )
 }
@@ -87,45 +88,48 @@ function NoteBrowser({
 
   return (
     <div className={styles.browser}>
-      <Button variant="primary" className={styles.newBtn} onClick={onNewNote}>+ New note</Button>
-
-      <div className={styles.searchWrap}>
-        <label className={styles.srOnly} htmlFor={`${idPrefix}-search`}>Search notes</label>
-        <SearchIcon />
-        <input
-          ref={searchRef}
-          id={`${idPrefix}-search`}
-          type="search"
-          value={query}
-          onChange={event => onQueryChange(event.target.value)}
-          placeholder="Search notes"
-          autoComplete="off"
-        />
-        {query && (
-          <button type="button" className={styles.clearSearch} onClick={() => onQueryChange('')} aria-label="Clear note search">×</button>
-        )}
+      <div className={styles.browserTools}>
+        <div className={styles.searchWrap}>
+          <label className={styles.srOnly} htmlFor={`${idPrefix}-search`}>Search notes</label>
+          <SearchIcon />
+          <input
+            ref={searchRef}
+            id={`${idPrefix}-search`}
+            type="search"
+            value={query}
+            onChange={event => onQueryChange(event.target.value)}
+            placeholder="Search"
+            autoComplete="off"
+          />
+          {query && (
+            <button type="button" className={styles.clearSearch} onClick={() => onQueryChange('')} aria-label="Clear note search">×</button>
+          )}
+        </div>
+        <Button variant="secondary" className={styles.newBtn} onClick={onNewNote}>+ New</Button>
       </div>
 
       <div className={styles.filters}>
         <button
           type="button"
-          className={`${styles.filterBtn} ${favoritesOnly ? styles.filterBtnActive : ''}`}
+          className={`${styles.filterBtn} ${styles.filterIconBtn} ${favoritesOnly ? styles.filterBtnActive : ''}`}
           onClick={onToggleFavorites}
           aria-pressed={favoritesOnly}
+          title="Favorites"
         >
-          <StarIcon filled={favoritesOnly} /> Favorites
+          <StarIcon filled={favoritesOnly} /><span className={styles.srOnly}>Favorites</span>
         </button>
         <button
           type="button"
-          className={`${styles.filterBtn} ${quickNotesOnly ? styles.quickFilterActive : ''}`}
+          className={`${styles.filterBtn} ${styles.filterIconBtn} ${quickNotesOnly ? styles.quickFilterActive : ''}`}
           onClick={onToggleQuickNotes}
           aria-pressed={quickNotesOnly}
+          title="Quick Notes"
         >
-          <BoltIcon filled={quickNotesOnly} /> Quick Notes
+          <BoltIcon filled={quickNotesOnly} /><span className={styles.srOnly}>Quick Notes</span>
         </button>
       </div>
 
-      <p className={styles.resultSummary} aria-hidden="true">{results.count} {results.count === 1 ? 'note' : 'notes'}</p>
+      <p className={styles.resultSummary} aria-hidden="true"><span>All notes</span><span>{results.count}</span></p>
       <p className={styles.srOnly} aria-live="polite">{announcement}</p>
 
       <div className={styles.noteList}>
@@ -161,16 +165,6 @@ function NoteBrowser({
   )
 }
 
-function formatLastEdited(timestamp) {
-  if (!timestamp) return 'Last edited unknown'
-  return `Last edited ${new Date(timestamp).toLocaleString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  })}`
-}
-
 export default function BrainDump() {
   const [notes, setNotes] = useSyncedStorage('brainDumpNotes', [])
   const [activeId, setActiveId] = useSyncedStorage('brainDumpActiveId', null)
@@ -181,13 +175,11 @@ export default function BrainDump() {
   const [mode, setMode] = useState('edit')
   const [mobileBrowserOpen, setMobileBrowserOpen] = useState(false)
   const [confirmation, setConfirmation] = useState(null)
-  const [status, setStatus] = useState('idle')
   const [draft, setDraft] = useState(null)
   const titleRef = useRef(null)
   const searchRef = useRef(null)
   const cancelRef = useRef(null)
-  const saveTimerRef = useRef(null)
-  const idleTimerRef = useRef(null)
+  const noteActionsRef = useRef(null)
   const notesRef = useRef(notes)
   const pinnedRef = useRef(pinnedNote)
   const { showToast } = useToast()
@@ -213,11 +205,6 @@ export default function BrainDump() {
   const filtersActive = Boolean(query.trim() || favoritesOnly || quickNotesOnly)
   const outsideResults = Boolean(activeNote && filtersActive && !resultIds.has(activeNote.id))
 
-  useEffect(() => () => {
-    clearTimeout(saveTimerRef.current)
-    clearTimeout(idleTimerRef.current)
-  }, [])
-
   useEffect(() => {
     if (!activeNote) {
       setDraft(null)
@@ -231,20 +218,31 @@ export default function BrainDump() {
     })
   }, [activeNote?.id, activeNote?.title, activeNote?.content])
 
+  useEffect(() => {
+    function handleOutsidePress(event) {
+      const menu = noteActionsRef.current
+      if (menu?.open && !menu.contains(event.target)) menu.removeAttribute('open')
+    }
+
+    function handleEscape(event) {
+      const menu = noteActionsRef.current
+      if (event.key !== 'Escape' || !menu?.open) return
+      menu.removeAttribute('open')
+      menu.querySelector('summary')?.focus()
+    }
+
+    document.addEventListener('pointerdown', handleOutsidePress)
+    document.addEventListener('keydown', handleEscape)
+    return () => {
+      document.removeEventListener('pointerdown', handleOutsidePress)
+      document.removeEventListener('keydown', handleEscape)
+    }
+  }, [])
+
   function focusTitle() {
     // Let a closing BottomSheet restore its trigger first, then move focus to
     // the selected note as the final, intentional destination.
     setTimeout(() => requestAnimationFrame(() => titleRef.current?.focus()), 0)
-  }
-
-  function triggerStatus() {
-    setStatus('saving')
-    clearTimeout(saveTimerRef.current)
-    clearTimeout(idleTimerRef.current)
-    saveTimerRef.current = setTimeout(() => {
-      setStatus('saved')
-      idleTimerRef.current = setTimeout(() => setStatus('idle'), 2000)
-    }, 600)
   }
 
   function selectNote(id) {
@@ -274,7 +272,6 @@ export default function BrainDump() {
     } else {
       setNotes(previous => updateBrainDumpNote(previous, activeNote.id, { [field]: value }, now))
     }
-    triggerStatus()
   }
 
   function updateDraft(field, value) {
@@ -292,7 +289,6 @@ export default function BrainDump() {
     if (!activeNote || isPinned) return
     const now = Date.now()
     setNotes(previous => updateBrainDumpNote(previous, activeNote.id, { favorite: !activeNote.favorite }, now))
-    triggerStatus()
   }
 
   function clearFilters() {
@@ -310,7 +306,6 @@ export default function BrainDump() {
         showToast('The pinned note is already empty.', { tone: 'info' })
       } else {
         setPinnedNote(result.note)
-        triggerStatus()
       }
     } else {
       const result = clearBrainDumpNote(notesRef.current, activeNote.id, now)
@@ -318,7 +313,6 @@ export default function BrainDump() {
         showToast(result.reason === 'missing' ? 'That note is no longer available.' : 'The note is already empty.', { tone: result.reason === 'missing' ? 'error' : 'info' })
       } else {
         setNotes(result.notes)
-        triggerStatus()
       }
     }
     setConfirmation(null)
@@ -349,8 +343,6 @@ export default function BrainDump() {
   const titleOverage = Math.max(0, draftTitle.length - NOTE_TITLE_LIMIT)
   const contentOverage = Math.max(0, draftContent.length - NOTE_CONTENT_LIMIT)
   const canDelete = !isPinned && validNotes.length > 1
-  const statusText = status === 'saving' ? 'Saving…' : status === 'saved' ? 'Saved' : 'Auto-saves'
-
   const browserProps = {
     query,
     onQueryChange: setQuery,
@@ -366,7 +358,7 @@ export default function BrainDump() {
   }
 
   return (
-    <Card title="Notes">
+    <>
       <div className={styles.layout}>
         <aside className={styles.sidebar} aria-label="Note browser">
           <NoteBrowser {...browserProps} idPrefix="brain-dump-rail" />
@@ -375,7 +367,6 @@ export default function BrainDump() {
         <section className={styles.editor} aria-label="Note editor">
           <div className={styles.mobileTopbar}>
             <Button variant="secondary" onClick={() => setMobileBrowserOpen(true)}><NotesIcon /> Notes</Button>
-            {activeNote && <span className={styles.mobileTitle}>{displayTitle(activeNote)}</span>}
           </div>
 
           {activeNote ? (
@@ -387,22 +378,20 @@ export default function BrainDump() {
                 </div>
               )}
 
-              <input
-                ref={titleRef}
-                className={`${styles.titleInput} ${titleInvalid ? styles.invalidField : ''}`}
-                value={draftTitle}
-                onChange={event => updateDraft('title', event.target.value)}
-                placeholder="Untitled"
-                aria-label="Note title"
-                aria-invalid={titleInvalid}
-                aria-describedby={titleInvalid ? 'note-title-error' : undefined}
-              />
-              {titleInvalid && <p id="note-title-error" className={styles.validationError}>Title is {titleOverage} {titleOverage === 1 ? 'character' : 'characters'} over the {NOTE_TITLE_LIMIT}-character limit. Shorten it to save.</p>}
-
-              <div className={styles.toolbar}>
-                <div className={styles.noteControls}>
+              <div className={styles.titleRow}>
+                <input
+                  ref={titleRef}
+                  className={`${styles.titleInput} ${titleInvalid ? styles.invalidField : ''}`}
+                  value={draftTitle}
+                  onChange={event => updateDraft('title', event.target.value)}
+                  placeholder="Untitled"
+                  aria-label="Note title"
+                  aria-invalid={titleInvalid}
+                  aria-describedby={titleInvalid ? 'note-title-error' : undefined}
+                />
+                <div className={styles.titleActions}>
                   {isPinned ? (
-                    <span className={styles.pinnedControl}><StarIcon filled /> Permanent favorite</span>
+                    <span className={styles.pinnedControl} title="Permanent favorite"><StarIcon filled /><span className={styles.srOnly}>Permanent favorite</span></span>
                   ) : (
                     <button
                       type="button"
@@ -410,33 +399,32 @@ export default function BrainDump() {
                       onClick={toggleFavorite}
                       aria-pressed={activeNote.favorite}
                       aria-label={activeNote.favorite ? 'Remove note from favorites' : 'Add note to favorites'}
-                    >
-                      <StarIcon filled={activeNote.favorite} /> {activeNote.favorite ? 'Favorite' : 'Favorite'}
-                    </button>
+                      title={activeNote.favorite ? 'Remove from favorites' : 'Add to favorites'}
+                    ><StarIcon filled={activeNote.favorite} /></button>
                   )}
-
-                  <div className={styles.modeToggle} aria-label="Markdown mode">
-                    <button type="button" className={mode === 'edit' ? styles.modeActive : ''} onClick={() => setMode('edit')} aria-pressed={mode === 'edit'}>Edit</button>
-                    <button type="button" className={mode === 'preview' ? styles.modeActive : ''} onClick={() => setMode('preview')} aria-pressed={mode === 'preview'}>Preview</button>
-                  </div>
+                  <details ref={noteActionsRef} className={styles.moreMenu}>
+                    <summary role="button" aria-label="Note actions" title="Note actions"><MoreIcon /></summary>
+                    <div className={styles.moreMenuPopover}>
+                      <button type="button" onClick={() => { noteActionsRef.current?.removeAttribute('open'); setConfirmation('clear') }} disabled={!draftContent}>Clear content</button>
+                      {!isPinned && (
+                        <button
+                          type="button"
+                          className={styles.menuDelete}
+                          onClick={() => { noteActionsRef.current?.removeAttribute('open'); setConfirmation('delete') }}
+                          disabled={!canDelete}
+                          title={canDelete ? 'Permanently delete note' : 'The final regular note cannot be deleted'}
+                        >Delete note</button>
+                      )}
+                    </div>
+                  </details>
                 </div>
+              </div>
+              {titleInvalid && <p id="note-title-error" className={styles.validationError}>Title is {titleOverage} {titleOverage === 1 ? 'character' : 'characters'} over the {NOTE_TITLE_LIMIT}-character limit. Shorten it to save.</p>}
 
-                <div className={styles.noteActions}>
-                  {!isPinned && (
-                    <button
-                      type="button"
-                      className={styles.deleteBtn}
-                      onClick={() => setConfirmation('delete')}
-                      disabled={!canDelete}
-                      title={canDelete ? 'Permanently delete note' : 'The final regular note cannot be deleted'}
-                    >Delete note</button>
-                  )}
-                  <button
-                    type="button"
-                    className={styles.clearBtn}
-                    onClick={() => setConfirmation('clear')}
-                    disabled={!draftContent}
-                  >Clear content</button>
+              <div className={styles.modeBar}>
+                <div className={styles.modeToggle} aria-label="Markdown mode">
+                  <button type="button" className={mode === 'edit' ? styles.modeActive : ''} onClick={() => setMode('edit')} aria-pressed={mode === 'edit'}>Edit</button>
+                  <button type="button" className={mode === 'preview' ? styles.modeActive : ''} onClick={() => setMode('preview')} aria-pressed={mode === 'preview'}>Preview</button>
                 </div>
               </div>
 
@@ -450,10 +438,9 @@ export default function BrainDump() {
                     placeholder="Start writing in Markdown…"
                     aria-label="Note content"
                     aria-invalid={contentInvalid}
-                    aria-describedby={contentInvalid ? 'note-content-error' : 'markdown-hint'}
+                    aria-describedby={contentInvalid ? 'note-content-error' : undefined}
                     spellCheck
                   />
-                  <p id="markdown-hint" className={styles.markdownHint}>Markdown supported · headings, lists, emphasis, quotes, code, and safe links</p>
                   {contentInvalid && <p id="note-content-error" className={styles.validationError}>Content is {contentOverage.toLocaleString()} {contentOverage === 1 ? 'character' : 'characters'} over the {NOTE_CONTENT_LIMIT.toLocaleString()}-character limit. Shorten it to save.</p>}
                 </div>
               ) : (
@@ -467,15 +454,6 @@ export default function BrainDump() {
                 </div>
               )}
 
-              <div className={styles.footer}>
-                <span className={`${styles.status} ${status === 'saved' ? styles.saved : ''}`} aria-live="polite">
-                  <span className={styles.statusDot} aria-hidden="true" />{statusText}
-                </span>
-                <div className={styles.meta}>
-                  <span>{draftContent.length.toLocaleString()} chars</span>
-                  <span>{formatLastEdited(activeNote.updatedAt)}</span>
-                </div>
-              </div>
             </>
           ) : (
             <div className={styles.emptyEditor}>
@@ -527,6 +505,6 @@ export default function BrainDump() {
           </>
         )}
       />
-    </Card>
+    </>
   )
 }

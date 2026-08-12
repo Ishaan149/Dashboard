@@ -49,24 +49,24 @@
   position: fixed;
   right: 24px;
   bottom: max(24px, env(safe-area-inset-bottom));
-  width: 54px;
-  height: 54px;
+  width: 46px;
+  height: 46px;
   display: grid;
   place-items: center;
-  border: 1px solid color-mix(in srgb, var(--accent) 72%, white);
-  border-radius: 50%;
-  background: linear-gradient(145deg, color-mix(in srgb, var(--accent) 88%, white), var(--accent));
-  color: #0b1511;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.42), 0 0 0 5px color-mix(in srgb, var(--accent) 9%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border));
+  border-radius: 15px;
+  background: color-mix(in srgb, var(--bg) 80%, white);
+  color: var(--accent);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.38);
   cursor: pointer;
   z-index: calc(var(--z-nav) + 1);
   transition: transform var(--motion-fast), box-shadow var(--motion-fast), filter var(--motion-fast);
 }
 
 .quickNoteWidget:hover {
-  transform: translateY(-2px) scale(1.04);
-  filter: brightness(1.06);
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.48), 0 0 0 7px color-mix(in srgb, var(--accent) 12%, transparent);
+  transform: translateY(-2px);
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg));
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.44);
 }
 
 .quickNoteWidget:active { transform: translateY(0) scale(0.97); }
@@ -101,9 +101,9 @@
 
   .quickNoteWidget {
     right: 16px;
-    bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom) + 12px);
-    width: 50px;
-    height: 50px;
+    bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom) + 14px);
+    width: 46px;
+    height: 46px;
   }
 }
 

@@ -21,6 +21,10 @@
   width: 100%;
 }
 
+.viewBrainDump {
+  max-width: 1320px;
+}
+
 @keyframes fadeSlide {
   from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }

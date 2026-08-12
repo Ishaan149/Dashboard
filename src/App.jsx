@@ -66,7 +66,7 @@ export default function App() {
   const ActiveView = VIEWS[view]
   const isFullWidth = FULL_WIDTH_VIEWS.has(view)
   const viewClassName = isFullWidth
-    ? `${styles.viewFull} ${view === 'todo' ? styles.viewTodo : ''}`
+    ? `${styles.viewFull} ${view === 'todo' ? styles.viewTodo : ''} ${view === 'braindump' ? styles.viewBrainDump : ''}`
     : styles.view
 
   return (

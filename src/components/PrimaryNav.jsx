@@ -26,8 +26,11 @@ export default function PrimaryNav({ activeView, onNavigate, onLock }) {
       <nav className={styles.rail} aria-label="Primary">
         <div className={styles.brand} aria-label="Dashboard">
           <span className={styles.brandMark} aria-hidden="true">D</span>
-          <span className={styles.brandName}>Dashboard</span>
+          <span className={styles.brandCopy}>
+            <span className={styles.brandName}>Dashboard</span>
+          </span>
         </div>
+        <p className={styles.sectionLabel}>Workspace</p>
         <div className={styles.railItems}>
           {NAV_ITEMS.map(item => (
             <NavButton key={item.id} item={item} activeView={activeView} onNavigate={onNavigate} />

@@ -291,6 +291,11 @@ const CommandPalette = forwardRef(function CommandPalette({ activeView, onNaviga
               ))}
               {!options.length && <div className={styles.empty}>No matching commands or pages</div>}
             </div>
+            <div className={styles.paletteFooter} aria-hidden="true">
+              <span><kbd>↑</kbd><kbd>↓</kbd> Move</span>
+              <span><kbd>↵</kbd> Open</span>
+              <span><kbd>Esc</kbd> Close</span>
+            </div>
           </>
         ) : (
           <form className={styles.captureForm} onSubmit={saveQuickNote}>
