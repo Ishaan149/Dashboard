@@ -106,11 +106,7 @@
 }
 
 .active .icon { color: var(--accent); }
-.lock {
-  margin-top: auto;
-  color: color-mix(in srgb, var(--danger) 68%, var(--ink-2));
-  border-top-color: var(--border);
-}
+.railItems + .navItem { margin-top: auto; }
 .bottomNav { display: none; }
 
 @media (max-width: 1199px) and (min-width: 768px) {

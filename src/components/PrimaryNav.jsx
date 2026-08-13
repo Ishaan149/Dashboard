@@ -1,4 +1,4 @@
-import { LockIcon, NAV_ITEMS, NavigationIcon } from './navigation'
+import { NAV_ITEMS, NavigationIcon, SETTINGS_NAV_ITEM } from './navigation'
 import styles from './PrimaryNav.module.css'
 
 function NavButton({ item, activeView, mobile, onNavigate }) {
@@ -20,7 +20,7 @@ function NavButton({ item, activeView, mobile, onNavigate }) {
   )
 }
 
-export default function PrimaryNav({ activeView, onNavigate, onLock }) {
+export default function PrimaryNav({ activeView, onNavigate }) {
   return (
     <>
       <nav className={styles.rail} aria-label="Primary">
@@ -36,10 +36,7 @@ export default function PrimaryNav({ activeView, onNavigate, onLock }) {
             <NavButton key={item.id} item={item} activeView={activeView} onNavigate={onNavigate} />
           ))}
         </div>
-        <button type="button" className={`${styles.navItem} ${styles.lock}`} onClick={onLock} aria-label="Lock Dashboard" data-tooltip="Lock">
-          <span className={styles.icon}><LockIcon /></span>
-          <span className={styles.label}>Lock</span>
-        </button>
+        <NavButton item={SETTINGS_NAV_ITEM} activeView={activeView} onNavigate={onNavigate} />
       </nav>
 
       <nav className={styles.bottomNav} aria-label="Primary">

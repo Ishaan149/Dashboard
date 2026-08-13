@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { NAV_ITEMS, getViewLabel } from './navigation'
+import { NAV_ITEMS, SETTINGS_NAV_ITEM, getViewLabel } from './navigation'
 
 describe('primary navigation', () => {
   it('keeps the six stable view IDs in product order', () => {
@@ -27,5 +27,10 @@ describe('primary navigation', () => {
       'Habits',
       'Planner',
     ])
+  })
+
+  it('exposes Settings as a utility destination', () => {
+    expect(SETTINGS_NAV_ITEM).toMatchObject({ id: 'settings', label: 'Settings', icon: 'settings' })
+    expect(getViewLabel('settings')).toBe('Settings')
   })
 })

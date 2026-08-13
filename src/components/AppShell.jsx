@@ -14,15 +14,15 @@ function QuickNoteIcon() {
   )
 }
 
-export default function AppShell({ activeView, onNavigate, onLock, children }) {
+export default function AppShell({ activeView, onNavigate, children }) {
   const paletteRef = useRef(null)
 
   return (
     <div className={styles.shell}>
       <a className={styles.skipLink} href="#main-content">Skip to main content</a>
-      <PrimaryNav activeView={activeView} onNavigate={onNavigate} onLock={onLock} />
+      <PrimaryNav activeView={activeView} onNavigate={onNavigate} />
       <div className={styles.workspace}>
-        <PageHeader activeView={activeView} onNavigate={onNavigate} onLock={onLock} />
+        <PageHeader activeView={activeView} onNavigate={onNavigate} />
         <main id="main-content" className={styles.main} tabIndex="-1">
           {children}
         </main>
@@ -32,12 +32,12 @@ export default function AppShell({ activeView, onNavigate, onLock, children }) {
         className={styles.quickNoteWidget}
         onClick={() => paletteRef.current?.open()}
         aria-label="Open command palette"
-        data-tooltip="Quick Note"
+        data-tooltip="Command palette"
       >
         <QuickNoteIcon />
       </button>
       <Suspense fallback={null}>
-        <CommandPalette ref={paletteRef} activeView={activeView} onNavigate={onNavigate} />
+        <CommandPalette ref={paletteRef} onNavigate={onNavigate} />
       </Suspense>
     </div>
   )
