@@ -12,6 +12,7 @@ const VIEWS = {
   jobs:       lazy(() => import('./components/JobTracker')),
   habits:     lazy(() => import('./components/HabitTracker')),
   dayplanner: lazy(() => import('./components/DayPlanner')),
+  settings:   lazy(() => import('./components/Settings')),
 }
 
 const FULL_WIDTH_VIEWS = new Set(['dayplanner', 'overview', 'todo', 'braindump'])
@@ -71,12 +72,12 @@ export default function App() {
 
   return (
     <ToastProvider>
-      <AppShell activeView={view} onNavigate={handleNavigate} onLock={handleLock}>
+      <AppShell activeView={view} onNavigate={handleNavigate}>
         <div className={styles.content}>
           <div className={viewClassName} key={view}>
             <Suspense fallback={<LoadingState label={getViewLabel(view)} />}>
               <ViewReady onReady={handleViewReady}>
-                <ActiveView onChange={handleNavigate} />
+                <ActiveView onChange={handleNavigate} onLock={handleLock} />
               </ViewReady>
             </Suspense>
           </div>

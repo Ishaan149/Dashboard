@@ -74,7 +74,7 @@
   animation: menuIn var(--motion-fast) ease-out;
 }
 
-.lockAction {
+.settingsAction {
   width: 100%;
   min-height: var(--control-min-touch);
   padding: 0 11px;
@@ -84,13 +84,13 @@
   border: 0;
   border-radius: var(--radius-sm);
   background: transparent;
-  color: color-mix(in srgb, var(--danger) 78%, white);
+  color: var(--ink-2);
   font: inherit;
   font-size: 13px;
   cursor: pointer;
 }
 
-.lockAction:hover { background: color-mix(in srgb, var(--danger) 10%, transparent); }
+.settingsAction:hover { background: var(--glass-hover); color: var(--ink); }
 
 @keyframes menuIn {
   from { opacity: 0; transform: translateY(-4px); }
@@ -118,5 +118,5 @@
 }
 
 @media (forced-colors: active) {
-  .header, .menuButton, .menu, .lockAction { border-color: CanvasText; }
+  .header, .menuButton, .menu, .settingsAction { border-color: CanvasText; }
 }

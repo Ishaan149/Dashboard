@@ -7,7 +7,10 @@ export const NAV_ITEMS = Object.freeze([
   { id: 'dayplanner', label: 'Day Planner', mobileLabel: 'Planner', icon: 'planner' },
 ])
 
+export const SETTINGS_NAV_ITEM = Object.freeze({ id: 'settings', label: 'Settings', mobileLabel: 'Settings', icon: 'settings' })
+
 export function getViewLabel(viewId) {
+  if (viewId === SETTINGS_NAV_ITEM.id) return SETTINGS_NAV_ITEM.label
   return NAV_ITEMS.find(item => item.id === viewId)?.label ?? 'Dashboard'
 }
 
@@ -27,8 +30,20 @@ export function NavigationIcon({ name, size = 20 }) {
   if (name === 'today') {
     return <svg {...common}><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
   }
+  if (name === 'home') {
+    return <svg {...common}><path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10M9 20v-6h6v6"/></svg>
+  }
   if (name === 'todo') {
     return <svg {...common}><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+  }
+  if (name === 'taskToday') {
+    return <svg {...common}><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 9h18"/><circle cx="12" cy="15" r="2.5"/></svg>
+  }
+  if (name === 'taskWeek') {
+    return <svg {...common}><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 9h18M8 13h.01M12 13h.01M16 13h.01M8 17h.01M12 17h.01M16 17h.01"/></svg>
+  }
+  if (name === 'settings') {
+    return <svg {...common}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V21h-4v-.08A1.7 1.7 0 0 0 8.97 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.52-1.03H3v-4h.08A1.7 1.7 0 0 0 4.6 8.94a1.7 1.7 0 0 0-.34-1.88L4.2 7l2.83-2.83.06.06a1.7 1.7 0 0 0 1.88.34A1.7 1.7 0 0 0 10 3.05V3h4v.08a1.7 1.7 0 0 0 1.03 1.52 1.7 1.7 0 0 0 1.88-.34l.06-.06L19.8 7l-.06.06a1.7 1.7 0 0 0-.34 1.88A1.7 1.7 0 0 0 20.92 10H21v4h-.08A1.7 1.7 0 0 0 19.4 15Z"/></svg>
   }
   if (name === 'brain') {
     return <svg {...common}><path d="M12 2a7 7 0 00-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 001 1h6a1 1 0 001-1v-2.26A7 7 0 0012 2z"/><path d="M9 21h6"/></svg>

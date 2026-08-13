@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { LockIcon, getViewLabel } from './navigation'
+import { NavigationIcon, getViewLabel } from './navigation'
 import styles from './PageHeader.module.css'
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -8,12 +8,12 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 const SHORT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 const pad = number => String(number).padStart(2, '0')
 
-export default function PageHeader({ activeView, onNavigate, onLock }) {
+export default function PageHeader({ activeView, onNavigate }) {
   const [now, setNow] = useState(new Date())
   const [open, setOpen] = useState(false)
   const wrapRef = useRef(null)
   const triggerRef = useRef(null)
-  const lockRef = useRef(null)
+  const settingsRef = useRef(null)
 
   useEffect(() => {
     const interval = setInterval(() => setNow(new Date()), 1000)
@@ -22,7 +22,7 @@ export default function PageHeader({ activeView, onNavigate, onLock }) {
 
   useEffect(() => {
     if (!open) return undefined
-    lockRef.current?.focus()
+    settingsRef.current?.focus()
 
     function closeAndReturnFocus() {
       setOpen(false)
@@ -89,14 +89,14 @@ export default function PageHeader({ activeView, onNavigate, onLock }) {
           {open && (
             <div className={styles.menu} role="menu">
               <button
-                ref={lockRef}
+                ref={settingsRef}
                 type="button"
-                className={styles.lockAction}
+                className={styles.settingsAction}
                 role="menuitem"
-                onClick={() => { setOpen(false); onLock() }}
+                onClick={() => { setOpen(false); onNavigate('settings') }}
               >
-                <LockIcon size={18} />
-                Lock Dashboard
+                <NavigationIcon name="settings" size={18} />
+                Settings
               </button>
             </div>
           )}
