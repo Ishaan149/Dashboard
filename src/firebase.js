@@ -1,5 +1,8 @@
 import { initializeApp } from 'firebase/app'
-import { getFirestore } from 'firebase/firestore'
+import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore'
+import { assertSafeFirebaseEnvironment } from './config/firebaseEnvironment'
+
+assertSafeFirebaseEnvironment(import.meta.env)
 
 const firebaseConfig = {
   apiKey:            import.meta.env.VITE_FIREBASE_API_KEY,
@@ -13,3 +16,11 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig)
 
 export const db = getFirestore(app)
+
+if (import.meta.env.VITE_FIREBASE_EMULATOR === 'true') {
+  connectFirestoreEmulator(
+    db,
+    import.meta.env.VITE_FIREBASE_EMULATOR_HOST || '127.0.0.1',
+    Number(import.meta.env.VITE_FIREBASE_EMULATOR_PORT || 8080),
+  )
+}

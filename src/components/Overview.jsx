@@ -10,6 +10,14 @@ import {
   setOccurrenceCompleted,
 } from '../domain/recurringTasks'
 import { updatePinnedNote } from '../domain/brainDump'
+import {
+  adjustUncategorized,
+  getJobRecord,
+  getOverallApplicationCount,
+  getPeriodApplicationTotal,
+  getUncategorizedCount,
+  normalizeJobRecords,
+} from '../domain/jobActivity'
 import styles from './Overview.module.css'
 
 // ── icons ─────────────────────────────────────────────────────────────────────
@@ -263,7 +271,7 @@ function ScheduleCard({ blocks, categories, nowMin }) {
 
 const DAY_ABBR = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
-function JobsCard({ today, week, spark, onAdjust }) {
+function JobsCard({ today, week, spark, uncategorized, onAdjust }) {
   const max = Math.max(...spark, 1)
   return (
     <div className={styles.card}>
@@ -299,7 +307,7 @@ function JobsCard({ today, week, spark, onAdjust }) {
         <button
           className={styles.stepBtn}
           onClick={() => onAdjust(-1)}
-          disabled={today === 0}
+          disabled={uncategorized === 0}
           aria-label="Remove application"
         >−</button>
         <span className={styles.stepLabel}>Log an application</span>
@@ -374,28 +382,18 @@ export default function Overview() {
   const todayDone   = habitLogs[today] || []
   const sortedBlocks = [...blocks].sort((a, b) => a.startMinutes - b.startMinutes)
 
-  const jobsToday = (() => {
-    const r = jobRecords.find(r => r.date === today)
-    return r ? r.count : 0
-  })()
-  const jobsWeek = jobRecords.filter(r => r.date >= weekStart).reduce((s, r) => s + r.count, 0)
+  const normalizedJobRecords = normalizeJobRecords(jobRecords)
+  const todayJobRecord = getJobRecord(normalizedJobRecords, today)
+  const jobsToday = getOverallApplicationCount(todayJobRecord)
+  const jobsTodayUncategorized = getUncategorizedCount(todayJobRecord)
+  const jobsWeek = getPeriodApplicationTotal(normalizedJobRecords, weekStart)
   const jobSpark = Array.from({ length: 7 }, (_, i) => {
     const key = getDateKey(6 - i)
-    const r   = jobRecords.find(r => r.date === key)
-    return r ? r.count : 0
+    return getOverallApplicationCount(getJobRecord(normalizedJobRecords, key))
   })
 
   function adjustJobs(delta) {
-    setJobRecords(prev => {
-      const existing = prev.find(r => r.date === today)
-      if (existing) {
-        return prev.map(r =>
-          r.date === today ? { ...r, count: Math.max(0, r.count + delta) } : r
-        )
-      }
-      if (delta > 0) return [...prev, { date: today, count: delta }]
-      return prev
-    })
+    setJobRecords(previous => adjustUncategorized(previous, today, delta))
   }
 
   function toggleTask(task) {
@@ -439,7 +437,7 @@ export default function Overview() {
         <ScheduleCard blocks={sortedBlocks} categories={categories} nowMin={nowMinutes} />
         <TasksCard tasks={todayTodos} onToggle={toggleTask} />
         <HabitsCard habits={habits} todayDone={todayDone} onToggle={toggleHabit} />
-        <JobsCard today={jobsToday} week={jobsWeek} spark={jobSpark} onAdjust={adjustJobs} />
+        <JobsCard today={jobsToday} week={jobsWeek} spark={jobSpark} uncategorized={jobsTodayUncategorized} onAdjust={adjustJobs} />
         <WeatherCard weather={weather} />
         <BrainDumpCard note={pinnedNote} onChange={updateBrainDump} />
       </div>
@@ -454,7 +452,7 @@ export default function Overview() {
         <BrainDumpCard note={pinnedNote} onChange={updateBrainDump} />
       </div>
       <div className={styles.col}>
-        <JobsCard today={jobsToday} week={jobsWeek} spark={jobSpark} onAdjust={adjustJobs} />
+        <JobsCard today={jobsToday} week={jobsWeek} spark={jobSpark} uncategorized={jobsTodayUncategorized} onAdjust={adjustJobs} />
         <TasksCard tasks={todayTodos} onToggle={toggleTask} />
       </div>
       <div className={styles.col}>

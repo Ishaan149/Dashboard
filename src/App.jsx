@@ -15,7 +15,7 @@ const VIEWS = {
   settings:   lazy(() => import('./components/Settings')),
 }
 
-const FULL_WIDTH_VIEWS = new Set(['dayplanner', 'overview', 'todo', 'braindump'])
+const FULL_WIDTH_VIEWS = new Set(['dayplanner', 'overview', 'todo', 'braindump', 'jobs'])
 
 function ViewReady({ onReady, children }) {
   useEffect(() => {
@@ -67,7 +67,7 @@ export default function App() {
   const ActiveView = VIEWS[view]
   const isFullWidth = FULL_WIDTH_VIEWS.has(view)
   const viewClassName = isFullWidth
-    ? `${styles.viewFull} ${view === 'todo' ? styles.viewTodo : ''} ${view === 'braindump' ? styles.viewBrainDump : ''}`
+    ? `${styles.viewFull} ${view === 'todo' ? styles.viewTodo : ''} ${view === 'braindump' ? styles.viewBrainDump : ''} ${view === 'jobs' ? styles.viewJobs : ''}`
     : styles.view
 
   return (

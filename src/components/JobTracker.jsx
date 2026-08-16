@@ -1,132 +1,220 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useSyncedStorage } from '../hooks/useSyncedStorage'
-import { getMonthStartKey, getWeekStartKey, parseLocalDateKey, toLocalDateKey } from '../utils/date'
-import Card from './Card'
+import { addDays, getMonthStartKey, getWeekStartKey, parseLocalDateKey, toLocalDateKey } from '../utils/date'
+import {
+  APPLICATION_CATEGORIES,
+  adjustCategory,
+  adjustOutreach,
+  getAllTimeApplicationTotal,
+  getJobRecord,
+  getOverallApplicationCount,
+  getPeriodApplicationTotal,
+  normalizeJobRecords,
+} from '../domain/jobActivity'
 import styles from './JobTracker.module.css'
 
-function getToday() {
-  return toLocalDateKey(new Date())
+function formatDate(dateKey) {
+  return parseLocalDateKey(dateKey)?.toLocaleDateString('en-US', {
+    weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
+  }) ?? dateKey
 }
 
-function formatDate(dateStr) {
-  return parseLocalDateKey(dateStr)?.toLocaleDateString('en-US', {
+function formatHistoryDate(dateKey) {
+  return parseLocalDateKey(dateKey)?.toLocaleDateString('en-US', {
     weekday: 'short', month: 'short', day: 'numeric', year: 'numeric',
-  }) ?? dateStr
+  }) ?? dateKey
+}
+
+function formatNavigationDate(dateKey) {
+  return parseLocalDateKey(dateKey)?.toLocaleDateString('en-US', {
+    weekday: 'short', month: 'short', day: 'numeric',
+  }) ?? dateKey
+}
+
+function EmptyRecord({ date }) {
+  return { date, count: 0, categories: {}, emails: 0, linkedin: 0 }
+}
+
+function CounterGlyph({ increase = false }) {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden="true">
+      <path d="M4 10h12" />
+      {increase && <path d="M10 4v12" />}
+    </svg>
+  )
+}
+
+function Counter({ label, value, noun, onAdjust, dateLabel, compact = false }) {
+  return (
+    <li className={`${styles.counter} ${compact ? styles.counterCompact : ''}`}>
+      <div className={styles.counterHead}>
+        <h3>{label}</h3>
+      </div>
+      <div className={styles.counterControls}>
+        <button
+          type="button"
+          className={styles.countButton}
+          onClick={() => onAdjust(-1)}
+          disabled={value === 0}
+          aria-label={`Decrease ${label} ${noun} for ${dateLabel}`}
+        ><CounterGlyph /></button>
+        <span className={styles.counterValue} aria-live="polite">{value}</span>
+        <button
+          type="button"
+          className={styles.countButton}
+          onClick={() => onAdjust(1)}
+          aria-label={`Increase ${label} ${noun} for ${dateLabel}`}
+        ><CounterGlyph increase /></button>
+      </div>
+    </li>
+  )
+}
+
+function DateNavigation({ selectedDate, selectedDateLabel, onMove, isToday }) {
+  return (
+    <div className={styles.dateNavigation} role="group" aria-label="Activity date navigation">
+      <button
+        type="button"
+        className={styles.dateNavButton}
+        onClick={() => onMove(-1)}
+        aria-label={`Previous activity date from ${selectedDateLabel}`}
+      >‹</button>
+      <time className={styles.dateNavText} dateTime={selectedDate} aria-label="Selected activity date">
+        {isToday ? 'Today' : formatNavigationDate(selectedDate)}
+      </time>
+      <button
+        type="button"
+        className={styles.dateNavButton}
+        onClick={() => onMove(1)}
+        aria-label={`Next activity date from ${selectedDateLabel}`}
+      >›</button>
+    </div>
+  )
+}
+
+function Summary({ week, month, allTime }) {
+  return (
+    <section className={styles.summary} aria-labelledby="job-summary-heading">
+      <h2 id="job-summary-heading" className={styles.sectionEyebrow}>Application summary</h2>
+      <div className={styles.summaryGrid}>
+        <div className={styles.stat}><strong>{week}</strong><span>this week</span></div>
+        <div className={styles.stat}><strong>{month}</strong><span>this month</span></div>
+        <div className={styles.stat}><strong>{allTime}</strong><span>all time</span></div>
+      </div>
+    </section>
+  )
 }
 
 export default function JobTracker() {
-  const today = getToday()
   const [records, setRecords] = useSyncedStorage('job_applications', [])
   const [note, setNote] = useSyncedStorage('job_note', '')
-  const [selectedDate, setSelectedDate] = useState(today)
+  const [selectedDate, setSelectedDate] = useState(() => toLocalDateKey(new Date()))
 
-  const selectedRecord = records.find(r => r.date === selectedDate)
-  const todayCount = selectedRecord ? selectedRecord.count : 0
+  const selectedRecord = getJobRecord(records, selectedDate) ?? EmptyRecord({ date: selectedDate })
+  const selectedDateLabel = formatDate(selectedDate)
+  const normalizedRecords = useMemo(() => normalizeJobRecords(records), [records])
+  const history = normalizedRecords
+    .filter(record => record.date !== selectedDate)
+    .sort((a, b) => b.date.localeCompare(a.date))
 
-  const weekStart = getWeekStartKey()
-  const monthStart = getMonthStartKey()
-  const weekCount = records.filter(r => r.date >= weekStart).reduce((sum, r) => sum + r.count, 0)
-  const monthCount = records.filter(r => r.date >= monthStart).reduce((sum, r) => sum + r.count, 0)
+  const week = getPeriodApplicationTotal(records, getWeekStartKey())
+  const month = getPeriodApplicationTotal(records, getMonthStartKey())
+  const allTime = getAllTimeApplicationTotal(records)
 
-  function upsert(delta) {
-    setRecords(prev => {
-      const exists = prev.find(r => r.date === selectedDate)
-      if (exists) {
-        return prev.map(r =>
-          r.date === selectedDate
-            ? { ...r, count: Math.max(0, r.count + delta) }
-            : r
-        )
-      }
-      return delta > 0 ? [...prev, { date: selectedDate, count: delta }] : prev
+  function moveSelectedDate(delta) {
+    setSelectedDate(current => {
+      const parsed = parseLocalDateKey(current) ?? new Date()
+      return toLocalDateKey(addDays(parsed, delta))
     })
   }
 
-  const history = [...records]
-    .filter(r => r.date !== selectedDate)
-    .sort((a, b) => b.date.localeCompare(a.date))
+  function adjustApplicationCategory(categoryKey, delta) {
+    setRecords(previous => adjustCategory(previous, selectedDate, categoryKey, delta))
+  }
 
-  const total = records.reduce((sum, r) => sum + r.count, 0)
-
+  function adjustOutreachCounter(field, delta) {
+    setRecords(previous => adjustOutreach(previous, selectedDate, field, delta))
+  }
 
   return (
-    <Card title="Job Applications">
-      <div className={styles.todaySection}>
-        <div className={styles.countRow}>
-          <button
-            className={styles.countBtn}
-            onClick={() => upsert(-1)}
-            disabled={todayCount === 0}
-            aria-label="Decrease count"
-          >
-            −
-          </button>
-          <div className={styles.countDisplay}>
-            <span className={styles.count}>{todayCount}</span>
-            <span className={styles.countLabel}>{selectedDate === today ? 'today' : 'selected'}</span>
-          </div>
-          <button
-            className={styles.countBtn}
-            onClick={() => upsert(1)}
-            aria-label="Increase count"
-          >
-            +
-          </button>
-        </div>
-        <input
-          type="date"
-          className={styles.dateInput}
-          value={selectedDate}
-          max={today}
-          onChange={e => setSelectedDate(e.target.value)}
-        />
-        <div className={styles.statsRow}>
-          <div className={styles.statItem}>
-            <span className={styles.statValue}>{weekCount}</span>
-            <span className={styles.statLabel}>this week</span>
-          </div>
-          <div className={styles.statDivider} />
-          <div className={styles.statItem}>
-            <span className={styles.statValue}>{monthCount}</span>
-            <span className={styles.statLabel}>this month</span>
-          </div>
-          <div className={styles.statDivider} />
-          <div className={styles.statItem}>
-            <span className={styles.statValue}>{total}</span>
-            <span className={styles.statLabel}>all time</span>
-          </div>
-        </div>
-      </div>
+    <div className={styles.page}>
+      <Summary week={week} month={month} allTime={allTime} />
 
-      <div className={styles.divider} />
-
-      <div className={styles.noteSection}>
-        <p className={styles.historyHeading}>Notes</p>
-        <textarea
-          className={styles.noteArea}
-          value={note}
-          onChange={e => setNote(e.target.value)}
-          placeholder="Links, notes, anything job-search related…"
-        />
-      </div>
-
-      <div className={styles.divider} />
-
-      <div className={styles.historySection}>
-        <p className={styles.historyHeading}>History</p>
-        {history.length === 0 ? (
-          <p className={styles.empty}>No history yet — start applying!</p>
-        ) : (
-          <ul className={styles.historyList}>
-            {history.map(r => (
-              <li key={r.date} className={styles.historyItem}>
-                <span className={styles.historyDate}>{formatDate(r.date)}</span>
-                <span className={styles.historyCount}>{r.count}</span>
-              </li>
+      <section className={styles.logging} aria-label="Job activity logging">
+        <div className={styles.activityGroup}>
+          <div className={styles.groupHeader}>
+            <h3 className={styles.groupHeading}>Applications</h3>
+            <DateNavigation
+              selectedDate={selectedDate}
+              selectedDateLabel={selectedDateLabel}
+              onMove={moveSelectedDate}
+              isToday={selectedDate === toLocalDateKey(new Date())}
+            />
+          </div>
+          <ul className={styles.counterGrid}>
+            {APPLICATION_CATEGORIES.map(category => (
+              <Counter
+                key={category.key}
+                label={category.label}
+                noun="applications"
+                value={selectedRecord.categories?.[category.key] ?? 0}
+                onAdjust={delta => adjustApplicationCategory(category.key, delta)}
+                dateLabel={selectedDateLabel}
+              />
             ))}
           </ul>
-        )}
+        </div>
+
+        <div className={styles.activityGroup}>
+          <h3 className={styles.groupHeading}>Outreach</h3>
+          <ul className={`${styles.counterGrid} ${styles.outreachGrid}`}>
+            <Counter
+              label="Emails"
+              noun="sent"
+              compact
+              value={selectedRecord.emails ?? 0}
+              onAdjust={delta => adjustOutreachCounter('emails', delta)}
+              dateLabel={selectedDateLabel}
+            />
+            <Counter
+              label="LinkedIn"
+              noun="messages"
+              compact
+              value={selectedRecord.linkedin ?? 0}
+              onAdjust={delta => adjustOutreachCounter('linkedin', delta)}
+              dateLabel={selectedDateLabel}
+            />
+          </ul>
+        </div>
+      </section>
+
+      <div className={styles.lowerGrid}>
+        <section className={styles.panel} aria-labelledby="notes-heading">
+          <h2 id="notes-heading" className={styles.panelHeading}>Notes</h2>
+          <textarea
+            className={styles.noteArea}
+            value={note}
+            onChange={event => setNote(event.target.value)}
+            placeholder="Links, notes, anything job-search related…"
+          />
+        </section>
+
+        <section className={styles.panel} aria-labelledby="history-heading">
+          <h2 id="history-heading" className={styles.panelHeading}>History</h2>
+          {history.length === 0 ? (
+            <p className={styles.empty}>No history yet — start applying!</p>
+          ) : (
+            <ul className={styles.historyList}>
+              {history.map(record => (
+                <li key={record.date} className={styles.historyItem}>
+                  <span>{formatHistoryDate(record.date)}</span>
+                  <strong>{getOverallApplicationCount(record)}</strong>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       </div>
-    </Card>
+    </div>
   )
 }
