@@ -19,7 +19,7 @@
   gap: var(--space-3);
   border: 1px solid var(--border-hi);
   border-radius: var(--radius-md);
-  background: #17191f;
+  background: var(--surface-raised);
   box-shadow: var(--shadow-popover);
   color: var(--ink);
   font-size: 13px;

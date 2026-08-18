@@ -4,7 +4,7 @@
   padding: var(--space-4);
   display: grid;
   place-items: center;
-  background: rgba(0, 0, 0, 0.68);
+  background: var(--overlay);
   z-index: var(--z-modal);
   animation: backdropIn var(--motion-normal) ease-out;
 }
@@ -17,7 +17,7 @@
   overflow: hidden;
   border: 1px solid var(--border-hi);
   border-radius: var(--radius-lg);
-  background: #15171d;
+  background: var(--surface-solid);
   box-shadow: var(--shadow-modal);
   color: var(--ink);
   animation: modalIn var(--motion-normal) ease-out;

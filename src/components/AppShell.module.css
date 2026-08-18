@@ -1,4 +1,24 @@
 .shell {
+  --bg: var(--theme-background);
+  --accent: var(--theme-accent);
+  --accent-glow: color-mix(in srgb, var(--theme-accent) 35%, transparent);
+  --accent-soft: color-mix(in srgb, var(--theme-accent) 12%, transparent);
+  --accent-contrast: var(--theme-background);
+  --focus-color: color-mix(in srgb, var(--theme-accent) 84%, var(--theme-foreground));
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--theme-accent) 62%, transparent);
+  --ink: var(--theme-foreground);
+  --ink-2: color-mix(in srgb, var(--theme-foreground) 67%, var(--theme-background));
+  --ink-3: color-mix(in srgb, var(--theme-foreground) 54%, var(--theme-background));
+  --text: var(--theme-foreground);
+  --subtext: color-mix(in srgb, var(--theme-foreground) 40%, var(--theme-background));
+  --glass: color-mix(in srgb, var(--theme-foreground) 5.5%, transparent);
+  --glass-hover: color-mix(in srgb, var(--theme-foreground) 8%, transparent);
+  --border: color-mix(in srgb, var(--theme-foreground) 10%, transparent);
+  --border-hi: color-mix(in srgb, var(--theme-foreground) 22%, transparent);
+  --surface-deep: color-mix(in srgb, var(--theme-background) 86%, black);
+  --surface-solid: color-mix(in srgb, var(--theme-foreground) 4%, var(--theme-background));
+  --surface-raised: color-mix(in srgb, var(--theme-foreground) 6%, var(--theme-background));
+  --overlay: color-mix(in srgb, black 68%, transparent);
   width: 100%;
   height: 100dvh;
   min-height: 0;
@@ -35,7 +55,7 @@
   padding: 10px 14px;
   border-radius: var(--radius-sm);
   background: var(--accent);
-  color: #0b1511;
+  color: var(--accent-contrast);
   font-size: 14px;
   font-weight: 720;
   text-decoration: none;
@@ -78,7 +98,7 @@
   padding: 7px 10px;
   border: 1px solid var(--border-hi);
   border-radius: var(--radius-sm);
-  background: #0e0f14;
+  background: var(--surface-deep);
   box-shadow: var(--shadow-popover);
   color: var(--ink);
   font-size: 11px;

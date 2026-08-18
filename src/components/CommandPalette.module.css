@@ -4,7 +4,7 @@
   padding: var(--space-4);
   display: grid;
   place-items: center;
-  background: rgba(5, 6, 9, 0.68);
+  background: var(--overlay);
   backdrop-filter: blur(5px);
   z-index: var(--z-modal);
   animation: backdropIn var(--motion-normal) ease-out;
@@ -92,11 +92,11 @@
 .field input, .field textarea { width: 100%; border: 1px solid var(--border); border-radius: var(--radius-md); outline: 0; background: rgba(0,0,0,.16); color: var(--ink); font-size: 14px; font-weight: 450; }
 .field input { min-height: 44px; padding: 0 12px; }
 .field textarea { min-height: 150px; padding: 11px 12px; resize: vertical; line-height: 1.55; }
-.field input:focus, .field textarea:focus { border-color: var(--border-hi); box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08); }
+.field input:focus, .field textarea:focus { border-color: var(--focus-color); box-shadow: var(--focus-ring); }
 .selectWrap { position: relative; }
 .selectTrigger { width: 100%; min-height: 44px; padding: 0 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); outline: 0; background: rgba(0,0,0,.16); color: var(--ink); font: inherit; font-size: 14px; font-weight: 500; text-align: left; cursor: pointer; }
 .selectTrigger:hover { border-color: var(--border-hi); background: var(--glass-hover); }
-.selectTrigger:focus-visible, .selectTrigger[aria-expanded="true"] { border-color: var(--border-hi); box-shadow: 0 0 0 3px rgba(255,255,255,.08); }
+.selectTrigger:focus-visible, .selectTrigger[aria-expanded="true"] { border-color: var(--focus-color); box-shadow: var(--focus-ring); }
 .selectChevron { width: 20px; height: 20px; display: grid; place-items: center; flex: none; color: var(--ink-3); transition: transform var(--motion-fast) ease; }
 .selectChevronOpen { transform: rotate(180deg); }
 .selectMenu { max-height: 190px; margin-top: 6px; padding: 5px; overflow-y: auto; border: 1px solid var(--border-hi); border-radius: var(--radius-md); background: color-mix(in srgb, var(--bg) 96%, white); box-shadow: var(--shadow-modal); }

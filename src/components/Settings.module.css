@@ -6,6 +6,70 @@
   box-shadow: var(--shadow-popover);
 }
 
+.appearance { padding: 24px clamp(22px, 5vw, 40px) 30px; }
+.sectionIntro { margin-bottom: 20px; }
+.sectionIntro h2 { color: var(--ink); font-size: 20px; letter-spacing: -.02em; }
+.helper { margin-top: 6px; color: var(--ink-2); font-size: 13px; line-height: 1.5; }
+
+.presetGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.presetCard {
+  min-width: 0;
+  min-height: 132px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--glass);
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.presetCard:hover { border-color: var(--border-hi); background: var(--glass-hover); color: var(--ink); }
+.presetSelected { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); color: var(--ink); }
+.presetHeader { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.checkmark { display: grid; place-items: center; width: 20px; height: 20px; border: 1px solid var(--border-hi); border-radius: 50%; color: transparent; }
+.presetSelected .checkmark { border-color: var(--accent); background: var(--accent); color: var(--accent-contrast); }
+
+.preview {
+  min-height: 76px;
+  flex: 1;
+  display: grid;
+  grid-template-columns: 24% 1fr;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--preview-foreground) 16%, transparent);
+  border-radius: 8px;
+  background: var(--preview-background);
+}
+
+.previewRail { padding: 8px 5px; border-right: 1px solid color-mix(in srgb, var(--preview-foreground) 12%, transparent); background: color-mix(in srgb, var(--preview-foreground) 5%, var(--preview-background)); }
+.previewRail span { display: block; width: 12px; height: 12px; border-radius: 4px; background: var(--preview-accent); }
+.previewMain { padding: 8px; display: flex; flex-direction: column; gap: 8px; }
+.previewHeader { width: 55%; height: 5px; border-radius: 9px; background: var(--preview-foreground); opacity: .84; }
+.previewCards { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; flex: 1; }
+.previewCards span { border: 1px solid color-mix(in srgb, var(--preview-foreground) 13%, transparent); border-radius: 5px; background: color-mix(in srgb, var(--preview-foreground) 6%, transparent); }
+.previewCards span:first-child { border-top: 3px solid var(--preview-accent); }
+
+.colorControls { margin-top: 22px; border-top: 1px solid var(--border); }
+.colorRow { min-height: 62px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border-bottom: 1px solid color-mix(in srgb, var(--border) 72%, transparent); }
+.colorRow:last-child { border-bottom: 0; }
+.colorLabel { color: var(--ink); font-size: 14px; font-weight: 650; }
+.colorInput { width: 48px; min-width: 48px; height: 48px; padding: 3px; border: 1px solid var(--border-hi); border-radius: 10px; background: var(--glass); cursor: pointer; }
+.colorInput::-webkit-color-swatch-wrapper { padding: 0; }
+.colorInput::-webkit-color-swatch { border: 0; border-radius: 6px; }
+.colorInput::-moz-color-swatch { border: 0; border-radius: 6px; }
+.srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
 .intro {
   padding: 24px clamp(22px, 5vw, 40px);
   border-bottom: 1px solid var(--border);
@@ -46,7 +110,7 @@
   font: inherit;
   font-size: 12px;
   font-weight: 750;
-  box-shadow: inset 0 1px rgba(255,255,255,.05);
+  box-shadow: inset 0 1px color-mix(in srgb, var(--theme-foreground) 5%, transparent);
 }
 
 .security {
@@ -82,6 +146,8 @@
 .lockButton:hover { border-color: color-mix(in srgb, var(--danger) 54%, var(--border)); background: color-mix(in srgb, var(--danger) 15%, transparent); }
 
 @media (max-width: 560px) {
+  .appearance { padding-inline: 18px; }
+  .presetGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .shortcutRow { align-items: flex-start; gap: 14px; }
   .keys { padding-top: 2px; }
   .keys kbd { min-width: 32px; height: 32px; padding-inline: 8px; }
@@ -90,5 +156,7 @@
 }
 
 @media (forced-colors: active) {
-  .page, .intro, .shortcutRow, .keys kbd, .security, .lockButton { border-color: CanvasText; }
+  .page, .intro, .presetCard, .preview, .colorControls, .colorRow, .colorInput, .shortcutRow, .keys kbd, .security, .lockButton { border-color: CanvasText; }
+  .presetSelected { outline: 3px solid Highlight; }
+  .checkmark { color: CanvasText; }
 }

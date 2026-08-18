@@ -1,8 +1,8 @@
 .card {
-  background: rgba(255,255,255,0.055);
+  background: var(--glass);
   backdrop-filter: blur(28px) saturate(160%);
   -webkit-backdrop-filter: blur(28px) saturate(160%);
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid var(--border);
   border-radius: 20px;
   padding: 24px;
   transition: border-color 0.25s;
@@ -16,11 +16,11 @@
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+  background: linear-gradient(90deg, transparent, var(--border-hi), transparent);
   pointer-events: none;
 }
 
-.card:hover { border-color: rgba(255,255,255,0.2); }
+.card:hover { border-color: var(--border-hi); }
 
 .full { grid-column: 1 / -1; }
 
@@ -36,5 +36,5 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.32);
+  color: var(--ink-3);
 }

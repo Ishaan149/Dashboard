@@ -6,7 +6,7 @@
   display: flex;
   flex-direction: column;
   gap: 0;
-  background: rgba(10, 11, 15, 0.92);
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
   border-right: 1px solid var(--border);
   backdrop-filter: var(--blur);
   -webkit-backdrop-filter: var(--blur);
@@ -133,7 +133,7 @@
     padding: 7px 9px;
     border: 1px solid var(--border-hi);
     border-radius: var(--radius-sm);
-    background: #0e1015;
+    background: var(--surface-deep);
     color: var(--ink);
     box-shadow: var(--shadow-popover);
     font-size: 12px;
@@ -161,7 +161,7 @@
     display: grid;
     grid-template-columns: repeat(6, minmax(0, 1fr));
     align-items: stretch;
-    background: rgba(12, 13, 18, 0.96);
+    background: color-mix(in srgb, var(--bg) 96%, transparent);
     border-top: 1px solid var(--border-hi);
     backdrop-filter: blur(20px) saturate(150%);
     -webkit-backdrop-filter: blur(20px) saturate(150%);

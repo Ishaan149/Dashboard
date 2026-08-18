@@ -29,7 +29,7 @@
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 10px;
-  background: rgba(255,255,255,.025);
+  background: color-mix(in srgb, var(--theme-foreground) 2.5%, transparent);
 }
 .dateNavButton {
   width: 32px;
@@ -73,17 +73,17 @@
 .groupHeader .groupHeading { margin-bottom: 0; color: var(--accent); }
 .counterGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 11px; padding: 0; list-style: none; }
 .outreachGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.counter { min-width: 0; padding: 16px; border: 1px solid var(--border); border-radius: var(--radius-md); background: rgba(255,255,255,.035); }
+.counter { min-width: 0; padding: 16px; border: 1px solid var(--border); border-radius: var(--radius-md); background: color-mix(in srgb, var(--theme-foreground) 3.5%, transparent); }
 .counterHead { display: flex; align-items: center; justify-content: center; gap: 10px; }
 .counter h3 { min-width: 0; color: var(--ink); font-size: 15px; font-weight: 650; line-height: 1.3; text-align: center; }
-.counterValue { min-width: 26px; color: var(--accent); font-size: 22px; font-weight: 700; line-height: 1; text-align: center; font-variant-numeric: tabular-nums; }
+.counterValue { min-width: 26px; color: var(--ink); font-size: 22px; font-weight: 700; line-height: 1; text-align: center; font-variant-numeric: tabular-nums; }
 .counterControls { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 13px; }
 .counterCompact { display: flex; align-items: center; gap: 14px; padding: 10px 14px; }
 .counterCompact .counterHead { flex: 1; justify-content: flex-start; }
 .counterCompact .counterHead h3 { text-align: left; }
 .counterCompact .counterValue { font-size: 22px; }
 .counterCompact .counterControls { flex: none; margin-top: 0; gap: 8px; }
-.countButton { width: 38px; height: 38px; flex: none; display: grid; place-items: center; padding: 0; border: 1px solid var(--border); border-radius: 50%; background: rgba(255,255,255,.025); color: var(--ink-2); cursor: pointer; }
+.countButton { width: 38px; height: 38px; flex: none; display: grid; place-items: center; padding: 0; border: 1px solid var(--border); border-radius: 50%; background: color-mix(in srgb, var(--theme-foreground) 2.5%, transparent); color: var(--ink-2); cursor: pointer; }
 .countButton svg { display: block; width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; }
 .countButton:hover:not(:disabled) { border-color: var(--border-hi); background: var(--glass-hover); color: var(--ink); }
 .countButton:disabled { cursor: not-allowed; opacity: .28; }
@@ -91,12 +91,12 @@
 .lowerGrid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: stretch; }
 .panel { min-width: 0; padding: 18px 22px; display: flex; flex-direction: column; }
 .panelHeading { margin-bottom: 12px; }
-.noteArea { display: block; width: 100%; flex: 1; min-height: 142px; padding: 11px 12px; border: 1px solid var(--border); border-radius: var(--radius-md); background: rgba(255,255,255,.035); color: var(--ink); font-size: 13px; line-height: 1.5; resize: vertical; }
+.noteArea { display: block; width: 100%; flex: 1; min-height: 142px; padding: 11px 12px; border: 1px solid var(--border); border-radius: var(--radius-md); background: color-mix(in srgb, var(--theme-foreground) 3.5%, transparent); color: var(--ink); font-size: 13px; line-height: 1.5; resize: vertical; }
 .noteArea::placeholder { color: var(--ink-3); }
 .historyList { display: flex; flex-direction: column; gap: 5px; max-height: 220px; overflow-y: auto; padding: 0; list-style: none; }
-.historyItem { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 38px; padding: 7px 10px; border: 1px solid transparent; border-radius: var(--radius-sm); background: rgba(255,255,255,.035); color: var(--ink-2); font-size: 13px; }
+.historyItem { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 38px; padding: 7px 10px; border: 1px solid transparent; border-radius: var(--radius-sm); background: color-mix(in srgb, var(--theme-foreground) 3.5%, transparent); color: var(--ink-2); font-size: 13px; }
 .historyItem:hover { border-color: var(--border); background: var(--glass-hover); }
-.historyItem strong { color: var(--accent); font-variant-numeric: tabular-nums; }
+.historyItem strong { color: var(--ink); font-variant-numeric: tabular-nums; }
 .empty { color: var(--ink-3); font-size: 13px; font-style: italic; }
 
 @media (min-width: 1100px) {

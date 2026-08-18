@@ -2,6 +2,7 @@ import { lazy, Suspense, useRef } from 'react'
 import PageHeader from './PageHeader'
 import PrimaryNav from './PrimaryNav'
 import styles from './AppShell.module.css'
+import { useTheme } from '../theme/ThemeProvider'
 
 const CommandPalette = lazy(() => import('./CommandPalette'))
 
@@ -16,9 +17,15 @@ function QuickNoteIcon() {
 
 export default function AppShell({ activeView, onNavigate, children }) {
   const paletteRef = useRef(null)
+  const { theme } = useTheme()
+  const themeStyle = {
+    '--theme-accent': theme.colors.accent,
+    '--theme-background': theme.colors.background,
+    '--theme-foreground': theme.colors.foreground,
+  }
 
   return (
-    <div className={styles.shell}>
+    <div className={styles.shell} style={themeStyle} data-theme={theme.presetId}>
       <a className={styles.skipLink} href="#main-content">Skip to main content</a>
       <PrimaryNav activeView={activeView} onNavigate={onNavigate} />
       <div className={styles.workspace}>

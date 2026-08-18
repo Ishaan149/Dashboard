@@ -23,23 +23,23 @@
 
 .settingsLabel {
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--ink-2);
   font-weight: 500;
   white-space: nowrap;
 }
 
 .settingsSelect {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.10);
+  background: var(--glass);
+  border: 1px solid var(--border);
   border-radius: 6px;
-  color: #e2e8f0;
+  color: var(--ink);
   font-size: 12px;
   padding: 4px 8px;
   cursor: pointer;
   outline: none;
 }
 .settingsSelect:hover {
-  border-color: rgba(255,255,255,0.2);
+  border-color: var(--border-hi);
 }
 
 .settingsSpacer { flex: 1; }
@@ -61,7 +61,7 @@
   align-items: center;
   gap: 8px;
 }
-.confirmText { font-size: 12px; color: #94a3b8; }
+.confirmText { font-size: 12px; color: var(--ink-2); }
 .confirmYes {
   background: rgba(239,68,68,0.15);
   border: 1px solid rgba(239,68,68,0.4);
@@ -72,10 +72,10 @@
   cursor: pointer;
 }
 .confirmNo {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: var(--glass);
+  border: 1px solid var(--border);
   border-radius: 5px;
-  color: #94a3b8;
+  color: var(--ink-2);
   font-size: 12px;
   padding: 3px 10px;
   cursor: pointer;
@@ -97,8 +97,8 @@
   min-height: 0;
   max-height: calc(100vh - 220px);
   padding: 12px 16px 32px;
-  background: #0b0c10;
-  border: 1px solid rgba(255,255,255,0.07);
+  background: var(--surface-deep);
+  border: 1px solid var(--border);
   border-radius: 16px;
 }
 
@@ -121,7 +121,7 @@
   width: 56px;
   flex-shrink: 0;
   font-size: 11px;
-  color: #64748b;
+  color: var(--ink-3);
   padding-right: 8px;
   text-align: right;
   padding-top: 2px;
@@ -131,7 +131,7 @@
 .hourLine {
   flex: 1;
   height: 1px;
-  background: rgba(255,255,255,0.06);
+  background: color-mix(in srgb, var(--theme-foreground) 6%, transparent);
   margin-top: 8px;
 }
 
@@ -160,8 +160,8 @@
 .panel {
   width: 260px;
   flex-shrink: 0;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: var(--glass);
+  border: 1px solid var(--border);
   border-radius: 12px;
   display: flex;
   flex-direction: column;
@@ -181,19 +181,19 @@
   align-items: center;
   justify-content: space-between;
   padding: 14px 16px 10px;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid var(--border);
 }
 
 .panelTitle {
   font-size: 13px;
   font-weight: 600;
-  color: #e2e8f0;
+  color: var(--ink);
 }
 
 .closeBtn {
   background: none;
   border: none;
-  color: #64748b;
+  color: var(--ink-3);
   cursor: pointer;
   padding: 2px;
   display: flex;
@@ -201,7 +201,7 @@
   border-radius: 4px;
   transition: color 0.15s;
 }
-.closeBtn:hover { color: #e2e8f0; }
+.closeBtn:hover { color: var(--ink); }
 
 .panelBody {
   padding: 14px 16px;
@@ -214,7 +214,7 @@
 .fieldLabel {
   font-size: 11px;
   font-weight: 500;
-  color: #64748b;
+  color: var(--ink-3);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   display: block;
@@ -223,10 +223,10 @@
 
 .fieldInput {
   width: 100%;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.10);
+  background: var(--glass);
+  border: 1px solid var(--border);
   border-radius: 6px;
-  color: #e2e8f0;
+  color: var(--ink);
   font-size: 13px;
   padding: 7px 10px;
   outline: none;
@@ -234,7 +234,7 @@
   transition: border-color 0.15s;
 }
 .fieldInput:focus {
-  border-color: rgba(99,102,241,0.5);
+  border-color: var(--focus-color);
 }
 
 .categoryRow {
@@ -249,21 +249,21 @@
   gap: 5px;
   padding: 4px 10px;
   border-radius: 20px;
-  border: 1px solid rgba(255,255,255,0.10);
+  border: 1px solid var(--border);
   background: transparent;
-  color: #94a3b8;
+  color: var(--ink-2);
   font-size: 12px;
   cursor: pointer;
   transition: all 0.15s;
 }
 .catBtn:hover {
-  border-color: var(--cat-color, #94a3b8);
-  color: #e2e8f0;
+  border-color: var(--cat-color, var(--ink-2));
+  color: var(--ink);
 }
 .catBtnActive {
-  border-color: var(--cat-color, #94a3b8);
-  background: color-mix(in srgb, var(--cat-color, #94a3b8) 15%, transparent);
-  color: #e2e8f0;
+  border-color: var(--cat-color, var(--ink-2));
+  background: color-mix(in srgb, var(--cat-color, var(--ink-2)) 15%, transparent);
+  color: var(--ink);
 }
 
 .catDot {
@@ -277,7 +277,7 @@
   margin-left: 2px;
   font-size: 13px;
   line-height: 1;
-  color: rgba(255,255,255,0.25);
+  color: var(--ink-3);
   transition: color 0.15s;
 }
 .catRemove:hover {
@@ -287,11 +287,11 @@
 .catAddBtn {
   font-size: 16px;
   padding: 2px 10px;
-  color: #64748b;
+  color: var(--ink-3);
 }
 .catAddBtn:hover {
-  color: #e2e8f0;
-  border-color: rgba(255,255,255,0.2);
+  color: var(--ink);
+  border-color: var(--border-hi);
 }
 
 .newCatForm {
@@ -299,8 +299,8 @@
   flex-direction: column;
   gap: 8px;
   padding: 10px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: var(--glass);
+  border: 1px solid var(--border);
   border-radius: 8px;
 }
 
@@ -323,7 +323,7 @@
   transform: scale(1.15);
 }
 .colorSwatchActive {
-  border-color: #fff;
+  border-color: var(--ink);
   transform: scale(1.15);
 }
 
@@ -335,26 +335,26 @@
 
 .cancelCatBtn {
   background: transparent;
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid var(--border);
   border-radius: 6px;
-  color: #64748b;
+  color: var(--ink-3);
   font-size: 12px;
   padding: 4px 10px;
   cursor: pointer;
 }
-.cancelCatBtn:hover { color: #e2e8f0; }
+.cancelCatBtn:hover { color: var(--ink); }
 
 .addCatBtn {
-  background: rgba(99,102,241,0.15);
-  border: 1px solid rgba(99,102,241,0.4);
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
   border-radius: 6px;
-  color: #a5b4fc;
+  color: var(--accent);
   font-size: 12px;
   padding: 4px 10px;
   cursor: pointer;
   transition: background 0.15s;
 }
-.addCatBtn:hover:not(:disabled) { background: rgba(99,102,241,0.25); }
+.addCatBtn:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 25%, transparent); }
 .addCatBtn:disabled { opacity: 0.4; cursor: default; }
 
 .timeRow {
@@ -369,22 +369,22 @@
 
 .fieldSelect {
   width: 100%;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.10);
+  background: var(--glass);
+  border: 1px solid var(--border);
   border-radius: 6px;
-  color: #e2e8f0;
+  color: var(--ink);
   font-size: 12px;
   padding: 6px 8px;
   outline: none;
   cursor: pointer;
 }
 .fieldSelect:focus {
-  border-color: rgba(99,102,241,0.5);
+  border-color: var(--focus-color);
 }
 
 .panelFooter {
   padding: 10px 16px 14px;
-  border-top: 1px solid rgba(255,255,255,0.06);
+  border-top: 1px solid var(--border);
 }
 
 .deleteBtn {

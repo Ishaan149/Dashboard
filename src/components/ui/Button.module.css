@@ -21,7 +21,7 @@
   filter: grayscale(0.25);
 }
 
-.primary { background: var(--accent); color: #0b1712; border-color: color-mix(in srgb, var(--accent) 80%, white); }
+.primary { background: var(--accent); color: var(--accent-contrast); border-color: color-mix(in srgb, var(--accent) 80%, white); }
 .primary:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 88%, white); }
 .secondary { background: var(--glass); color: var(--ink); border-color: var(--border-hi); }
 .secondary:hover:not(:disabled) { background: var(--glass-hover); }

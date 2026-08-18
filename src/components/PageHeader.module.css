@@ -7,7 +7,7 @@
   gap: var(--space-4);
   flex: 0 0 auto;
   border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
-  background: linear-gradient(180deg, rgba(19, 20, 25, 0.98), rgba(19, 20, 25, 0.88));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg) 98%, transparent), color-mix(in srgb, var(--bg) 88%, transparent));
   z-index: 10;
 }
 
@@ -68,7 +68,7 @@
   padding: 6px;
   border: 1px solid var(--border-hi);
   border-radius: var(--radius-md);
-  background: #0e0f14;
+  background: var(--surface-deep);
   box-shadow: var(--shadow-popover);
   z-index: var(--z-popover);
   animation: menuIn var(--motion-fast) ease-out;

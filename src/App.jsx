@@ -3,6 +3,7 @@ import AppShell from './components/AppShell'
 import PasswordGate from './components/PasswordGate'
 import { getViewLabel } from './components/navigation'
 import { LoadingState, ToastProvider } from './components/ui'
+import { ThemeProvider } from './theme/ThemeProvider'
 import styles from './App.module.css'
 
 const VIEWS = {
@@ -71,18 +72,20 @@ export default function App() {
     : styles.view
 
   return (
-    <ToastProvider>
-      <AppShell activeView={view} onNavigate={handleNavigate}>
-        <div className={styles.content}>
-          <div className={viewClassName} key={view}>
-            <Suspense fallback={<LoadingState label={getViewLabel(view)} />}>
-              <ViewReady onReady={handleViewReady}>
-                <ActiveView onChange={handleNavigate} onLock={handleLock} />
-              </ViewReady>
-            </Suspense>
+    <ThemeProvider>
+      <ToastProvider>
+        <AppShell activeView={view} onNavigate={handleNavigate}>
+          <div className={styles.content}>
+            <div className={viewClassName} key={view}>
+              <Suspense fallback={<LoadingState label={getViewLabel(view)} />}>
+                <ViewReady onReady={handleViewReady}>
+                  <ActiveView onChange={handleNavigate} onLock={handleLock} />
+                </ViewReady>
+              </Suspense>
+            </div>
           </div>
-        </div>
-      </AppShell>
-    </ToastProvider>
+        </AppShell>
+      </ToastProvider>
+    </ThemeProvider>
   )
 }
