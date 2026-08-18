@@ -6,10 +6,10 @@ Live at: [ishaan149.github.io/Dashboard](https://Ishaan149.github.io/Dashboard)
 
 ## Features
 
-- **Overview** — at-a-glance summary of tasks, habits, today's schedule, job application count, weather (Tempe, AZ), brain dump preview, and a daily quote
+- **Overview** — at-a-glance summary of tasks, habits, today's schedule, typed job-application logging and overall counts, weather (Tempe, AZ), brain dump preview, and a daily quote
 - **To-Do** — a navigable seven-day board with recurring weekday tasks, per-date completion and skipping, plus global This Week and folder-based Long Term lists
 - **Brain Dump** — a permanent pinned note plus Markdown notes with local title/body search, bounded previews, favorites, safe Edit/Preview modes, confirmations, editor metadata, and a mobile note browser
-- **Action Command Palette** — open from the floating command button or with `Cmd/Ctrl+K` to create a task for today or this week, log a habit, or capture a flagged Quick Note directly into Brain Dump
+- **Action Command Palette** — open from the floating command button or with `Cmd/Ctrl+K` to create a task for today or this week, log one of the four job-application types, log a habit, or capture a flagged Quick Note directly into Brain Dump
 - **Habit Tracker** — define habits and log them daily with streak history
 - **Day Planner** — time-block calendar with configurable hours and categories (work, uni, gym, rest, meeting)
 - **Job Tracker** — log job applications by day, view a 7-day sparkline

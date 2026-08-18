@@ -4,6 +4,8 @@
 
 Phase 1 implemented August 10, 2026: authenticated global invocation, six navigation commands, and Quick Note capture with a Brain Dump Quick Notes filter. The broader task/job/habit actions and cross-feature stored-record search described below remain proposed.
 
+Amendment: `overview-command-palette-typed-job-logging-prd.md` supersedes every job-logging statement below. The implemented command is `jobs.log` / **Log Application**; it chooses one of four fixed types, logs exactly one for local today, and preserves legacy Uncategorized quantities.
+
 ## Summary
 
 Add a global **Universal Command Palette** that opens with `Cmd+K` on macOS and `Ctrl+K` on Windows/Linux. It gives the unlocked dashboard a single fast path to:
@@ -241,6 +243,8 @@ Each flow presents only the title field and validates it identically. Add This W
 Content is trimmed only to validate nonemptiness; preserve interior and trailing authored whitespace when saving. The title is limited to 200 characters and content to 10,000. On success, navigate to Brain Dump, select the new note, and focus its editor title or content input. This is a quick capture, not an inline rich note editor.
 
 ### Log job applications
+
+The job-logging interaction in this section is superseded by `overview-command-palette-typed-job-logging-prd.md`: the implemented root command is **Log Application**, followed by an explicit choice among the four fixed job types for local today. Legacy Uncategorized values remain intact and are not selectable.
 
 1. Choose **Log job applications**.
 2. Enter a count. It must be an integer from 1 through 999 and defaults to `1`.

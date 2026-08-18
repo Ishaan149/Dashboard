@@ -1,6 +1,7 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { createBrainDumpNote, NOTE_TITLE_LIMIT } from '../domain/brainDump'
+import { adjustCategory, APPLICATION_CATEGORIES } from '../domain/jobActivity'
 import { useSyncedStorage } from '../hooks/useSyncedStorage'
 import { getDateKey } from '../utils/date'
 import { NavigationIcon } from './navigation'
@@ -75,6 +76,7 @@ const CommandPalette = forwardRef(function CommandPalette({ onNavigate }, ref) {
   const [habitLogs, setHabitLogs] = useSyncedStorage('habit_logs', {})
   const [notes, setNotes] = useSyncedStorage('brainDumpNotes', [])
   const [, setActiveId] = useSyncedStorage('brainDumpActiveId', null)
+  const [, setJobRecords] = useSyncedStorage('job_applications', [])
   const panelRef = useRef(null)
   const queryRef = useRef(null)
   const taskTitleRef = useRef(null)
@@ -82,6 +84,8 @@ const CommandPalette = forwardRef(function CommandPalette({ onNavigate }, ref) {
   const keepEditingRef = useRef(null)
   const contentRef = useRef(null)
   const titleRef = useRef(null)
+  const firstJobTypeRef = useRef(null)
+  const jobCommitRef = useRef(false)
   const openRef = useRef(false)
   const stepRef = useRef('root')
   const { showToast } = useToast()
@@ -94,6 +98,7 @@ const CommandPalette = forwardRef(function CommandPalette({ onNavigate }, ref) {
     { id: 'task.today', step: 'task', target: 'today', label: 'Create Task Today', icon: 'taskToday', keywords: ['add task', 'todo', 'today'] },
     { id: 'task.week', step: 'task', target: 'week', label: 'Create Task This Week', icon: 'taskWeek', keywords: ['add task', 'todo', 'week'] },
     { id: 'habit.log', step: 'habit', label: 'Log Habit', icon: 'habits', keywords: ['complete habit', 'track habit', 'today'] },
+    { id: 'jobs.log', step: 'jobs', label: 'Log Application', icon: 'jobs', keywords: ['job', 'jobs', 'application', 'applications', 'add job', ...APPLICATION_CATEGORIES.map(category => category.label)] },
   ], [])
 
   const groups = useMemo(() => {
@@ -249,6 +254,7 @@ const CommandPalette = forwardRef(function CommandPalette({ onNavigate }, ref) {
     if (step === 'habit') requestAnimationFrame(() => habitSelectRef.current?.focus())
     if (step === 'note') requestAnimationFrame(() => contentRef.current?.focus())
     if (step === 'confirm') requestAnimationFrame(() => keepEditingRef.current?.focus())
+    if (step === 'jobs') requestAnimationFrame(() => firstJobTypeRef.current?.focus())
   }, [open, step])
 
   function activate(item) {
@@ -261,6 +267,8 @@ const CommandPalette = forwardRef(function CommandPalette({ onNavigate }, ref) {
       setTaskTarget(item.target)
     } else if (item.step === 'habit') {
       setSelectedHabitId(String(availableHabits[0]?.id ?? ''))
+    } else if (item.step === 'jobs') {
+      jobCommitRef.current = false
     }
     setStep(item.step)
     stepRef.current = item.step
@@ -330,6 +338,28 @@ const CommandPalette = forwardRef(function CommandPalette({ onNavigate }, ref) {
     showToast(`${selectedHabit.name} logged for today.`)
   }
 
+  function logApplication(category) {
+    if (jobCommitRef.current) return
+    jobCommitRef.current = true
+    setJobRecords(previous => adjustCategory(previous, getDateKey(0), category.key, 1))
+    closeImmediately()
+    showToast(`${category.label} application logged for today.`)
+  }
+
+  function handleJobTypeKeyDown(event) {
+    const options = [...event.currentTarget.querySelectorAll('[role="option"]')]
+    const currentIndex = options.indexOf(document.activeElement)
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp' || event.key === 'Home' || event.key === 'End') {
+      event.preventDefault()
+      const nextIndex = event.key === 'Home'
+        ? 0
+        : event.key === 'End'
+          ? options.length - 1
+          : (Math.max(0, currentIndex) + (event.key === 'ArrowDown' ? 1 : -1) + options.length) % options.length
+      options[nextIndex]?.focus()
+    }
+  }
+
   function handleHabitSelectKeyDown(event) {
     if (event.key === 'Escape' && habitMenuOpen) {
       event.preventDefault()
@@ -396,7 +426,7 @@ const CommandPalette = forwardRef(function CommandPalette({ onNavigate }, ref) {
         className={styles.palette}
         role="dialog"
         aria-modal="true"
-        aria-label={step === 'root' ? 'Command palette' : step === 'task' ? `Create Task ${taskTarget === 'today' ? 'Today' : 'This Week'}` : step === 'habit' ? 'Log Habit' : step === 'confirm' ? 'Discard unsaved changes' : 'Capture Quick Note'}
+        aria-label={step === 'root' ? 'Command palette' : step === 'task' ? `Create Task ${taskTarget === 'today' ? 'Today' : 'This Week'}` : step === 'habit' ? 'Log Habit' : step === 'jobs' ? 'Log Application' : step === 'confirm' ? 'Discard unsaved changes' : 'Capture Quick Note'}
         tabIndex="-1"
       >
         {step === 'root' ? (
@@ -464,6 +494,30 @@ const CommandPalette = forwardRef(function CommandPalette({ onNavigate }, ref) {
             <div className={styles.formActions}>
               <Button ref={keepEditingRef} variant="secondary" onClick={keepEditing}>Keep Editing</Button>
               <Button variant="danger" onClick={discardChanges}>Discard</Button>
+            </div>
+          </div>
+        ) : step === 'jobs' ? (
+          <div className={styles.captureForm}>
+            <div className={styles.formHeader}>
+              <button type="button" className={styles.backButton} onClick={backToRootImmediately}>← Back</button>
+              <IconButton label="Close command palette" onClick={closeImmediately}><CloseIcon /></IconButton>
+            </div>
+            <div className={styles.formIntro}><NavigationIcon name="jobs" /><h2>Log Application</h2></div>
+            <p className={styles.jobInstruction}>Choose a job type to log for today</p>
+            <div className={styles.jobTypeOptions} role="listbox" aria-label="Job types" onKeyDown={handleJobTypeKeyDown}>
+              {APPLICATION_CATEGORIES.map((category, index) => (
+                <button
+                  ref={index === 0 ? firstJobTypeRef : undefined}
+                  key={category.key}
+                  type="button"
+                  className={`${styles.option} ${styles.jobTypeOption}`}
+                  role="option"
+                  aria-selected="false"
+                  onClick={() => logApplication(category)}
+                >
+                  <span className={styles.optionText}><strong>{category.label}</strong></span>
+                </button>
+              ))}
             </div>
           </div>
         ) : step === 'task' ? (

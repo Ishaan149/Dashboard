@@ -12,6 +12,7 @@ const storage = vi.hoisted(() => ({
   setHabitLogs: vi.fn(),
   setNotes: vi.fn(),
   setActiveId: vi.fn(),
+  setJobRecords: vi.fn(),
 }))
 
 vi.mock('../hooks/useSyncedStorage', () => ({
@@ -22,6 +23,7 @@ vi.mock('../hooks/useSyncedStorage', () => ({
     if (key === 'habit_logs') return [{}, storage.setHabitLogs]
     if (key === 'brainDumpNotes') return [[{ id: 'existing', title: 'Existing', content: '' }], storage.setNotes]
     if (key === 'brainDumpActiveId') return [null, storage.setActiveId]
+    if (key === 'job_applications') return [[], storage.setJobRecords]
     throw new Error(`Unexpected storage key: ${key}`)
   },
 }))
@@ -60,6 +62,7 @@ describe('Command Palette Quick Note', () => {
     storage.setHabitLogs.mockReset()
     storage.setNotes.mockReset()
     storage.setActiveId.mockReset()
+    storage.setJobRecords.mockReset()
     onNavigate = vi.fn()
     randomUUID = vi.spyOn(globalThis.crypto, 'randomUUID').mockReturnValue('quick-generated')
     container = document.createElement('div')
@@ -85,6 +88,7 @@ describe('Command Palette Quick Note', () => {
     expect(dialog.textContent).toContain('Create Task This Week')
     expect(dialog.textContent).toContain('Log Habit')
     expect(dialog.textContent).toContain('Quick Note')
+    expect(dialog.textContent).toContain('Log Application')
     expect(dialog.textContent).not.toContain('Home')
     expect(dialog.textContent).not.toContain('To-Do')
     expect(dialog.textContent).not.toContain('Brain Dump')
@@ -179,6 +183,91 @@ describe('Command Palette Quick Note', () => {
     const updated = storage.setHabitLogs.mock.calls[0][0]({})
     expect(Object.values(updated).flat()).toContain(7)
     expect(document.body.textContent).toContain('Read logged for today.')
+  })
+
+  it.each(['jobs', 'applications', 'add job', 'Software Engineering', 'AI Applications', 'Backend', 'Data'])(
+    'finds Log Application with the %s keyword',
+    keyword => {
+      act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true })))
+      inputValue(document.body.querySelector('[aria-label="Search commands"]'), keyword)
+      expect(document.body.querySelector('[role="option"]')?.textContent).toContain('Log Application')
+    },
+  )
+
+  it('opens the ordered uncommitted job-type list and cancels without writing', () => {
+    act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true })))
+    clickCommand('Log Application')
+
+    expect([...document.body.querySelectorAll('[aria-label="Job types"] [role="option"]')].map(option => option.textContent.trim())).toEqual([
+      'Software Engineering',
+      'AI Applications',
+      'Backend',
+      'Data',
+    ])
+    expect(storage.setJobRecords).not.toHaveBeenCalled()
+    click([...document.body.querySelectorAll('button')].find(button => button.textContent.trim() === '← Back'))
+    expect(storage.setJobRecords).not.toHaveBeenCalled()
+    expect(document.body.querySelector('[aria-label="Search commands"]')).not.toBeNull()
+  })
+
+  it.each(['escape', 'close', 'backdrop'])('does not write when the job step is dismissed by %s', dismissal => {
+    act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true })))
+    clickCommand('Log Application')
+
+    if (dismissal === 'escape') {
+      act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })))
+    } else if (dismissal === 'close') {
+      click(document.body.querySelector('[aria-label="Close command palette"]'))
+    } else {
+      const backdrop = document.body.querySelector('[class*="backdrop"]')
+      act(() => backdrop.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })))
+    }
+
+    expect(storage.setJobRecords).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['Software Engineering', 'softwareEngineering'],
+    ['AI Applications', 'aiApplications'],
+    ['Backend', 'backend'],
+    ['Data', 'data'],
+  ])('logs exactly one %s application and preserves compatible fields', (label, key) => {
+    const existing = [{
+      date: '2026-08-18',
+      count: 6,
+      categories: { softwareEngineering: 1, aiApplications: 0, backend: 1, data: 1 },
+      emails: 2,
+      linkedin: 3,
+      future: { keep: true },
+    }]
+    act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true })))
+    clickCommand('Log Application')
+    click([...document.body.querySelectorAll('[aria-label="Job types"] [role="option"]')].find(option => option.textContent.includes(label)))
+
+    expect(storage.setJobRecords).toHaveBeenCalledTimes(1)
+    const updated = storage.setJobRecords.mock.calls[0][0](existing)
+    expect(updated[0]).toMatchObject({ count: 7, emails: 2, linkedin: 3, future: { keep: true } })
+    expect(updated[0].categories[key]).toBe(existing[0].categories[key] + 1)
+    expect(updated[0].categories).toEqual({ ...existing[0].categories, [key]: existing[0].categories[key] + 1 })
+    expect(document.body.querySelector('[role="dialog"]')).toBeNull()
+    expect(document.body.textContent).toContain(`${label} application logged for today.`)
+  })
+
+  it('supports keyboard job-type choice and reopens with no committed selection', async () => {
+    act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true })))
+    clickCommand('Log Application')
+    const first = document.body.querySelector('[aria-label="Job types"] [role="option"]')
+    await act(async () => new Promise(resolve => requestAnimationFrame(resolve)))
+    expect(document.activeElement).toBe(first)
+    act(() => first.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true })))
+    expect(document.activeElement.textContent).toContain('AI Applications')
+    act(() => document.activeElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })))
+    click(document.activeElement)
+    expect(storage.setJobRecords).toHaveBeenCalledTimes(1)
+
+    act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true })))
+    clickCommand('Log Application')
+    expect([...document.body.querySelectorAll('[aria-label="Job types"] [role="option"]')].every(option => option.getAttribute('aria-selected') === 'false')).toBe(true)
   })
 
   it('opens globally and captures an isolated regular Brain Dump Quick Note', () => {

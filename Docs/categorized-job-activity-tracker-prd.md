@@ -4,6 +4,8 @@
 
 Proposed version-one requirements for the approved **Categorized Job Activity Tracker**. This document is implementation-ready, but it does not authorize deployment, production-database access, or changes to production data.
 
+Amendment: `overview-command-palette-typed-job-logging-prd.md` supersedes every statement below that describes Overview or command-palette quick entries as Uncategorized, unchanged, or lacking a type chooser. The dedicated Job Applications page requirements remain unchanged.
+
 ## Summary
 
 Rebuild the dedicated **Job Applications** page as a wider dashboard that keeps the existing count-based workflow while adding four fixed application categories and two independent outreach counters.
@@ -41,7 +43,7 @@ The dedicated `JobTracker.jsx` and `JobTracker.module.css` files are currently d
 - Keep the existing global application summary periods, notes field, and simple history presentation.
 - Include categorized applications in the unchanged Overview totals.
 - Interpret existing aggregate counts safely as Uncategorized without an eager data rewrite.
-- Preserve compatibility with the unchanged Overview and command-palette logging flows.
+- Preserve compatibility with Overview and command-palette logging flows. Their quick-entry behavior is superseded by `overview-command-palette-typed-job-logging-prd.md`.
 - Maintain local-first behavior and synchronized storage after an explicitly authorized release.
 
 ## Non-goals
@@ -57,8 +59,8 @@ Version one does not include:
 - Linking an Email or LinkedIn count to a particular application.
 - Goals, quotas, planned-versus-completed state, reminders, streaks, conversion rates, funnels, or recommendations.
 - A history redesign, calendar view, new chart, new time-period calculation, export, or reporting system.
-- Changes to the Overview layout, controls, labels, card order, or visual design.
-- Changes to the command-palette interface or a category picker in that flow.
+- Changes to the Overview layout, controls, labels, card order, or visual design, except as superseded by `overview-command-palette-typed-job-logging-prd.md`.
+- Changes to the command-palette interface or a category picker in that flow, except as superseded by `overview-command-palette-typed-job-logging-prd.md`.
 - Direct numeric entry, confirmations, toasts, or Undo for counter changes.
 - Authentication, Firestore rules, routing, backend services, or database administration.
 
@@ -104,8 +106,8 @@ Overview reads `job_applications`, calculates today's and weekly totals, display
 - Initial date: always local today when the page mounts.
 - Week start: Monday.
 - Overview: no presentation redesign; its totals include all categorized and Uncategorized applications.
-- Overview quick controls: modify Uncategorized only.
-- Command palette: unchanged; its application logs remain Uncategorized.
+- Overview quick controls: superseded by `overview-command-palette-typed-job-logging-prd.md`; new quick entries require one of the four fixed types.
+- Command palette: superseded by `overview-command-palette-typed-job-logging-prd.md`; new quick entries require one of the four fixed types.
 - Notes: retain the existing single global notes field unchanged.
 - History: retain the existing date plus overall application-count presentation.
 - Empty dates: remove a date only when every application category, Uncategorized, Emails, and LinkedIn is zero.
@@ -168,16 +170,12 @@ On narrow screens, the page is a single column in the same semantic order: summa
 
 - Preserve the Overview card's current layout, labels, total metrics, sparkline, and `+`/`−` controls.
 - Its displayed application count is the date's overall application count, so categorized applications appear automatically without a new category UI.
-- Overview Increase adds one Uncategorized application for local today. It must preserve all categorized and outreach fields already present on the record.
-- Overview Decrease removes one Uncategorized application only. It is disabled or a no-op when Uncategorized is zero, even if categorized applications make the displayed overall count positive.
-- Overview never changes a categorized application or outreach count.
+- Superseded by `overview-command-palette-typed-job-logging-prd.md`: Overview Increase and Decrease adjust the selected fixed type for local today while preserving legacy Uncategorized and outreach values.
 - Overview does not show Emails or LinkedIn in version one.
 
 ### Command-palette compatibility
 
-- Do not add a category chooser or change the command-palette interface.
-- Any existing command-palette application logging continues to increase the date's overall count without increasing a category, thereby adding Uncategorized.
-- Command-palette writes must preserve category and outreach fields on an existing date record.
+- Superseded by `overview-command-palette-typed-job-logging-prd.md`: the command palette exposes a four-type chooser and writes the selected category while preserving legacy Uncategorized and outreach values.
 - Search/navigation behavior remains unchanged.
 
 ### Summary statistics
@@ -242,7 +240,7 @@ Rules:
 - Automatic migration means compatible interpretation on read, not an eager database rewrite. Merely opening the page must not write, reshape, sort, or delete records.
 - Write enhanced fields only when the user explicitly changes that date through an authorized app environment.
 - `count` remains the aggregate compatibility field consumed by existing surfaces. A categorized increment/decrement updates both the category and `count` atomically within the same local state update.
-- An Overview or command-palette Uncategorized increment/decrement changes `count` but preserves enhanced fields.
+- As amended by `overview-command-palette-typed-job-logging-prd.md`, Overview and command-palette quick entries use categorized adjustments that preserve existing Uncategorized quantities and enhanced fields.
 - If malformed data contains `count < categorizedTotal`, use `categorizedTotal` as the safe in-memory overall count and repair only when the user explicitly edits that record. Never discard valid category quantities to fit a malformed aggregate.
 - Normalize counts to finite, non-negative integers. Invalid/missing values become zero in memory. Do not persist normalization solely because data was read.
 - Preserve unknown object fields when updating a record so compatible future metadata is not silently lost.
@@ -286,7 +284,7 @@ Expected implementation areas after separate approval include:
 - Recreate `src/components/JobTracker.jsx` and `src/components/JobTracker.module.css` as the wide responsive page.
 - Add pure job-activity normalization and update helpers under `src/domain/` with focused unit tests.
 - Update `src/App.jsx` so `jobs` uses the full-width view container.
-- Update Overview calculations and controls to use the shared overall/Uncategorized helpers without changing its rendered design.
+- Update Overview calculations and typed controls to use the shared overall/category helpers while retaining the card's aggregate presentation.
 - Preserve enhanced record fields in any command-palette/provider job mutation.
 - Update relevant documentation only after behavior is implemented and verified.
 
@@ -330,9 +328,9 @@ Cover at minimum:
 - Summary statistics remain application-only and include Uncategorized.
 - Notes remain global and synchronized through the mocked/test boundary.
 - History remains date plus overall count and excludes the selected date.
-- Overview looks unchanged, includes categorized totals, and modifies only Uncategorized.
-- Overview Decrease cannot reduce categorized applications.
-- Command-palette logging preserves enhanced fields and adds Uncategorized.
+- Overview retains its aggregate presentation, includes Uncategorized totals, and modifies only the selected category.
+- Overview Decrease cannot borrow from another category or reduce Uncategorized.
+- Command-palette typed logging preserves enhanced fields and existing Uncategorized quantities.
 - Keyboard operation, accessible names, focus visibility, and disabled semantics.
 - Responsive layouts at wide desktop, tablet, 480–767px, and below 480px without horizontal page overflow.
 
@@ -357,8 +355,8 @@ Using synthetic data in the emulator or dedicated test project only:
 5. Existing counts are interpreted as Uncategorized without an eager migration or render-time write.
 6. Uncategorized is included in aggregate statistics, Overview, and History but is not shown as a dedicated page counter.
 7. Categorized changes update the aggregate compatibility count; outreach changes do not.
-8. Overview retains its current presentation, includes all applications, and changes only Uncategorized through its quick controls.
-9. The command-palette interface remains unchanged and its application logging preserves enhanced fields while adding Uncategorized.
+8. As amended, Overview retains its aggregate presentation, includes all applications, and changes only the selected fixed type through its quick controls.
+9. As amended, the command palette offers a fixed type chooser and preserves enhanced fields and existing Uncategorized quantities when logging.
 10. Existing this-week, this-month, all-time, Notes, and History behavior remains recognizable and is not expanded into a new analytics system.
 11. Dates are removed only when all application and outreach values are zero.
 12. The page is keyboard accessible, screen-reader meaningful, touch-safe, and usable without horizontal page scrolling.

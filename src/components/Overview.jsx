@@ -11,11 +11,12 @@ import {
 } from '../domain/recurringTasks'
 import { updatePinnedNote } from '../domain/brainDump'
 import {
-  adjustUncategorized,
+  adjustCategory,
+  APPLICATION_CATEGORIES,
+  APPLICATION_CATEGORY_KEYS,
   getJobRecord,
   getOverallApplicationCount,
   getPeriodApplicationTotal,
-  getUncategorizedCount,
   normalizeJobRecords,
 } from '../domain/jobActivity'
 import styles from './Overview.module.css'
@@ -271,7 +272,7 @@ function ScheduleCard({ blocks, categories, nowMin }) {
 
 const DAY_ABBR = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
-function JobsCard({ today, week, spark, uncategorized, onAdjust }) {
+function JobsCard({ today, week, spark, selectedType, selectedCount, onSelectedTypeChange, onAdjust }) {
   const max = Math.max(...spark, 1)
   return (
     <div className={styles.card}>
@@ -307,14 +308,28 @@ function JobsCard({ today, week, spark, uncategorized, onAdjust }) {
         <button
           className={styles.stepBtn}
           onClick={() => onAdjust(-1)}
-          disabled={uncategorized === 0}
-          aria-label="Remove application"
+          disabled={!selectedType || selectedCount === 0}
+          aria-label="Remove selected job type application"
         >−</button>
-        <span className={styles.stepLabel}>Log an application</span>
+        <label className={styles.jobTypeField}>
+          <span className={styles.srOnly}>Job type</span>
+          <select
+            className={`${styles.jobTypeSelect} ${selectedType ? styles.jobTypeSelectChosen : ''}`}
+            value={selectedType}
+            onChange={event => onSelectedTypeChange(event.target.value)}
+            aria-label="Job type"
+          >
+            <option value="" disabled>Choose job type</option>
+            {APPLICATION_CATEGORIES.map(category => (
+              <option key={category.key} value={category.key}>{category.label}</option>
+            ))}
+          </select>
+        </label>
         <button
           className={styles.stepBtn}
           onClick={() => onAdjust(1)}
-          aria-label="Add application"
+          disabled={!selectedType}
+          aria-label="Add selected job type application"
         >+</button>
       </div>
     </div>
@@ -322,7 +337,7 @@ function JobsCard({ today, week, spark, uncategorized, onAdjust }) {
 }
 
 // ── main ──────────────────────────────────────────────────────────────────────
-export default function Overview() {
+export default function Overview({ selectedJobType = '', onSelectedJobTypeChange = () => {} }) {
   const [dailyTasks, setDailyTasks] = useSyncedStorage('todos-daily', {})
   const [recurringSeries]           = useSyncedStorage('todos-recurring', [])
   const [recurringState, setRecurringState] = useSyncedStorage('todos-recurring-state', {})
@@ -385,7 +400,8 @@ export default function Overview() {
   const normalizedJobRecords = normalizeJobRecords(jobRecords)
   const todayJobRecord = getJobRecord(normalizedJobRecords, today)
   const jobsToday = getOverallApplicationCount(todayJobRecord)
-  const jobsTodayUncategorized = getUncategorizedCount(todayJobRecord)
+  const validSelectedJobType = APPLICATION_CATEGORY_KEYS.includes(selectedJobType) ? selectedJobType : ''
+  const selectedJobCount = validSelectedJobType ? todayJobRecord?.categories[validSelectedJobType] ?? 0 : 0
   const jobsWeek = getPeriodApplicationTotal(normalizedJobRecords, weekStart)
   const jobSpark = Array.from({ length: 7 }, (_, i) => {
     const key = getDateKey(6 - i)
@@ -393,7 +409,8 @@ export default function Overview() {
   })
 
   function adjustJobs(delta) {
-    setJobRecords(previous => adjustUncategorized(previous, today, delta))
+    if (!validSelectedJobType) return
+    setJobRecords(previous => adjustCategory(previous, today, validSelectedJobType, delta))
   }
 
   function toggleTask(task) {
@@ -437,7 +454,7 @@ export default function Overview() {
         <ScheduleCard blocks={sortedBlocks} categories={categories} nowMin={nowMinutes} />
         <TasksCard tasks={todayTodos} onToggle={toggleTask} />
         <HabitsCard habits={habits} todayDone={todayDone} onToggle={toggleHabit} />
-        <JobsCard today={jobsToday} week={jobsWeek} spark={jobSpark} uncategorized={jobsTodayUncategorized} onAdjust={adjustJobs} />
+        <JobsCard today={jobsToday} week={jobsWeek} spark={jobSpark} selectedType={validSelectedJobType} selectedCount={selectedJobCount} onSelectedTypeChange={onSelectedJobTypeChange} onAdjust={adjustJobs} />
         <WeatherCard weather={weather} />
         <BrainDumpCard note={pinnedNote} onChange={updateBrainDump} />
       </div>
@@ -452,7 +469,7 @@ export default function Overview() {
         <BrainDumpCard note={pinnedNote} onChange={updateBrainDump} />
       </div>
       <div className={styles.col}>
-        <JobsCard today={jobsToday} week={jobsWeek} spark={jobSpark} uncategorized={jobsTodayUncategorized} onAdjust={adjustJobs} />
+        <JobsCard today={jobsToday} week={jobsWeek} spark={jobSpark} selectedType={validSelectedJobType} selectedCount={selectedJobCount} onSelectedTypeChange={onSelectedJobTypeChange} onAdjust={adjustJobs} />
         <TasksCard tasks={todayTodos} onToggle={toggleTask} />
       </div>
       <div className={styles.col}>

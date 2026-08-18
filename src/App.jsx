@@ -28,6 +28,7 @@ function ViewReady({ onReady, children }) {
 
 export default function App() {
   const [view, setView] = useState('overview')
+  const [overviewJobType, setOverviewJobType] = useState('')
   const [unlocked, setUnlocked] = useState(
     () => localStorage.getItem('dashboard-unlocked') === 'true'
   )
@@ -79,7 +80,12 @@ export default function App() {
             <div className={viewClassName} key={view}>
               <Suspense fallback={<LoadingState label={getViewLabel(view)} />}>
                 <ViewReady onReady={handleViewReady}>
-                  <ActiveView onChange={handleNavigate} onLock={handleLock} />
+                  <ActiveView
+                    onChange={handleNavigate}
+                    onLock={handleLock}
+                    selectedJobType={overviewJobType}
+                    onSelectedJobTypeChange={setOverviewJobType}
+                  />
                 </ViewReady>
               </Suspense>
             </div>

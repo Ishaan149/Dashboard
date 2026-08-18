@@ -25,6 +25,7 @@ vi.mock('firebase/firestore', () => ({
 vi.mock('../firebase', () => ({ db: { mocked: true } }))
 
 import { useSyncedStorage } from './useSyncedStorage'
+import { adjustCategory, getJobRecord } from '../domain/jobActivity'
 
 function Harness() {
   const [notes, setNotes] = useSyncedStorage('brainDumpNotes', [])
@@ -41,6 +42,17 @@ function SharedHarness() {
   return (
     <button type="button" onClick={() => setFirst([{ id: 'quick' }])}>
       {first.length}:{second.length}
+    </button>
+  )
+}
+
+function JobConsumersHarness() {
+  const [, setPaletteRecords] = useSyncedStorage('job_applications', [])
+  const [overviewRecords] = useSyncedStorage('job_applications', [])
+  const backend = getJobRecord(overviewRecords, '2026-08-18')?.categories.backend ?? 0
+  return (
+    <button type="button" onClick={() => setPaletteRecords(previous => adjustCategory(previous, '2026-08-18', 'backend', 1))}>
+      Overview backend: {backend}
     </button>
   )
 }
@@ -99,5 +111,20 @@ describe('useSyncedStorage Firebase safety', () => {
 
     expect(container.textContent).toBe('1:1')
     expect(JSON.parse(localStorage.getItem('shared'))).toEqual([{ id: 'quick' }])
+  })
+
+  it('shows a palette-style typed job update in another mounted same-tab consumer immediately', () => {
+    localStorage.removeItem('job_applications')
+    act(() => root.render(<JobConsumersHarness />))
+    expect(container.textContent).toBe('Overview backend: 0')
+
+    act(() => container.querySelector('button').dispatchEvent(new MouseEvent('click', { bubbles: true })))
+
+    expect(container.textContent).toBe('Overview backend: 1')
+    expect(JSON.parse(localStorage.getItem('job_applications'))[0]).toMatchObject({
+      date: '2026-08-18',
+      count: 1,
+      categories: { backend: 1 },
+    })
   })
 })

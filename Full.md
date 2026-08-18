@@ -22,7 +22,7 @@ There is no application server. Persisted values are cached in browser `localSto
 
 Navigation is state-based rather than URL-based; there is no router. `AppShell` composes the responsive primary navigation, page header, and scrollable main landmark. Navigation keeps the existing IDs and callbacks; the `overview` destination is presented to users as **Today**. Each authenticated view is loaded with `React.lazy`, so the password screen does not initialize Firebase and the browser only downloads feature code when it is needed.
 
-The authenticated shell also lazy-loads an action-first Command Palette. Its floating bottom-right command button and global `Cmd+K`/`Ctrl+K` shortcut offer four focused actions: create a task for today, create a task for this week, log a habit, and capture a Quick Note. On mobile, the button sits above the fixed bottom navigation. Every action writes through the feature's existing synchronized storage key; Quick Notes are saved as regular Brain Dump records with `quickNote: true`. The palette has no independent persistence key and is never mounted on the password gate.
+The authenticated shell also lazy-loads an action-first Command Palette. Its floating bottom-right command button and global `Cmd+K`/`Ctrl+K` shortcut offer five focused actions: create a task for today, create a task for this week, log a typed job application, log a habit, and capture a Quick Note. On mobile, the button sits above the fixed bottom navigation. Every action writes through the feature's existing synchronized storage key; Quick Notes are saved as regular Brain Dump records with `quickNote: true`. The palette has no independent persistence key and is never mounted on the password gate.
 
 The authenticated shell has three CSS-driven modes:
 
@@ -46,7 +46,7 @@ The active view is rendered in one of three layout variants:
 | `src/components/AppShell.jsx` | Authenticated shell landmarks, skip link, header/navigation composition, and main scroll region |
 | `src/components/PrimaryNav.jsx` | Expanded desktop rail, compact tablet rail, mobile bottom navigation, active state, and Lock rail action |
 | `src/components/PageHeader.jsx` | Active page heading, local date/clock, Today shortcut, and mobile Lock overflow menu |
-| `src/components/CommandPalette.jsx` | Authenticated global shortcut and inline task, habit-log, and Quick Note action forms |
+| `src/components/CommandPalette.jsx` | Authenticated global shortcut and inline task, typed job-log, habit-log, and Quick Note actions |
 | `src/components/navigation.jsx` | Stable navigation IDs, user-facing labels, order, and shared navigation icons |
 | `src/firebase.js` | Firebase application initialization and Firestore export |
 | `src/hooks/useSyncedStorage.js` | Shared `localStorage`/Firestore persistence hook |
@@ -152,7 +152,7 @@ Today (the `overview` view) reads the same keys as the full feature pages and ex
 
 - toggle today's dated tasks;
 - toggle today's habits;
-- increment or decrement today's job applications;
+- select a fixed job type and increment or decrement that type for today while retaining overall totals;
 - edit the pinned Brain Dump note.
 
 Schedule blocks are sorted before display. The current-time value supports schedules extending past midnight and refreshes every minute. At widths up to 1024 px, a media-query listener switches the card ordering to the mobile grid.
@@ -222,7 +222,7 @@ Brain Dump renders cached values immediately and performs no read-time storage n
 
 The browser searches normalized title and Markdown source locally with deterministic exact-title, title-prefix, title-token, then body tiers. Result excerpts are whitespace-collapsed and capped at 160 characters. Search, Favorites, and Quick Notes filters are ephemeral and compose with AND. Pinned is shown above regular results, is always treated as a favorite, and is never treated as a Quick Note. `brainDumpSearchProvider` exposes bounded, write-free note results and `{ view: 'braindump', target: { kind: 'note', id } }` navigation targets for future palette search expansion.
 
-The authenticated command palette can create plain tasks in today's dated list or the shared This Week list, log one of today's remaining habits, and capture a Quick Note. Task titles accept up to 200 characters. Habit logging adds the selected habit ID to today's existing `habit_logs` entry without duplicates. Quick Notes accept required Markdown content up to 10,000 characters and an optional title up to 200 characters. A blank title is derived from the first nonempty content line and capped at 80 characters. Captures are prepended to `brainDumpNotes`, set as the active Brain Dump note, retain `favorite: false`, and add `quickNote: true`. Every successful action confirms through the shared toast region without forcing a page change.
+The authenticated command palette can create plain tasks in today's dated list or the shared This Week list, log exactly one Software Engineering, AI Applications, Backend, or Data application for local today, log one of today's remaining habits, and capture a Quick Note. Typed job logging uses `adjustCategory`, preserves legacy Uncategorized values and compatible fields, and confirms the selected type through the shared toast region. Task titles accept up to 200 characters. Habit logging adds the selected habit ID to today's existing `habit_logs` entry without duplicates. Quick Notes accept required Markdown content up to 10,000 characters and an optional title up to 200 characters. A blank title is derived from the first nonempty content line and capped at 80 characters. Captures are prepended to `brainDumpNotes`, set as the active Brain Dump note, retain `favorite: false`, and add `quickNote: true`. Every successful action confirms through the shared toast region without forcing a page change.
 
 The editor stores Markdown source in the existing `content` string. Preview uses Marked with GFM disabled and DOMPurify with a narrow tag/attribute allow-list. Raw HTML and image syntax render as inert source text; only `http`, `https`, and `mailto` links become anchors. Edit/Preview mode, character counts, browser-sheet state, queries, and save indicators are never synchronized.
 
