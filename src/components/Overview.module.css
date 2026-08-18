@@ -374,7 +374,7 @@
 
 .blockTime b {
   display: block;
-  color: var(--ink-2);
+  color: var(--ink);
   font-weight: 600;
 }
 
@@ -515,28 +515,10 @@
 }
 
 .jobTypeField {
-  position: relative;
+  display: block;
   flex: 1;
   min-width: 0;
-}
-
-.jobTypeField::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  right: 13px;
-  width: 6px;
-  height: 6px;
-  border-right: 1.5px solid var(--ink-3);
-  border-bottom: 1.5px solid var(--ink-3);
-  pointer-events: none;
-  transform: translateY(-70%) rotate(45deg);
-  transition: border-color var(--motion-fast), transform var(--motion-fast);
-}
-
-.jobTypeField:focus-within::after {
-  border-color: var(--ink-2);
-  transform: translateY(-45%) rotate(45deg);
+  height: 34px;
 }
 
 .jobTypeSelect {
@@ -544,41 +526,33 @@
   -webkit-appearance: none;
   width: 100%;
   min-width: 0;
-  height: 34px;
-  padding: 0 34px 0 12px;
+  height: 100%;
+  padding: 0 12px;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--theme-foreground) 16%, transparent);
+  border: 0;
   border-radius: 10px;
   outline: 0;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--theme-foreground) 7%, transparent),
-    color-mix(in srgb, var(--theme-foreground) 4%, transparent)
-  );
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--theme-foreground) 7%, transparent), 0 1px 2px rgba(0, 0, 0, .18);
-  color: var(--ink-3);
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink-2);
   font: inherit;
   font-size: 12px;
   font-weight: 600;
+  text-align: center;
+  text-align-last: center;
   text-overflow: ellipsis;
   cursor: pointer;
   transition: border-color var(--motion-fast), background var(--motion-fast), color var(--motion-fast), box-shadow var(--motion-fast);
 }
 
 .jobTypeSelect:hover {
-  border-color: color-mix(in srgb, var(--theme-foreground) 30%, transparent);
-  background: color-mix(in srgb, var(--accent) 5%, var(--glass-hover));
-}
-
-.jobTypeSelectChosen {
-  border-color: var(--border-hi);
-  background: color-mix(in srgb, var(--accent) 7%, var(--surface-raised));
   color: var(--ink);
 }
 
 .jobTypeSelect:focus-visible {
-  border-color: color-mix(in srgb, var(--theme-foreground) 42%, transparent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-foreground) 14%, transparent), inset 0 1px 0 color-mix(in srgb, var(--theme-foreground) 8%, transparent);
+  outline: 2px solid color-mix(in srgb, var(--theme-foreground) 42%, transparent);
+  outline-offset: 2px;
+  box-shadow: none;
 }
 
 .srOnly {
@@ -596,6 +570,7 @@
 .stepBtn {
   width: 34px;
   height: 34px;
+  padding: 0;
   border-radius: 10px;
   flex: none;
   border: 1px solid var(--border-hi);
@@ -631,7 +606,8 @@
 }
 
 @media (forced-colors: active) {
-  .jobTypeSelect, .stepBtn { border-color: CanvasText; }
+  .jobTypeSelect { border: 1px solid CanvasText; }
+  .stepBtn { border-color: CanvasText; }
 }
 
 /* ── responsive ──────────────────────────────────────────────────────────────── */

@@ -314,7 +314,7 @@ function JobsCard({ today, week, spark, selectedType, selectedCount, onSelectedT
         <label className={styles.jobTypeField}>
           <span className={styles.srOnly}>Job type</span>
           <select
-            className={`${styles.jobTypeSelect} ${selectedType ? styles.jobTypeSelectChosen : ''}`}
+            className={styles.jobTypeSelect}
             value={selectedType}
             onChange={event => onSelectedTypeChange(event.target.value)}
             aria-label="Job type"
