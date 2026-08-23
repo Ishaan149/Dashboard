@@ -29,6 +29,11 @@
   max-width: 1280px;
 }
 
+.viewHabits {
+  max-width: none;
+  width: 100%;
+}
+
 @keyframes fadeSlide {
   from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }

@@ -10,7 +10,7 @@ Live at: [ishaan149.github.io/Dashboard](https://Ishaan149.github.io/Dashboard)
 - **To-Do** — a navigable seven-day board with recurring weekday tasks, per-date completion and skipping, plus global This Week and folder-based Long Term lists
 - **Brain Dump** — a permanent pinned note plus Markdown notes with local title/body search, bounded previews, favorites, safe Edit/Preview modes, confirmations, editor metadata, and a mobile note browser
 - **Action Command Palette** — open from the floating command button or with `Cmd/Ctrl+K` to create a task for today or this week, log one of the four job-application types, log a habit, or capture a flagged Quick Note directly into Brain Dump
-- **Habit Tracker** — define habits and log them daily with streak history
+- **Habit Tracker** — define, rename, and delete daily habits; use an accessible labeled seven-day check-in grid with 7/30-day completion rates and current/best streaks
 - **Day Planner** — time-block calendar with configurable hours and categories (work, uni, gym, rest, meeting)
 - **Job Tracker** — log job applications by day, view a 7-day sparkline
 
@@ -80,7 +80,7 @@ Recurring-task calendar behavior, Command Palette Quick Note capture, same-tab s
 npm test
 ```
 
-Command Palette and Brain Dump tests use plain mocked/local values and jsdom. They do not connect to Firebase. Legacy note records are normalized only in memory while reading; enhanced metadata is written forward only for the individual note a user explicitly edits or creates.
+Command Palette, Habit Tracker, and Brain Dump tests use plain mocked/local values and jsdom. They do not connect to Firebase. Habit migration logic is tested only with synthetic in-memory fixtures and is not run automatically against any Firebase project. Legacy note records are normalized only in memory while reading; enhanced metadata is written forward only for the individual note a user explicitly edits or creates.
 
 ## Deployment
 

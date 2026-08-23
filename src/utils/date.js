@@ -39,3 +39,7 @@ export function parseLocalDateKey(dateKey) {
   const date = new Date(year, month - 1, day, 12)
   return toLocalDateKey(date) === dateKey ? date : null
 }
+
+export function isLocalDateKey(dateKey) {
+  return Boolean(parseLocalDateKey(dateKey))
+}

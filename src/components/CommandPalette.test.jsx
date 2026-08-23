@@ -3,6 +3,7 @@
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { getDateKey } from '../utils/date'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
@@ -233,7 +234,7 @@ describe('Command Palette Quick Note', () => {
     ['Data', 'data'],
   ])('logs exactly one %s application and preserves compatible fields', (label, key) => {
     const existing = [{
-      date: '2026-08-18',
+      date: getDateKey(0),
       count: 6,
       categories: { softwareEngineering: 1, aiApplications: 0, backend: 1, data: 1 },
       emails: 2,
