@@ -2,13 +2,14 @@ import { describe, expect, it } from 'vitest'
 import { NAV_ITEMS, SETTINGS_NAV_ITEM, getViewLabel } from './navigation'
 
 describe('primary navigation', () => {
-  it('keeps the six stable view IDs in product order', () => {
+  it('keeps the stable view IDs in product order', () => {
     expect(NAV_ITEMS.map(item => item.id)).toEqual([
       'overview',
       'todo',
       'braindump',
       'jobs',
       'habits',
+      'wellness',
       'dayplanner',
     ])
   })
@@ -25,6 +26,7 @@ describe('primary navigation', () => {
       'Brain',
       'Jobs',
       'Habits',
+      'Wellness',
       'Planner',
     ])
   })

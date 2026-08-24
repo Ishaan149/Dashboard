@@ -7,7 +7,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 vi.mock('./components/AppShell', () => ({
-  default: ({ children }) => <div>{children}</div>,
+  default: ({ children, onNavigate }) => (
+    <div>
+      <button type="button" aria-label="Open Wellness navigation" onClick={() => onNavigate('wellness')}>Wellness</button>
+      <main id="main-content" tabIndex="-1">{children}</main>
+    </div>
+  ),
 }))
 vi.mock('./theme/ThemeProvider', () => ({ ThemeProvider: ({ children }) => children }))
 vi.mock('./components/ui', () => ({
@@ -21,7 +26,7 @@ vi.mock('./components/Overview', () => ({
         <option value="">Choose job type</option>
         <option value="backend">Backend</option>
       </select>
-      <button type="button" onClick={() => onChange('todo')}>Open To-Do</button>
+      <button type="button" aria-label="Open To-Do" onClick={() => onChange('todo')}>Open To-Do</button>
     </div>
   ),
 }))
@@ -29,9 +34,12 @@ vi.mock('./components/TodoCard', () => ({
   default: ({ onChange, selectedJobType }) => (
     <div>
       <span>To-Do selection: {selectedJobType}</span>
-      <button type="button" onClick={() => onChange('overview')}>Open Overview</button>
+      <button type="button" aria-label="Open Overview" onClick={() => onChange('overview')}>Open Overview</button>
     </div>
   ),
+}))
+vi.mock('./components/Wellness', () => ({
+  default: () => <div>Wellness tracker loaded</div>,
 }))
 
 import App from './App'
@@ -70,11 +78,11 @@ describe('application-scoped Overview job type', () => {
     const select = container.querySelector('[aria-label="Mock job type"]')
     expect(select.value).toBe('')
     changeSelect(select, 'backend')
-    click(container.querySelector('button'))
+    click(container.querySelector('[aria-label="Open To-Do"]'))
     await act(async () => {})
     expect(container.textContent).toContain('To-Do selection: backend')
 
-    click(container.querySelector('button'))
+    click(container.querySelector('[aria-label="Open Overview"]'))
     await act(async () => {})
     expect(container.querySelector('[aria-label="Mock job type"]').value).toBe('backend')
 
@@ -82,5 +90,13 @@ describe('application-scoped Overview job type', () => {
     root = createRoot(container)
     await act(async () => root.render(<App />))
     expect(container.querySelector('[aria-label="Mock job type"]').value).toBe('')
+  })
+
+  it('loads Wellness through navigation and hands focus to the main landmark', async () => {
+    click(container.querySelector('[aria-label="Open Wellness navigation"]'))
+    await act(async () => {})
+    expect(container.textContent).toContain('Wellness tracker loaded')
+    await act(async () => new Promise(resolve => requestAnimationFrame(resolve)))
+    expect(document.activeElement).toBe(container.querySelector('#main-content'))
   })
 })

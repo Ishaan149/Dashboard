@@ -2,10 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { assertSafeFirebaseEnvironment } from './firebaseEnvironment'
 
 describe('Firebase environment isolation', () => {
-  it('accepts the local emulator for test configuration', () => {
+  it('accepts the local emulator for every non-production mode', () => {
     expect(() => assertSafeFirebaseEnvironment({
-      MODE: 'test',
-      VITE_FIREBASE_ENV: 'test',
+      MODE: 'development',
       VITE_FIREBASE_EMULATOR: 'true',
       VITE_FIREBASE_PROJECT_ID: 'synthetic-emulator',
     })).not.toThrow()
@@ -19,10 +18,23 @@ describe('Firebase environment isolation', () => {
       VITE_FIREBASE_TEST_PROJECT_ID: 'dashboard-synthetic-test',
     })).not.toThrow()
     expect(() => assertSafeFirebaseEnvironment({
-      MODE: 'test',
+      MODE: 'development',
       VITE_FIREBASE_ENV: 'test',
       VITE_FIREBASE_PROJECT_ID: 'unknown-project',
       VITE_FIREBASE_TEST_PROJECT_ID: 'dashboard-synthetic-test',
+    })).toThrow(/synthetic test project/u)
+  })
+
+  it('rejects an unclassified Firebase project in non-production builds', () => {
+    expect(() => assertSafeFirebaseEnvironment({
+      MODE: 'development',
+      VITE_FIREBASE_PROJECT_ID: 'unknown-project',
+    })).toThrow(/Non-production Firebase configuration/u)
+
+    expect(() => assertSafeFirebaseEnvironment({
+      MODE: 'test',
+      VITE_FIREBASE_ENV: 'test',
+      VITE_FIREBASE_PROJECT_ID: 'unknown-project',
     })).toThrow(/synthetic test project/u)
   })
 

@@ -4,6 +4,7 @@ export const NAV_ITEMS = Object.freeze([
   { id: 'braindump', label: 'Brain Dump', mobileLabel: 'Brain', icon: 'brain' },
   { id: 'jobs', label: 'Job Applications', mobileLabel: 'Jobs', icon: 'jobs' },
   { id: 'habits', label: 'Habits', mobileLabel: 'Habits', icon: 'habits' },
+  { id: 'wellness', label: 'Wellness', mobileLabel: 'Wellness', icon: 'wellness' },
   { id: 'dayplanner', label: 'Day Planner', mobileLabel: 'Planner', icon: 'planner' },
 ])
 
@@ -53,6 +54,9 @@ export function NavigationIcon({ name, size = 20 }) {
   }
   if (name === 'habits') {
     return <svg {...common}><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/></svg>
+  }
+  if (name === 'wellness') {
+    return <svg {...common}><path d="M12 21s-7-4.35-7-10a4 4 0 017-2.65A4 4 0 0119 11c0 5.65-7 10-7 10Z"/><path d="M12 6v7M8.5 12.5H12"/></svg>
   }
   return <svg {...common}><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M8 18h.01M12 18h.01"/></svg>
 }

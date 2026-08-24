@@ -159,7 +159,7 @@
     min-height: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom));
     padding: 6px 4px env(safe-area-inset-bottom);
     display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     align-items: stretch;
     background: color-mix(in srgb, var(--bg) 96%, transparent);
     border-top: 1px solid var(--border-hi);

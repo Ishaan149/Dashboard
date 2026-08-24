@@ -3,8 +3,13 @@ export function assertSafeFirebaseEnvironment(env) {
   const projectId = env.VITE_FIREBASE_PROJECT_ID
   const productionProjectId = env.VITE_FIREBASE_PRODUCTION_PROJECT_ID
   const isEmulator = env.VITE_FIREBASE_EMULATOR === 'true'
-  const isTestEnvironment = mode === 'test' || env.VITE_FIREBASE_ENV === 'test'
   const isNonProductionBuild = mode !== 'production'
+  const isExplicitSyntheticProject = Boolean(
+    env.VITE_FIREBASE_ENV === 'test'
+    && projectId
+    && env.VITE_FIREBASE_TEST_PROJECT_ID
+    && projectId === env.VITE_FIREBASE_TEST_PROJECT_ID,
+  )
 
   if (
     isNonProductionBuild
@@ -22,12 +27,7 @@ export function assertSafeFirebaseEnvironment(env) {
     throw new Error('Refusing to use production Firebase credentials outside an approved production build.')
   }
 
-  if (!isTestEnvironment) return
-
-  const isExplicitSyntheticProject = Boolean(
-    projectId && env.VITE_FIREBASE_TEST_PROJECT_ID && projectId === env.VITE_FIREBASE_TEST_PROJECT_ID,
-  )
-  if (!isEmulator && !isExplicitSyntheticProject) {
-    throw new Error('Test Firebase configuration must use the Local Emulator or an explicitly marked synthetic test project.')
+  if (isNonProductionBuild && !isEmulator && !isExplicitSyntheticProject) {
+    throw new Error('Non-production Firebase configuration must use the Local Emulator or an explicitly marked synthetic test project.')
   }
 }
