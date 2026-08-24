@@ -124,6 +124,7 @@
 
 .field input, .field select {
   width: 100%;
+  max-width: 100%;
   min-width: 0;
   min-height: var(--control-min-touch);
   padding: 0 11px;
@@ -243,6 +244,8 @@
 
 .weightMetrics { max-width: 100%; }
 .weightForm {
+  width: 100%;
+  min-width: 0;
   display: grid;
   grid-template-columns: minmax(160px, .65fr) minmax(160px, .65fr) auto;
   gap: var(--space-3);
@@ -250,6 +253,11 @@
   margin-top: var(--space-5);
 }
 .weightForm .button { white-space: nowrap; }
+.weightForm input[type='date'] {
+  inline-size: 100%;
+  max-inline-size: 100%;
+  min-inline-size: 0;
+}
 
 .chart {
   min-width: 0;
