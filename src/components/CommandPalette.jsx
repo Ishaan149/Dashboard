@@ -2,6 +2,7 @@ import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRe
 import { createPortal } from 'react-dom'
 import { createBrainDumpNote, NOTE_TITLE_LIMIT } from '../domain/brainDump'
 import { adjustCategory, APPLICATION_CATEGORIES } from '../domain/jobActivity'
+import { normalizeWeightRecords, upsertWeightRecord, validateWeightKg } from '../domain/wellness'
 import { useSyncedStorage } from '../hooks/useSyncedStorage'
 import { getDateKey } from '../utils/date'
 import { NavigationIcon } from './navigation'
@@ -69,6 +70,7 @@ const CommandPalette = forwardRef(function CommandPalette({ onNavigate }, ref) {
   const [returnStep, setReturnStep] = useState('root')
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
+  const [weightValue, setWeightValue] = useState('')
   const [error, setError] = useState('')
   const [, setDailyTasks] = useSyncedStorage('todos-daily', {})
   const [, setWeekTasks] = useSyncedStorage('todos-thisweek', [])
@@ -77,6 +79,7 @@ const CommandPalette = forwardRef(function CommandPalette({ onNavigate }, ref) {
   const [notes, setNotes] = useSyncedStorage('brainDumpNotes', [])
   const [, setActiveId] = useSyncedStorage('brainDumpActiveId', null)
   const [, setJobRecords] = useSyncedStorage('job_applications', [])
+  const [weightRecords, setWeightRecords] = useSyncedStorage('wellness_weight_records', {})
   const panelRef = useRef(null)
   const queryRef = useRef(null)
   const taskTitleRef = useRef(null)
@@ -85,6 +88,7 @@ const CommandPalette = forwardRef(function CommandPalette({ onNavigate }, ref) {
   const contentRef = useRef(null)
   const titleRef = useRef(null)
   const firstJobTypeRef = useRef(null)
+  const weightValueRef = useRef(null)
   const jobCommitRef = useRef(false)
   const openRef = useRef(false)
   const stepRef = useRef('root')
@@ -95,6 +99,7 @@ const CommandPalette = forwardRef(function CommandPalette({ onNavigate }, ref) {
 
   const commands = useMemo(() => [
     { id: 'note.quick', step: 'note', label: 'Quick Note', keywords: ['capture', 'write', 'brain dump'] },
+    { id: 'weight.log', step: 'weight', label: 'Log Weight', icon: 'wellness', keywords: ['weight', 'weigh in', 'wellness', 'health', 'kg', 'kilograms', 'today'] },
     { id: 'task.today', step: 'task', target: 'today', label: 'Create Task Today', icon: 'taskToday', keywords: ['add task', 'todo', 'today'] },
     { id: 'task.week', step: 'task', target: 'week', label: 'Create Task This Week', icon: 'taskWeek', keywords: ['add task', 'todo', 'week'] },
     { id: 'habit.log', step: 'habit', label: 'Log Habit', icon: 'habits', keywords: ['complete habit', 'track habit', 'today'] },
@@ -122,6 +127,7 @@ const CommandPalette = forwardRef(function CommandPalette({ onNavigate }, ref) {
     setReturnStep('root')
     setTitle('')
     setContent('')
+    setWeightValue('')
     setError('')
   }, [])
 
@@ -155,7 +161,9 @@ const CommandPalette = forwardRef(function CommandPalette({ onNavigate }, ref) {
     const currentStep = stepRef.current
     const hasUnsavedDraft = currentStep === 'task'
       ? Boolean(taskTitle.trim())
-      : currentStep === 'note' && Boolean(title.trim() || content.trim())
+      : currentStep === 'note'
+        ? Boolean(title.trim() || content.trim())
+        : currentStep === 'weight' && Boolean(weightValue.trim())
 
     if (hasUnsavedDraft) {
       setPendingExit(destination)
@@ -167,7 +175,7 @@ const CommandPalette = forwardRef(function CommandPalette({ onNavigate }, ref) {
 
     if (destination === 'root') backToRootImmediately()
     else closeImmediately()
-  }, [backToRootImmediately, closeImmediately, content, taskTitle, title])
+  }, [backToRootImmediately, closeImmediately, content, taskTitle, title, weightValue])
 
   const discardChanges = useCallback(() => {
     if (pendingExit === 'root') backToRootImmediately()
@@ -255,6 +263,7 @@ const CommandPalette = forwardRef(function CommandPalette({ onNavigate }, ref) {
     if (step === 'note') requestAnimationFrame(() => contentRef.current?.focus())
     if (step === 'confirm') requestAnimationFrame(() => keepEditingRef.current?.focus())
     if (step === 'jobs') requestAnimationFrame(() => firstJobTypeRef.current?.focus())
+    if (step === 'weight') requestAnimationFrame(() => weightValueRef.current?.focus())
   }, [open, step])
 
   function activate(item) {
@@ -269,6 +278,9 @@ const CommandPalette = forwardRef(function CommandPalette({ onNavigate }, ref) {
       setSelectedHabitId(String(availableHabits[0]?.id ?? ''))
     } else if (item.step === 'jobs') {
       jobCommitRef.current = false
+    } else if (item.step === 'weight') {
+      const todayWeight = normalizeWeightRecords(weightRecords)[todayKey]
+      setWeightValue(todayWeight ? todayWeight.weightKg.toFixed(1) : '')
     }
     setStep(item.step)
     stepRef.current = item.step
@@ -344,6 +356,21 @@ const CommandPalette = forwardRef(function CommandPalette({ onNavigate }, ref) {
     setJobRecords(previous => adjustCategory(previous, getDateKey(0), category.key, 1))
     closeImmediately()
     showToast(`${category.label} application logged for today.`)
+  }
+
+  function saveWeight(event) {
+    event.preventDefault()
+    const validation = validateWeightKg(weightValue)
+    if (!validation.valid) {
+      setError(validation.error)
+      weightValueRef.current?.focus()
+      return
+    }
+
+    const isUpdate = Boolean(normalizeWeightRecords(weightRecords)[todayKey])
+    setWeightRecords(previous => upsertWeightRecord(previous, todayKey, validation.value, Date.now()))
+    closeImmediately()
+    showToast(isUpdate ? 'Weight updated for today.' : 'Weight logged for today.')
   }
 
   function handleJobTypeKeyDown(event) {
@@ -426,7 +453,7 @@ const CommandPalette = forwardRef(function CommandPalette({ onNavigate }, ref) {
         className={styles.palette}
         role="dialog"
         aria-modal="true"
-        aria-label={step === 'root' ? 'Command palette' : step === 'task' ? `Create Task ${taskTarget === 'today' ? 'Today' : 'This Week'}` : step === 'habit' ? 'Log Habit' : step === 'jobs' ? 'Log Application' : step === 'confirm' ? 'Discard unsaved changes' : 'Capture Quick Note'}
+        aria-label={step === 'root' ? 'Command palette' : step === 'task' ? `Create Task ${taskTarget === 'today' ? 'Today' : 'This Week'}` : step === 'habit' ? 'Log Habit' : step === 'jobs' ? 'Log Application' : step === 'weight' ? 'Log Weight' : step === 'confirm' ? 'Discard unsaved changes' : 'Capture Quick Note'}
         tabIndex="-1"
       >
         {step === 'root' ? (
@@ -490,7 +517,7 @@ const CommandPalette = forwardRef(function CommandPalette({ onNavigate }, ref) {
               <IconButton label="Keep editing" onClick={keepEditing}><CloseIcon /></IconButton>
             </div>
             <div className={styles.formIntro}><BoltIcon /><h2>Discard changes?</h2></div>
-            <p className={styles.discardCopy}>Your unsaved {returnStep === 'task' ? 'task' : 'note'} will be lost.</p>
+            <p className={styles.discardCopy}>Your unsaved {returnStep === 'task' ? 'task' : returnStep === 'weight' ? 'weight entry' : 'note'} will be lost.</p>
             <div className={styles.formActions}>
               <Button ref={keepEditingRef} variant="secondary" onClick={keepEditing}>Keep Editing</Button>
               <Button variant="danger" onClick={discardChanges}>Discard</Button>
@@ -520,6 +547,38 @@ const CommandPalette = forwardRef(function CommandPalette({ onNavigate }, ref) {
               ))}
             </div>
           </div>
+        ) : step === 'weight' ? (
+          <form className={styles.captureForm} onSubmit={saveWeight} noValidate>
+            <div className={styles.formHeader}>
+              <button type="button" className={styles.backButton} onClick={() => requestExit('root')}>← Back</button>
+              <IconButton label="Close command palette" onClick={() => requestExit('close')}><CloseIcon /></IconButton>
+            </div>
+            <div className={styles.formIntro}><NavigationIcon name="wellness" /><h2>Log Weight</h2></div>
+            <label className={styles.field}>
+              <span>Weight (kg)</span>
+              <input
+                ref={weightValueRef}
+                type="number"
+                inputMode="decimal"
+                min="20"
+                max="500"
+                step="0.1"
+                value={weightValue}
+                onChange={event => { setWeightValue(event.target.value); setError('') }}
+                placeholder="Enter today’s weight"
+                aria-invalid={Boolean(error)}
+                aria-describedby={error ? 'weight-error' : 'weight-hint'}
+              />
+            </label>
+            <p id="weight-hint" className={styles.hint}>Records weight for today</p>
+            {error && <p id="weight-error" className={styles.error} role="alert">{error}</p>}
+            <div className={styles.formActions}>
+              <Button variant="secondary" onClick={closeImmediately}>Cancel</Button>
+              <Button variant="primary" type="submit" disabled={!weightValue.trim()}>
+                {normalizeWeightRecords(weightRecords)[todayKey] ? 'Update Weight' : 'Log Weight'}
+              </Button>
+            </div>
+          </form>
         ) : step === 'task' ? (
           <form className={styles.captureForm} onSubmit={saveTask}>
             <div className={styles.formHeader}>

@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState } from 'react'
+import { createContext, useContext, useLayoutEffect, useMemo, useState } from 'react'
 import {
   createThemeRecord,
   getPreset,
@@ -12,6 +12,27 @@ const ThemeContext = createContext(null)
 
 export function ThemeProvider({ children, storage }) {
   const [theme, setTheme] = useState(() => loadThemePreferences(storage))
+
+  useLayoutEffect(() => {
+    const root = document.documentElement
+    const variables = {
+      '--theme-accent': theme.colors.accent,
+      '--theme-background': theme.colors.background,
+      '--theme-foreground': theme.colors.foreground,
+    }
+    const previousValues = Object.fromEntries(
+      Object.keys(variables).map(name => [name, root.style.getPropertyValue(name)]),
+    )
+
+    Object.entries(variables).forEach(([name, value]) => root.style.setProperty(name, value))
+
+    return () => {
+      Object.entries(previousValues).forEach(([name, value]) => {
+        if (value) root.style.setProperty(name, value)
+        else root.style.removeProperty(name)
+      })
+    }
+  }, [theme.colors.accent, theme.colors.background, theme.colors.foreground])
 
   function selectPreset(presetId) {
     setTheme(current => {

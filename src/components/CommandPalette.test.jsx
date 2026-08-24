@@ -14,6 +14,7 @@ const storage = vi.hoisted(() => ({
   setNotes: vi.fn(),
   setActiveId: vi.fn(),
   setJobRecords: vi.fn(),
+  setWeightRecords: vi.fn(),
 }))
 
 vi.mock('../hooks/useSyncedStorage', () => ({
@@ -25,12 +26,23 @@ vi.mock('../hooks/useSyncedStorage', () => ({
     if (key === 'brainDumpNotes') return [[{ id: 'existing', title: 'Existing', content: '' }], storage.setNotes]
     if (key === 'brainDumpActiveId') return [null, storage.setActiveId]
     if (key === 'job_applications') return [[], storage.setJobRecords]
+    if (key === 'wellness_weight_records') return [{}, storage.setWeightRecords]
     throw new Error(`Unexpected storage key: ${key}`)
   },
 }))
 
 import CommandPalette from './CommandPalette'
+import { ThemeProvider } from '../theme/ThemeProvider'
 import { ToastProvider } from './ui'
+
+const themeStorage = {
+  getItem: () => JSON.stringify({
+    version: 1,
+    presetId: 'slate',
+    colors: { accent: '#AABBCC', background: '#112233', foreground: '#F1F2F3' },
+  }),
+  setItem: vi.fn(),
+}
 
 function inputValue(element, value) {
   const prototype = element instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype
@@ -64,13 +76,16 @@ describe('Command Palette Quick Note', () => {
     storage.setNotes.mockReset()
     storage.setActiveId.mockReset()
     storage.setJobRecords.mockReset()
+    storage.setWeightRecords.mockReset()
     onNavigate = vi.fn()
     randomUUID = vi.spyOn(globalThis.crypto, 'randomUUID').mockReturnValue('quick-generated')
     container = document.createElement('div')
     document.body.append(container)
     root = createRoot(container)
     act(() => root.render(
-      <ToastProvider><CommandPalette activeView="overview" onNavigate={onNavigate} /></ToastProvider>,
+      <ThemeProvider storage={themeStorage}>
+        <ToastProvider><CommandPalette activeView="overview" onNavigate={onNavigate} /></ToastProvider>
+      </ThemeProvider>,
     ))
   })
 
@@ -90,11 +105,31 @@ describe('Command Palette Quick Note', () => {
     expect(dialog.textContent).toContain('Log Habit')
     expect(dialog.textContent).toContain('Quick Note')
     expect(dialog.textContent).toContain('Log Application')
+    expect(dialog.textContent).toContain('Log Weight')
     expect(dialog.textContent).not.toContain('Home')
     expect(dialog.textContent).not.toContain('To-Do')
     expect(dialog.textContent).not.toContain('Brain Dump')
     expect(dialog.textContent).not.toContain('Job Applications')
     expect(dialog.textContent).not.toContain('Navigate')
+    expect([...dialog.querySelectorAll('[role="option"] strong')].map(element => element.textContent)).toEqual([
+      'Quick Note',
+      'Log Weight',
+      'Create Task Today',
+      'Create Task This Week',
+      'Log Habit',
+      'Log Application',
+    ])
+  })
+
+  it('makes the active custom theme available to the body-level palette portal', () => {
+    act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true })))
+
+    const dialog = document.body.querySelector('[role="dialog"]')
+    expect(dialog).not.toBeNull()
+    expect(dialog.closest('body')).toBe(document.body)
+    expect(document.documentElement.style.getPropertyValue('--theme-accent')).toBe('#AABBCC')
+    expect(document.documentElement.style.getPropertyValue('--theme-background')).toBe('#112233')
+    expect(document.documentElement.style.getPropertyValue('--theme-foreground')).toBe('#F1F2F3')
   })
 
   it('resets the active command when reopened', () => {
@@ -184,6 +219,38 @@ describe('Command Palette Quick Note', () => {
     const updated = storage.setHabitLogs.mock.calls[0][0]({})
     expect(Object.values(updated).flat()).toContain(7)
     expect(document.body.textContent).toContain('Read logged for today.')
+  })
+
+  it('finds and logs today\'s weight through the command palette', () => {
+    act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true })))
+    inputValue(document.body.querySelector('[aria-label="Search commands"]'), 'weigh in')
+    expect(document.body.querySelector('[role="option"]')?.textContent).toContain('Log Weight')
+
+    clickCommand('Log Weight')
+    const weightInput = document.body.querySelector('input[placeholder="Enter today’s weight"]')
+    inputValue(weightInput, '79.4')
+    click([...document.body.querySelectorAll('button')].find(button => button.textContent.trim() === 'Log Weight'))
+
+    expect(storage.setWeightRecords).toHaveBeenCalledTimes(1)
+    const updated = storage.setWeightRecords.mock.calls[0][0]({})
+    expect(updated[getDateKey(0)]).toMatchObject({ weightKg: 79.4 })
+    expect(document.body.querySelector('[role="dialog"]')).toBeNull()
+    expect(document.body.textContent).toContain('Weight logged for today.')
+  })
+
+  it('validates weight and protects an unsaved weight entry', () => {
+    act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true })))
+    clickCommand('Log Weight')
+    const weightInput = document.body.querySelector('input[placeholder="Enter today’s weight"]')
+    inputValue(weightInput, '19')
+    click([...document.body.querySelectorAll('button')].find(button => button.textContent.trim() === 'Log Weight'))
+
+    expect(document.body.textContent).toContain('Weight must be between 20 and 500 kg.')
+    expect(storage.setWeightRecords).not.toHaveBeenCalled()
+
+    click([...document.body.querySelectorAll('button')].find(button => button.textContent.trim() === '← Back'))
+    expect(document.body.querySelector('[aria-label="Discard unsaved changes"]')).not.toBeNull()
+    expect(document.body.textContent).toContain('Your unsaved weight entry will be lost.')
   })
 
   it.each(['jobs', 'applications', 'add job', 'Software Engineering', 'AI Applications', 'Backend', 'Data'])(
