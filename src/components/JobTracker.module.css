@@ -60,7 +60,7 @@
 }
 
 .summary { padding: 18px 22px; }
-.summaryGrid { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 15px; }
+.summaryGrid { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 15px; }
 .stat { display: flex; flex-direction: column; gap: 5px; padding: 0 20px; border-right: 1px solid var(--border); }
 .stat:first-child { padding-left: 0; }
 .stat:last-child { padding-right: 0; border-right: 0; }
@@ -110,8 +110,11 @@
   .dateNavButton { width: 44px; height: 44px; }
   .countButton { width: 44px; height: 44px; }
   .summary, .logging, .panel { padding: 16px; }
-  .summaryGrid { gap: 0; }
+  .summaryGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 14px; }
   .stat { padding-inline: 10px; }
+  .stat:nth-child(2) { padding-right: 0; border-right: 0; }
+  .stat:nth-child(3) { padding-top: 14px; padding-left: 0; border-top: 1px solid var(--border); }
+  .stat:nth-child(4) { padding-top: 14px; border-top: 1px solid var(--border); }
   .lowerGrid { grid-template-columns: 1fr; }
 }
 

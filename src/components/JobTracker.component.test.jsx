@@ -85,15 +85,21 @@ describe('Job Applications page', () => {
 
   it('keeps application-only summaries, notes, and history compatible with legacy records', () => {
     storage.records = [
+      { date: '2026-08-14', count: 3 },
       { date: '2026-08-13', count: 4 },
       { date: '2026-08-12', count: 0, emails: 2 },
     ]
     storage.note = 'Keep this global note'
     act(() => root.render(<JobTracker />))
 
-    expect(container.textContent).toContain('this week')
-    expect(container.textContent).toContain('this month')
-    expect(container.textContent).toContain('all time')
+    const summaryStats = [...container.querySelectorAll('[aria-labelledby="job-summary-heading"] div > div')]
+      .map(stat => [stat.querySelector('span').textContent, stat.querySelector('strong').textContent])
+    expect(summaryStats).toEqual([
+      ['today', '3'],
+      ['this week', '7'],
+      ['this month', '7'],
+      ['all time', '7'],
+    ])
     expect(container.querySelector('#notes-heading + textarea').value).toBe('Keep this global note')
     const historyItems = container.querySelectorAll('#history-heading + ul > li')
     expect(historyItems).toHaveLength(2)

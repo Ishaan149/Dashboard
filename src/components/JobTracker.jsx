@@ -92,11 +92,12 @@ function DateNavigation({ selectedDate, selectedDateLabel, onMove, isToday }) {
   )
 }
 
-function Summary({ week, month, allTime }) {
+function Summary({ today, week, month, allTime }) {
   return (
     <section className={styles.summary} aria-labelledby="job-summary-heading">
       <h2 id="job-summary-heading" className={styles.sectionEyebrow}>Application summary</h2>
       <div className={styles.summaryGrid}>
+        <div className={styles.stat}><strong>{today}</strong><span>today</span></div>
         <div className={styles.stat}><strong>{week}</strong><span>this week</span></div>
         <div className={styles.stat}><strong>{month}</strong><span>this month</span></div>
         <div className={styles.stat}><strong>{allTime}</strong><span>all time</span></div>
@@ -117,6 +118,7 @@ export default function JobTracker() {
     .filter(record => record.date !== selectedDate)
     .sort((a, b) => b.date.localeCompare(a.date))
 
+  const today = getOverallApplicationCount(getJobRecord(records, toLocalDateKey(new Date())))
   const week = getPeriodApplicationTotal(records, getWeekStartKey())
   const month = getPeriodApplicationTotal(records, getMonthStartKey())
   const allTime = getAllTimeApplicationTotal(records)
@@ -138,7 +140,7 @@ export default function JobTracker() {
 
   return (
     <div className={styles.page}>
-      <Summary week={week} month={month} allTime={allTime} />
+      <Summary today={today} week={week} month={month} allTime={allTime} />
 
       <section className={styles.logging} aria-label="Job activity logging">
         <div className={styles.activityGroup}>
