@@ -26,6 +26,15 @@ function sameLocation(a, b) {
   return a.type === b.type && a.date === b.date && a.folderId === b.folderId
 }
 
+function dropPosition(event) {
+  const { top, height } = event.currentTarget.getBoundingClientRect()
+  return event.clientY > top + height / 2 ? 'after' : 'before'
+}
+
+function listTargetKey(location) {
+  return `list:${location.type}:${location.date ?? ''}:${location.folderId ?? ''}`
+}
+
 function Chevron({ collapsed }) {
   return (
     <svg className={collapsed ? styles.chevronCollapsed : ''} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="11" height="11" aria-hidden="true">
@@ -34,14 +43,15 @@ function Chevron({ collapsed }) {
   )
 }
 
-function TaskRow({ task, nested = false, dragOver = false, onToggle, onDelete, onDragStart, onDragEnd, onDragOver, onDrop }) {
+function TaskRow({ task, nested = false, dragOver = null, onToggle, onDelete, onDragStart, onDragEnd, onDragOver, onDragLeave, onDrop }) {
   return (
     <li
-      className={`${styles.task} ${task.done ? styles.done : ''} ${nested ? styles.nested : ''} ${dragOver ? styles.taskDragOver : ''}`}
+      className={`${styles.task} ${task.done ? styles.done : ''} ${nested ? styles.nested : ''} ${dragOver ? styles.taskDragOver : ''} ${dragOver === 'after' ? styles.taskDragAfter : ''}`}
       draggable
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
       onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
       onDrop={onDrop}
     >
       <button className={styles.checkbox} onClick={onToggle} aria-label={task.done ? `Mark ${task.text} incomplete` : `Mark ${task.text} complete`} />
@@ -147,17 +157,35 @@ function AddTask({ onAdd, compact = false }) {
   )
 }
 
-function DropList({ className = '', location, dragging, children, empty, onDropAtEnd }) {
-  const [active, setActive] = useState(false)
+function DropList({ className = '', location, dragging, dragTarget, setDragTarget, children, empty, onDropAtEnd }) {
+  const targetKey = listTargetKey(location)
+  const active = dragTarget?.key === targetKey
+  const acceptsDrag = () => dragging.current?.kind === 'task'
+    || (dragging.current?.kind === 'folder' && location.type === 'long' && location.folderId == null)
   return (
     <div
-      className={`${className} ${active ? styles.dropZoneActive : ''}`}
-      onDragOver={event => { event.preventDefault(); if (dragging.current) setActive(true) }}
-      onDragLeave={event => { if (!event.currentTarget.contains(event.relatedTarget)) setActive(false) }}
-      onDrop={event => { event.preventDefault(); setActive(false); onDropAtEnd(location) }}
+      className={`${styles.dropZone} ${className} ${active ? styles.dropZoneActive : ''}`}
+      onDragOver={event => {
+        event.stopPropagation()
+        if (!acceptsDrag()) { setDragTarget(null); return }
+        event.preventDefault()
+        event.dataTransfer.dropEffect = 'move'
+        setDragTarget({ key: targetKey })
+      }}
+      onDragLeave={event => {
+        if (!event.currentTarget.contains(event.relatedTarget)) {
+          setDragTarget(previous => previous?.key === targetKey ? null : previous)
+        }
+      }}
+      onDrop={event => {
+        event.stopPropagation()
+        if (!acceptsDrag()) return
+        event.preventDefault()
+        onDropAtEnd(location)
+      }}
     >
       {children}
-      {empty && <p className={styles.empty}>{active ? 'Drop task here' : 'No tasks yet'}</p>}
+      {empty && active && <p className={styles.dropHint}>Drop task here</p>}
     </div>
   )
 }
@@ -173,6 +201,7 @@ export default function TodoCard() {
   const [folderName, setFolderName] = useState('')
   const [showFolderForm, setShowFolderForm] = useState(false)
   const [showSeriesForm, setShowSeriesForm] = useState(false)
+  const [recurringCollapsed, setRecurringCollapsed] = useState(false)
   const [editingSeriesId, setEditingSeriesId] = useState(null)
   const dragging = useRef(null)
 
@@ -230,14 +259,14 @@ export default function TodoCard() {
     setDragTarget(null)
   }
 
-  function insert(items, task, targetId = null) {
+  function insert(items, task, targetId = null, position = 'before') {
     const result = [...items]
     const index = targetId == null ? result.length : result.findIndex(item => item.id === targetId)
-    result.splice(index < 0 ? result.length : index, 0, task)
+    result.splice(index < 0 ? result.length : index + (targetId != null && position === 'after' ? 1 : 0), 0, task)
     return result
   }
 
-  function moveTask(targetLocation, targetId = null) {
+  function moveTask(targetLocation, targetId = null, position = 'before') {
     const source = dragging.current
     if (!source || source.kind !== 'task') return
     const task = findTask(source.location, source.id)
@@ -250,28 +279,34 @@ export default function TodoCard() {
         if (!found) return previous
         const without = sourceItems.filter(item => item.id !== source.id)
         if (source.location.date === targetLocation.date) {
-          return { ...previous, [source.location.date]: insert(without, found, targetId) }
+          return { ...previous, [source.location.date]: insert(without, found, targetId, position) }
         }
         const targetItems = previous[targetLocation.date] || []
         return {
           ...previous,
           [source.location.date]: without,
-          [targetLocation.date]: insert(targetItems, found, targetId),
+          [targetLocation.date]: insert(targetItems, found, targetId, position),
         }
       })
     } else if (sameLocation(source.location, targetLocation)) {
-      updateLocation(source.location, items => insert(items.filter(item => item.id !== source.id), task, targetId))
+      updateLocation(source.location, items => insert(items.filter(item => item.id !== source.id), task, targetId, position))
     } else {
       updateLocation(source.location, items => items.filter(item => item.id !== source.id))
-      updateLocation(targetLocation, items => insert(items, task, targetId))
+      updateLocation(targetLocation, items => insert(items, task, targetId, position))
     }
     endDrag()
+  }
+
+  function leaveTarget(event, key) {
+    if (!event.currentTarget.contains(event.relatedTarget)) {
+      setDragTarget(previous => previous?.key === key ? null : previous)
+    }
   }
 
   function dropOnTask(event, location, id) {
     event.preventDefault()
     event.stopPropagation()
-    moveTask(location, id)
+    moveTask(location, id, dropPosition(event))
   }
 
   function renderTask(task, location, nested = false) {
@@ -281,12 +316,23 @@ export default function TodoCard() {
         key={task.id}
         task={task}
         nested={nested}
-        dragOver={dragTarget === targetKey}
+        dragOver={dragTarget?.key === targetKey ? dragTarget.position : null}
         onToggle={() => toggleTask(location, task.id)}
         onDelete={() => deleteTask(location, task.id)}
         onDragStart={event => startTaskDrag(event, location, task.id)}
         onDragEnd={endDrag}
-        onDragOver={event => { event.preventDefault(); event.stopPropagation(); setDragTarget(targetKey) }}
+        onDragOver={event => {
+          event.stopPropagation()
+          if (dragging.current?.kind !== 'task') { setDragTarget(null); return }
+          if (sameLocation(dragging.current.location, location) && dragging.current.id === task.id) {
+            setDragTarget(null)
+            return
+          }
+          event.preventDefault()
+          event.dataTransfer.dropEffect = 'move'
+          setDragTarget({ key: targetKey, position: dropPosition(event) })
+        }}
+        onDragLeave={event => leaveTarget(event, targetKey)}
         onDrop={event => dropOnTask(event, location, task.id)}
       />
     )
@@ -350,15 +396,14 @@ export default function TodoCard() {
 
   function dropOnSeries(event, targetId) {
     event.preventDefault()
+    event.stopPropagation()
+    const position = dropPosition(event)
     const source = dragging.current
     if (source?.kind === 'series' && source.id !== targetId) {
       setRecurringSeries(previous => {
         const moved = previous.find(series => series.id === source.id)
         if (!moved) return previous
-        const result = previous.filter(series => series.id !== source.id)
-        const targetIndex = result.findIndex(series => series.id === targetId)
-        result.splice(targetIndex < 0 ? result.length : targetIndex, 0, moved)
-        return result
+        return insert(previous.filter(series => series.id !== source.id), moved, targetId, position)
       })
     }
     endDrag()
@@ -400,14 +445,12 @@ export default function TodoCard() {
     const source = dragging.current
     if (!source) return
     if (source.kind === 'folder') {
+      const position = dropPosition(event)
       if (source.id !== folder.id) {
         setLongTasks(previous => {
           const moved = previous.find(item => item.id === source.id && item.isFolder)
           if (!moved) return previous
-          const result = previous.filter(item => item.id !== source.id)
-          const index = result.findIndex(item => item.id === folder.id)
-          result.splice(index < 0 ? result.length : index, 0, moved)
-          return result
+          return insert(previous.filter(item => item.id !== source.id), moved, folder.id, position)
         })
       }
       return endDrag()
@@ -433,18 +476,26 @@ export default function TodoCard() {
     return orderByCompletion(longTasks).map(item => {
       if (!item.isFolder) return renderTask(item, { type: 'long', folderId: null })
       const folderLocation = { type: 'long', folderId: item.id }
-      const folderTarget = dragTarget === `folder:${item.id}`
+      const folderTarget = dragTarget?.key === `folder:${item.id}`
       return (
         <li className={styles.folder} key={item.id}>
           <div
-            className={`${styles.folderRow} ${folderTarget ? styles.folderDragOver : ''}`}
+            className={`${styles.folderRow} ${folderTarget ? (dragging.current?.kind === 'folder' ? `${styles.taskDragOver} ${dragTarget.position === 'after' ? styles.taskDragAfter : ''}` : styles.folderDragOver) : ''}`}
             draggable
             onDragStart={event => startFolderDrag(event, item.id)}
             onDragEnd={endDrag}
-            onDragOver={event => { event.preventDefault(); event.stopPropagation(); setDragTarget(`folder:${item.id}`) }}
+            onDragOver={event => {
+              event.stopPropagation()
+              const source = dragging.current
+              if (!source || !['task', 'folder'].includes(source.kind)) { setDragTarget(null); return }
+              if (source.kind === 'folder' && source.id === item.id) { setDragTarget(null); return }
+              event.preventDefault()
+              event.dataTransfer.dropEffect = 'move'
+              setDragTarget({ key: `folder:${item.id}`, position: dropPosition(event) })
+            }}
+            onDragLeave={event => leaveTarget(event, `folder:${item.id}`)}
             onDrop={event => dropOnFolder(event, item)}
           >
-            <span className={styles.dragHandle} aria-hidden="true">⠿</span>
             <button className={styles.folderToggle} onClick={() => setLongTasks(previous => previous.map(entry => entry.id === item.id ? { ...entry, collapsed: !entry.collapsed } : entry))} aria-label={item.collapsed ? `Expand ${item.name}` : `Collapse ${item.name}`}>
               <Chevron collapsed={item.collapsed} />
             </button>
@@ -453,7 +504,7 @@ export default function TodoCard() {
             <button className={styles.delete} onClick={() => setLongTasks(previous => previous.filter(entry => entry.id !== item.id))} aria-label={`Delete folder ${item.name}`}>×</button>
           </div>
           {!item.collapsed && (
-            <DropList className={styles.folderContents} location={folderLocation} dragging={dragging} empty={(item.items || []).length === 0} onDropAtEnd={dropAtEnd}>
+            <DropList className={styles.folderContents} location={folderLocation} dragging={dragging} dragTarget={dragTarget} setDragTarget={setDragTarget} empty={(item.items || []).length === 0} onDropAtEnd={dropAtEnd}>
               <ul className={styles.list}>{orderByCompletion(item.items || []).map(task => renderTask(task, folderLocation, true))}</ul>
               <AddTask compact onAdd={text => addTask(folderLocation, text)} />
             </DropList>
@@ -487,7 +538,7 @@ export default function TodoCard() {
                   <span className={`${styles.dayName} ${isToday ? styles.todayDayName : ''}`}>{day.name.slice(0, 3)}</span>
                   <span className={styles.dayDate}>{day.date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
                 </header>
-                <DropList className={styles.dayBody} location={location} dragging={dragging} onDropAtEnd={dropAtEnd}>
+                <DropList className={styles.dayBody} location={location} dragging={dragging} dragTarget={dragTarget} setDragTarget={setDragTarget} onDropAtEnd={dropAtEnd}>
                   <ul className={styles.list}>
                     {occurrences.filter(occurrence => !occurrence.done).map(renderRecurringOccurrence)}
                     {tasks.filter(task => !task.done).map(task => renderTask(task, location))}
@@ -504,14 +555,14 @@ export default function TodoCard() {
 
       <div className={styles.supportGrid}>
         <Card title="This Week">
-          <DropList className={styles.supportBody} location={{ type: 'week' }} dragging={dragging} empty={weekTasks.length === 0} onDropAtEnd={dropAtEnd}>
+          <DropList className={styles.supportBody} location={{ type: 'week' }} dragging={dragging} dragTarget={dragTarget} setDragTarget={setDragTarget} empty={weekTasks.length === 0} onDropAtEnd={dropAtEnd}>
             <ul className={styles.list}>{orderByCompletion(weekTasks).map(task => renderTask(task, { type: 'week' }))}</ul>
             <AddTask onAdd={text => addTask({ type: 'week' }, text)} />
           </DropList>
         </Card>
 
         <Card title="Long Term">
-          <DropList className={styles.supportBody} location={{ type: 'long', folderId: null }} dragging={dragging} empty={longTasks.length === 0} onDropAtEnd={dropAtEnd}>
+          <DropList className={styles.supportBody} location={{ type: 'long', folderId: null }} dragging={dragging} dragTarget={dragTarget} setDragTarget={setDragTarget} empty={longTasks.length === 0} onDropAtEnd={dropAtEnd}>
             <ul className={styles.list}>{renderLongItems()}</ul>
             <div className={styles.longActions}>
               <AddTask onAdd={text => addTask({ type: 'long', folderId: null }, text)} />
@@ -530,7 +581,9 @@ export default function TodoCard() {
 
       <Card
         title="Recurring Tasks"
-        action={!showSeriesForm && <button className={styles.newSeriesButton} onClick={() => { setEditingSeriesId(null); setShowSeriesForm(true) }}>+ New recurring task</button>}
+        collapsed={recurringCollapsed}
+        onToggle={() => setRecurringCollapsed(previous => !previous)}
+        action={!showSeriesForm && <button className={styles.newSeriesButton} onClick={() => { setRecurringCollapsed(false); setEditingSeriesId(null); setShowSeriesForm(true) }}>+ New recurring task</button>}
       >
         <div className={styles.recurringManagement}>
           {showSeriesForm && (
@@ -560,12 +613,20 @@ export default function TodoCard() {
               }
               return (
                 <li
-                  className={styles.seriesRow}
+                  className={`${styles.seriesRow} ${dragTarget?.key === `series:${series.id}` ? `${styles.taskDragOver} ${dragTarget.position === 'after' ? styles.taskDragAfter : ''}` : ''}`}
                   key={series.id}
                   draggable
                   onDragStart={event => startSeriesDrag(event, series.id)}
                   onDragEnd={endDrag}
-                  onDragOver={event => event.preventDefault()}
+                  onDragOver={event => {
+                    event.stopPropagation()
+                    if (dragging.current?.kind !== 'series') { setDragTarget(null); return }
+                    if (dragging.current.id === series.id) { setDragTarget(null); return }
+                    event.preventDefault()
+                    event.dataTransfer.dropEffect = 'move'
+                    setDragTarget({ key: `series:${series.id}`, position: dropPosition(event) })
+                  }}
+                  onDragLeave={event => leaveTarget(event, `series:${series.id}`)}
                   onDrop={event => dropOnSeries(event, series.id)}
                 >
                   <button

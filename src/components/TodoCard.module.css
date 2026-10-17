@@ -1,4 +1,5 @@
 .page { display: flex; flex-direction: column; gap: 18px; padding-bottom: 8px; }
+.page > :first-child { padding-top: 12px; }
 
 .weekControls { display: flex; align-items: center; gap: 6px; }
 .weekControls button { height: 28px; min-width: 28px; padding: 0 8px; border: 1px solid var(--border); border-radius: 8px; background: color-mix(in srgb, var(--theme-foreground) 3.5%, transparent); color: var(--ink-2); font: inherit; font-size: 14px; cursor: pointer; }
@@ -6,20 +7,21 @@
 .weekControls .todayButton { font-size: 11px; font-weight: 650; padding: 0 10px; }
 .range { color: var(--ink-3); font-size: 11px; font-weight: 600; margin-right: 4px; white-space: nowrap; }
 
-.weekBoard { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
+.weekBoard { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; margin: 0 -12px -12px; }
 .dayColumn { min-width: 0; min-height: 310px; display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 12px; background: color-mix(in srgb, var(--theme-background) 88%, black); overflow: hidden; transition: border-color .15s, background .15s; }
-.dayHeader { min-height: 58px; padding: 11px 10px 6px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; align-items: flex-start; position: relative; }
+.dayHeader { min-height: 34px; padding: 8px 10px; border-bottom: 1px solid var(--border); display: flex; align-items: baseline; justify-content: space-between; gap: 6px; white-space: nowrap; position: relative; }
 .dayName { color: var(--ink); font-size: 12px; font-weight: 700; letter-spacing: .02em; }
 .todayDayName { color: var(--accent); }
-.dayDate { color: var(--ink-3); font-size: 10px; margin-top: 2px; }
+.dayDate { color: var(--ink-3); font-size: 10px; }
 .dayBody { flex: 1; display: flex; flex-direction: column; min-height: 0; padding: 7px; }
 .dayBody .addTaskTrigger { margin-top: auto; }
 
-.list { list-style: none; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.task { min-width: 0; min-height: 34px; display: flex; align-items: center; gap: 5px; padding: 6px 6px 6px 4px; border: 0; border-radius: 8px; background: transparent; transition: opacity .12s; }
+.list { list-style: none; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.task { min-width: 0; min-height: 28px; display: flex; align-items: center; gap: 5px; padding: 3px 6px 3px 4px; border: 0; border-radius: 8px; background: transparent; transition: opacity .12s; }
 .taskDragOver { box-shadow: 0 -2px 0 var(--accent); }
-.dragHandle { color: color-mix(in srgb, var(--theme-foreground) 18%, transparent); font-size: 11px; cursor: grab; flex: 0 0 auto; }
-.task:active .dragHandle, .folderRow:active .dragHandle { cursor: grabbing; }
+.taskDragAfter { box-shadow: 0 2px 0 var(--accent); }
+.task[draggable], .folderRow[draggable], .seriesRow[draggable] { cursor: grab; }
+.task[draggable]:active, .folderRow[draggable]:active, .seriesRow[draggable]:active { cursor: grabbing; }
 .checkbox { appearance: none; width: 16px; height: 16px; flex: 0 0 auto; display: block; padding: 0; border: 2px solid color-mix(in srgb, var(--theme-foreground) 28%, transparent); border-radius: 50%; background: transparent; cursor: pointer; transition: border-color .15s, transform .15s; }
 .checkbox:hover, .checkbox:focus-visible { border-color: color-mix(in srgb, var(--theme-foreground) 52%, transparent); }
 .done .checkbox { border-color: var(--accent); background: radial-gradient(circle at center, var(--accent) 0 4px, transparent 4.25px); animation: completePop .16s ease-out; }
@@ -36,16 +38,21 @@
 .addForm input:focus { border-color: var(--focus-color); }
 .addForm button { flex: 0 0 auto; padding: 0 9px; border: 0; border-radius: 7px; background: var(--accent); color: var(--accent-contrast); font: inherit; font-size: 10px; font-weight: 750; cursor: pointer; }
 .empty { color: color-mix(in srgb, var(--theme-foreground) 22%, transparent); font-size: 10px; line-height: 1.4; text-align: center; padding: 22px 5px 8px; }
+.dropZone { position: relative; }
+.dropHint { position: absolute; top: 4px; right: 8px; margin: 0; color: var(--ink-3); font-size: 10px; pointer-events: none; }
 .dropZoneActive { background: color-mix(in srgb, var(--accent) 6%, transparent); outline: 1px dashed var(--accent-glow); outline-offset: -2px; border-radius: 8px; }
 
-.supportGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
-.supportBody { min-height: 150px; padding: 2px; }
-.supportBody .task { min-height: 38px; padding-left: 7px; }
+.supportGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: stretch; }
+.supportGrid > div { display: flex; flex-direction: column; padding: 12px; }
+.supportGrid > div > :first-child { padding: 6px 6px 0; margin-bottom: 12px; }
+.supportBody { flex: 1; display: flex; flex-direction: column; min-height: 162px; padding: 2px 0; }
+.supportBody > .list { flex: 1; }
+.supportBody .task { min-height: 30px; padding-left: 7px; }
 .supportBody .taskText { font-size: 12px; }
 .longActions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 5px; }
 
 .folder { list-style: none; }
-.folderRow { min-height: 38px; display: flex; align-items: center; gap: 6px; padding: 6px 8px 6px 6px; border: 1px solid var(--border); border-radius: 8px; background: color-mix(in srgb, var(--theme-foreground) 2.5%, transparent); }
+.folderRow { min-height: 30px; display: flex; align-items: center; gap: 6px; padding: 3px 8px 3px 6px; border: 1px solid var(--border); border-radius: 8px; background: color-mix(in srgb, var(--theme-foreground) 2.5%, transparent); }
 .folderDragOver { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
 .folderToggle { display: grid; place-items: center; padding: 2px; border: 0; background: none; color: var(--ink-3); cursor: pointer; }
 .folderToggle svg { transition: transform .15s; }
@@ -59,8 +66,8 @@
 .newSeriesButton { padding: 6px 9px; border: 1px solid var(--border); border-radius: 8px; background: color-mix(in srgb, var(--theme-foreground) 3.5%, transparent); color: var(--ink-2); font: inherit; font-size: 10px; font-weight: 650; cursor: pointer; }
 .newSeriesButton:hover { color: var(--accent); border-color: var(--border-hi); }
 .recurringManagement { min-height: 76px; }
-.seriesList { list-style: none; display: flex; flex-direction: column; gap: 6px; }
-.seriesRow { min-height: 48px; display: flex; align-items: center; gap: 9px; padding: 7px 9px; border: 1px solid var(--border); border-radius: 9px; background: color-mix(in srgb, var(--theme-foreground) 2.5%, transparent); }
+.seriesList { list-style: none; display: flex; flex-direction: column; gap: 3px; }
+.seriesRow { min-height: 40px; display: flex; align-items: center; gap: 9px; padding: 4px 9px; border: 1px solid var(--border); border-radius: 9px; background: color-mix(in srgb, var(--theme-foreground) 2.5%, transparent); }
 .seriesRow:hover { border-color: var(--border-hi); background: color-mix(in srgb, var(--theme-foreground) 4.5%, transparent); }
 .seriesDragHandle { flex: 0 0 auto; padding: 4px; border: 0; background: none; color: color-mix(in srgb, var(--theme-foreground) 25%, transparent); font: inherit; font-size: 13px; cursor: grab; }
 .seriesDragHandle:active { cursor: grabbing; }

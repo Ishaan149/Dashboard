@@ -23,6 +23,7 @@
 .card:hover { border-color: var(--border-hi); }
 
 .full { grid-column: 1 / -1; }
+.collapsed { padding-block: 8px; border-radius: 12px; }
 
 .header {
   display: flex;
@@ -30,6 +31,13 @@
   justify-content: space-between;
   margin-bottom: 18px;
 }
+
+.collapsedHeader { margin-bottom: 0; }
+.titleToggle { display: flex; align-items: center; gap: 8px; padding: 6px 0; border: 0; background: none; color: var(--ink-3); font: inherit; cursor: pointer; }
+.titleToggle:hover, .titleToggle:hover .title { color: var(--ink); }
+.titleToggle:focus-visible { outline: 2px solid var(--focus-color); outline-offset: 4px; border-radius: 3px; }
+.titleToggle svg { transition: transform .15s; }
+.collapsedChevron { transform: rotate(-90deg); }
 
 .title {
   font-size: 10.5px;
