@@ -109,7 +109,7 @@
 .railItems + .navItem { margin-top: auto; }
 .bottomNav { display: none; }
 
-@media (max-width: 1199px) and (min-width: 768px) {
+@media (min-width: 768px) {
   .rail {
     width: var(--nav-rail-compact);
     flex-basis: var(--nav-rail-compact);
