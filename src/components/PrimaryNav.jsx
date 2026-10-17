@@ -1,4 +1,5 @@
 import { NAV_ITEMS, NavigationIcon, SETTINGS_NAV_ITEM } from './navigation'
+import dashboardLogo from '../assets/dashboard-logo.png'
 import styles from './PrimaryNav.module.css'
 
 function NavButton({ item, activeView, mobile, onNavigate }) {
@@ -25,7 +26,7 @@ export default function PrimaryNav({ activeView, onNavigate }) {
     <>
       <nav className={styles.rail} aria-label="Primary">
         <div className={styles.brand} aria-label="Dashboard">
-          <span className={styles.brandMark} aria-hidden="true">D</span>
+          <img className={styles.brandMark} src={dashboardLogo} alt="" width="32" height="32" />
           <span className={styles.brandCopy}>
             <span className={styles.brandName}>Dashboard</span>
           </span>

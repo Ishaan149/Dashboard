@@ -28,13 +28,8 @@
   width: 32px;
   height: 32px;
   flex: 0 0 32px;
-  display: grid;
-  place-items: center;
-  border: 1px solid color-mix(in srgb, var(--accent) 38%, transparent);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
-  color: var(--accent);
-  font-size: 15px;
+  display: block;
+  object-fit: contain;
 }
 
 .brandCopy { min-width: 0; display: grid; gap: 1px; }
@@ -87,6 +82,11 @@
   font-weight: 680;
 }
 
+.rail .navItem.active {
+  border-color: transparent;
+  background: transparent;
+}
+
 .navItem.active::before {
   content: '';
   position: absolute;
@@ -120,7 +120,7 @@
   .brand { justify-content: center; padding: 0; }
   .brandCopy, .sectionLabel, .label { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
   .navItem { justify-content: center; padding: 0; }
-  .navItem.active::before { left: -6px; }
+  .navItem.active::before { left: 2px; }
 
   .navItem::after {
     content: attr(data-tooltip);
