@@ -22,13 +22,14 @@ describe('PrimaryNav', () => {
     container.remove()
   })
 
-  it('exposes Wellness as a labelled primary navigation destination', () => {
+  it('keeps Habits available in desktop and mobile navigation without Wellness', () => {
     const onNavigate = vi.fn()
     act(() => root.render(<PrimaryNav activeView="overview" onNavigate={onNavigate} />))
 
-    const wellnessButtons = [...container.querySelectorAll('button[aria-label="Wellness"]')]
-    expect(wellnessButtons).toHaveLength(2)
-    act(() => wellnessButtons[0].dispatchEvent(new MouseEvent('click', { bubbles: true })))
-    expect(onNavigate).toHaveBeenCalledWith('wellness')
+    expect(container.querySelector('[aria-label="Wellness"]')).toBeNull()
+    const habitButtons = [...container.querySelectorAll('button[aria-label="Habits"]')]
+    expect(habitButtons).toHaveLength(2)
+    act(() => habitButtons[0].dispatchEvent(new MouseEvent('click', { bubbles: true })))
+    expect(onNavigate).toHaveBeenCalledWith('habits')
   })
 })

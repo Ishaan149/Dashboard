@@ -9,7 +9,6 @@ describe('primary navigation', () => {
       'braindump',
       'jobs',
       'habits',
-      'wellness',
       'dayplanner',
     ])
   })
@@ -26,7 +25,6 @@ describe('primary navigation', () => {
       'Brain',
       'Jobs',
       'Habits',
-      'Wellness',
       'Planner',
     ])
   })

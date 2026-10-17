@@ -12,12 +12,11 @@ const VIEWS = {
   braindump:  lazy(() => import('./components/BrainDump')),
   jobs:       lazy(() => import('./components/JobTracker')),
   habits:     lazy(() => import('./components/HabitTracker')),
-  wellness:   lazy(() => import('./components/Wellness')),
   dayplanner: lazy(() => import('./components/DayPlanner')),
   settings:   lazy(() => import('./components/Settings')),
 }
 
-const FULL_WIDTH_VIEWS = new Set(['dayplanner', 'overview', 'todo', 'braindump', 'jobs', 'habits', 'wellness'])
+const FULL_WIDTH_VIEWS = new Set(['dayplanner', 'overview', 'todo', 'braindump', 'jobs', 'habits'])
 
 function ViewReady({ onReady, children }) {
   useEffect(() => {
@@ -34,6 +33,15 @@ export default function App() {
     () => localStorage.getItem('dashboard-unlocked') === 'true'
   )
   const shouldFocusAfterViewChange = useRef(false)
+
+  useEffect(() => {
+    // Retire browser caches only; the archived Firestore records stay intact.
+    for (const key of ['wellness_food_records', 'wellness_saved_foods', 'wellness_weight_records']) {
+      try {
+        localStorage.removeItem(key)
+      } catch {}
+    }
+  }, [])
 
   function handleUnlock() {
     localStorage.setItem('dashboard-unlocked', 'true')
@@ -70,7 +78,7 @@ export default function App() {
   const ActiveView = VIEWS[view]
   const isFullWidth = FULL_WIDTH_VIEWS.has(view)
   const viewClassName = isFullWidth
-    ? `${styles.viewFull} ${view === 'todo' ? styles.viewTodo : ''} ${view === 'braindump' ? styles.viewBrainDump : ''} ${view === 'jobs' ? styles.viewJobs : ''} ${view === 'habits' ? styles.viewHabits : ''} ${view === 'wellness' ? styles.viewWellness : ''}`
+    ? `${styles.viewFull} ${view === 'todo' ? styles.viewTodo : ''} ${view === 'braindump' ? styles.viewBrainDump : ''} ${view === 'jobs' ? styles.viewJobs : ''} ${view === 'habits' ? styles.viewHabits : ''}`
     : styles.view
 
   return (
