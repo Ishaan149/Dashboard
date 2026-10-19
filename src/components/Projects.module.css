@@ -10,7 +10,7 @@
 .cardOpen { flex: 1; display: flex; flex-direction: column; align-items: flex-start; width: 100%; min-height: 280px; padding: 24px; background: transparent; color: var(--ink); border: 0; text-align: left; cursor: pointer; }
 .cardOpen:focus-visible { outline-offset: -4px; }
 .projectIcon { display: grid; place-items: center; align-self: stretch; flex: 1; min-height: 130px; padding-bottom: 26px; color: var(--project-color, var(--accent)); }
-.iconTile { display: grid; place-items: center; width: 72px; height: 72px; border: 1px solid var(--border-hi); border-radius: 16px; background: var(--surface-solid); }
+.iconTile { display: grid; place-items: center; width: 72px; height: 72px; border: 1px solid color-mix(in srgb, currentColor 30%, transparent); border-radius: 16px; background: color-mix(in srgb, currentColor 8%, var(--surface-solid)); }
 .cardTitle { font-size: 21px; font-weight: 620; line-height: 1.35; overflow-wrap: anywhere; }
 .category { display: block; margin-top: 8px; color: var(--ink-3); font-size: 12px; overflow-wrap: anywhere; }
 .back { margin-bottom: 20px; }
