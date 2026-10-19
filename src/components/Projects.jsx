@@ -174,7 +174,7 @@ export default function Projects() {
                 const target = visibleProjects[index + (event.key === 'ArrowUp' ? -1 : 1)]
                 if (target) moveProject(item.id, target.id)
               }}>
-              <span className={styles.projectIcon}><NavigationIcon name="projects" size={40} /></span>
+              <span className={styles.projectIcon}><span className={styles.iconTile}><NavigationIcon name="projects" size={40} /></span></span>
               <span className={styles.cardTitle}>{item.name}</span>
               <span className={styles.category}>{categories.find(category => category.id === item.categoryId)?.name ?? 'Uncategorized'}</span>
             </button>
