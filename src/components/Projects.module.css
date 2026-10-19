@@ -1,6 +1,6 @@
 .page { min-width: 0; color: var(--ink); }
-.collectionHeader, .projectHeader { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 20px; margin: 8px 0 28px; }
-.collectionHeader h2, .projectHeader h2 { font-size: clamp(24px, 3vw, 32px); font-weight: 650; letter-spacing: -.03em; overflow-wrap: anywhere; }
+.projectHeader { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 20px; margin: 8px 0 28px; }
+.projectHeader h2 { font-size: clamp(24px, 3vw, 32px); font-weight: 650; letter-spacing: -.03em; overflow-wrap: anywhere; }
 .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .statusViews { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding-bottom: 20px; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
 .statusViews button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--ink); }
@@ -54,7 +54,6 @@
   .editor { padding: 16px; }
 }
 @media (max-width: 767px) {
-  .collectionHeader { margin-top: 0; }
   .cards { gap: 14px; }
   .notesWorkspace { grid-template-columns: minmax(0, 1fr); }
   .noteIndex { border-right: 0; border-bottom: 1px solid var(--border); }

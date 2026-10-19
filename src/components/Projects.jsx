@@ -48,14 +48,14 @@ export default function Projects() {
   const optionsTriggerRef = useRef(null)
   const [deleting, setDeleting] = useState(null)
   const cancelRef = useRef(null)
-  const headingRef = useRef(null)
+  const viewFocusRef = useRef(null)
   const draggedProject = useRef(null)
   const projects = data?.projects ?? []
   const categories = data?.categories ?? []
   const project = projects.find(item => item.id === projectId)
   const visibleProjects = projects.filter(item => item.completed === completed)
 
-  useEffect(() => { if (projectId !== null) headingRef.current?.focus() }, [projectId])
+  useEffect(() => { if (projectId !== null) viewFocusRef.current?.focus() }, [projectId])
 
   useEffect(() => {
     if (!optionsOpen) return
@@ -119,7 +119,7 @@ export default function Projects() {
   function returnToProjects() {
     setCompleted(project.completed)
     setProjectId(null)
-    requestAnimationFrame(() => headingRef.current?.focus())
+    requestAnimationFrame(() => viewFocusRef.current?.focus())
   }
 
   return (
@@ -129,7 +129,7 @@ export default function Projects() {
         <header className={styles.projectHeader}>
           <div className={styles.projectInfo}>
             <p className={styles.eyebrow}>{project.completed ? 'Completed project' : 'Active project'}</p>
-            <h2 ref={headingRef} tabIndex={-1}>{project.name}</h2>
+            <h2 ref={viewFocusRef} tabIndex={-1}>{project.name}</h2>
             {project.categoryId && <span className={styles.category}>{categories.find(item => item.id === project.categoryId)?.name ?? 'Uncategorized'}</span>}
             {project.description && <p className={styles.description}>{project.description}</p>}
           </div>
@@ -144,12 +144,9 @@ export default function Projects() {
           <ProjectNotes key={project.id} project={project} onUpdate={update => updateProject(project.id, update)} />
         </div>
       </> : <>
-        <header className={styles.collectionHeader}>
-          <h2 ref={headingRef} tabIndex={-1}>Your projects</h2>
-        </header>
         <div className={styles.statusViews} aria-label="Project status">
-          <Button aria-pressed={!completed} onClick={() => setCompleted(false)}>Active</Button>
-          <Button aria-pressed={completed} onClick={() => setCompleted(true)}>Completed</Button>
+          <Button ref={!completed ? viewFocusRef : undefined} aria-pressed={!completed} onClick={() => setCompleted(false)}>Active</Button>
+          <Button ref={completed ? viewFocusRef : undefined} aria-pressed={completed} onClick={() => setCompleted(true)}>Completed</Button>
           <div className={styles.collectionActions}>
             <Button variant="primary" onClick={() => setForm('new')}>New project</Button>
             <div ref={optionsRef} className={styles.collectionOptions}>
@@ -190,7 +187,7 @@ export default function Projects() {
           setCompleted(project?.completed ?? completed)
           setProjectId(null)
           setDeleting(null)
-          requestAnimationFrame(() => headingRef.current?.focus())
+          requestAnimationFrame(() => viewFocusRef.current?.focus())
         }}>Delete project</Button></>} />
       {categoriesOpen && <ProjectCategories categories={categories} onCreate={createCategory} onRename={renameCategory} onDelete={deleteCategory} onClose={() => setCategoriesOpen(false)} />}
       {form && <ProjectForm project={form === 'new' ? null : form} categories={categories} onSave={saveProject} onClose={() => setForm(null)} />}
