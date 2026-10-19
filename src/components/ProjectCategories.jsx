@@ -17,7 +17,7 @@ function CategoryRow({ category, onRename, onDelete }) {
 export default function ProjectCategories({ categories, onCreate, onRename, onDelete, onClose }) {
   const [name, setName] = useState('')
   return (
-    <Dialog open title="Project categories" description="Reuse categories across projects. Deleting a category leaves its projects uncategorized." onClose={onClose}>
+    <Dialog open title="Project categories" onClose={onClose}>
       <div className={styles.form}>
         {categories.map(category => <CategoryRow key={category.id} category={category} onRename={onRename} onDelete={onDelete} />)}
         {!categories.length && <p className={styles.hint}>No categories yet. Add one for any kind of project.</p>}

@@ -43,6 +43,9 @@ export default function Projects() {
   const [projectId, setProjectId] = useState(null)
   const [form, setForm] = useState(null)
   const [categoriesOpen, setCategoriesOpen] = useState(false)
+  const [optionsOpen, setOptionsOpen] = useState(false)
+  const optionsRef = useRef(null)
+  const optionsTriggerRef = useRef(null)
   const [deleting, setDeleting] = useState(null)
   const cancelRef = useRef(null)
   const headingRef = useRef(null)
@@ -53,6 +56,25 @@ export default function Projects() {
   const visibleProjects = projects.filter(item => item.completed === completed)
 
   useEffect(() => { if (projectId !== null) headingRef.current?.focus() }, [projectId])
+
+  useEffect(() => {
+    if (!optionsOpen) return
+    const frame = requestAnimationFrame(() => optionsRef.current?.querySelector('[data-options-action]')?.focus())
+    function dismiss(event) {
+      if (event.type === 'keydown') {
+        if (event.key !== 'Escape') return
+        optionsTriggerRef.current?.focus()
+      } else if (optionsRef.current?.contains(event.target)) return
+      setOptionsOpen(false)
+    }
+    document.addEventListener('pointerdown', dismiss)
+    document.addEventListener('keydown', dismiss)
+    return () => {
+      cancelAnimationFrame(frame)
+      document.removeEventListener('pointerdown', dismiss)
+      document.removeEventListener('keydown', dismiss)
+    }
+  }, [optionsOpen])
 
   function updateProject(id, update) {
     setData(previous => ({ ...previous, projects: previous.projects.map(item => item.id === id ? update(item) : item) }))
@@ -123,32 +145,40 @@ export default function Projects() {
         </div>
       </> : <>
         <header className={styles.collectionHeader}>
-          <div><h2 ref={headingRef} tabIndex={-1}>Your projects</h2><p>A place for your ideas, notes, and next steps.</p></div>
-          <div className={styles.actions}><Button onClick={() => setCategoriesOpen(true)}>Manage categories</Button><Button variant="primary" onClick={() => setForm('new')}>New project</Button></div>
+          <h2 ref={headingRef} tabIndex={-1}>Your projects</h2>
+          <Button variant="primary" onClick={() => setForm('new')}>New project</Button>
         </header>
         <div className={styles.statusViews} aria-label="Project status">
           <Button aria-pressed={!completed} onClick={() => setCompleted(false)}>Active</Button>
           <Button aria-pressed={completed} onClick={() => setCompleted(true)}>Completed</Button>
+          <div ref={optionsRef} className={styles.collectionOptions}>
+            <Button ref={optionsTriggerRef} variant="ghost" className={styles.optionsTrigger} aria-label="Project options" title="Project options" aria-expanded={optionsOpen} aria-controls="project-options" onClick={() => setOptionsOpen(open => !open)}>
+              <span aria-hidden="true">•••</span>
+            </Button>
+            {optionsOpen && <div id="project-options" className={styles.optionsPopover}>
+              <button type="button" data-options-action onClick={() => { optionsTriggerRef.current?.focus(); setOptionsOpen(false); setCategoriesOpen(true) }}>Manage categories</button>
+            </div>}
+          </div>
         </div>
         {visibleProjects.length ? <div className={styles.cards}>
           {visibleProjects.map((item, index) => <article className={styles.card} key={item.id}
             onDragOver={event => { if (draggedProject.current) event.preventDefault() }}
             onDrop={event => { event.preventDefault(); if (draggedProject.current) moveProject(draggedProject.current, item.id); draggedProject.current = null }}>
 
-            <button className={styles.cardOpen} aria-label={`Open ${item.name}`} onClick={() => setProjectId(item.id)}>
+            <button className={styles.cardOpen} aria-label={`Open ${item.name}`} onClick={() => setProjectId(item.id)}
+              draggable title="Drag to reorder. Use Alt + ↑ or ↓ with the keyboard." aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"
+              onDragStart={event => { draggedProject.current = item.id; event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', item.id) }}
+              onDragEnd={() => { draggedProject.current = null }}
+              onKeyDown={event => {
+                if (!event.altKey || !['ArrowUp', 'ArrowDown'].includes(event.key)) return
+                event.preventDefault()
+                const target = visibleProjects[index + (event.key === 'ArrowUp' ? -1 : 1)]
+                if (target) moveProject(item.id, target.id)
+              }}>
               <span className={styles.projectIcon}><NavigationIcon name="projects" size={24} /></span>
               <span className={styles.cardTitle}>{item.name}</span>
               <span className={styles.category}>{categories.find(category => category.id === item.categoryId)?.name ?? 'Uncategorized'}</span>
             </button>
-            <footer className={styles.cardFooter}>
-              <span className={styles.dragHandle} draggable role="img" aria-label={`Drag ${item.name} to reorder`} title="Drag to reorder"
-                onDragStart={event => { draggedProject.current = item.id; event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', item.id) }}
-                onDragEnd={() => { draggedProject.current = null }}>⠿</span>
-              <div className={styles.actions}>
-                <Button aria-label={`Move ${item.name} up`} disabled={index === 0} onClick={() => moveProject(item.id, visibleProjects[index - 1].id)}>↑</Button>
-                <Button aria-label={`Move ${item.name} down`} disabled={index === visibleProjects.length - 1} onClick={() => moveProject(item.id, visibleProjects[index + 1].id)}>↓</Button>
-              </div>
-            </footer>
           </article>)}
         </div> : <EmptyState message={completed ? 'No completed projects yet. Completed work will stay here for reference.' : 'No active projects yet. Start with a name and make room for your next idea.'} actionLabel={completed ? undefined : 'Create your first project'} onAction={() => setForm('new')} />}
       </>}

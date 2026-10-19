@@ -37,7 +37,7 @@ function change(name, value) {
   })
 }
 function submit(name) { act(() => control(name).closest('form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))) }
-function createProject(name) { click('New project'); change('Project name', name); submit('Create project') }
+function openCategories() { click('Project options'); click('Manage categories') }
 function mount() { root = createRoot(container); act(() => root.render(<Projects />)) }
 function remount() { act(() => root.unmount()); mount() }
 function project(overrides = {}) { return { id: 'a', name: 'Alpha', description: 'A project', categoryId: null, completed: false, notes: [], tasks: [], ...overrides } }
@@ -74,7 +74,7 @@ describe('Projects workspace', () => {
     const tasks = [{ id: 't', text: 'Unfinished', completed: false }]
     storage.value = { projects: [project({ notes, tasks }), project({ id: 'done', name: 'Archived', completed: true }), project({ id: 'b', name: 'Beta' }), project({ id: 'c', name: 'Gamma' })], categories: [] }
     mount()
-    click('Move Gamma up')
+    act(() => control('Open Gamma').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', altKey: true, bubbles: true })))
     expect(storage.value.projects.map(item => item.name)).toEqual(['Alpha', 'Archived', 'Gamma', 'Beta'])
     remount()
     expect([...container.querySelectorAll('[aria-label^="Open "]')].map(item => item.textContent.trim())).toEqual(['AlphaUncategorized', 'GammaUncategorized', 'BetaUncategorized'])
@@ -93,15 +93,15 @@ describe('Projects workspace', () => {
     click('New project'); change('Project name', 'One'); change('Project category', '__new__'); change('New category name', 'University'); submit('Create project')
     click('New project'); change('Project name', 'Two'); change('Project category', storage.value.categories[0].id); submit('Create project')
     expect(storage.value.categories).toHaveLength(1)
-    click('Manage categories')
+    openCategories()
     change('Rename University', 'Study'); submit('Save category University')
     click('Close dialog')
     expect([...container.querySelectorAll('article')].map(node => node.textContent)).toEqual([expect.stringContaining('Study'), expect.stringContaining('Study')])
-    click('Manage categories'); click('Delete category Study'); click('Close dialog')
+    openCategories(); click('Delete category Study'); click('Close dialog')
     expect(storage.value.categories).toEqual([])
     expect(storage.value.projects.map(item => item.categoryId)).toEqual([null, null])
     expect(storage.value.projects.map(item => item.name)).toEqual(['One', 'Two'])
-    click('Manage categories'); change('Category name', 'Personal'); submit('Add category'); click('Close dialog')
+    openCategories(); change('Category name', 'Personal'); submit('Add category'); click('Close dialog')
     expect(storage.value.categories[0].name).toBe('Personal')
   })
 
@@ -191,7 +191,7 @@ describe('Projects workspace', () => {
   it('allows dragging within a status view and keeps equal-time notes in deterministic order', () => {
     storage.value = { projects: [project({ notes: [{ id: 'z', title: 'Zed', content: 'Z', createdAt: 1, updatedAt: 1 }, { id: 'a', title: 'Aye', content: 'A', createdAt: 1, updatedAt: 1 }] }), project({ id: 'done', name: 'Archived', completed: true }), project({ id: 'b', name: 'Beta' })], categories: [] }
     mount()
-    const source = container.querySelector('[aria-label="Drag Alpha to reorder"]')
+    const source = control('Open Alpha')
     const event = new Event('dragstart', { bubbles: true })
     Object.defineProperty(event, 'dataTransfer', { value: { setData: vi.fn() } })
     act(() => source.dispatchEvent(event))
@@ -214,7 +214,7 @@ describe('Projects workspace', () => {
 
   it('preserves category editing focus after a rename is saved', async () => {
     storage.value = { projects: [], categories: [{ id: 'uni', name: 'University' }] }
-    mount(); click('Manage categories')
+    mount(); openCategories()
     await act(async () => new Promise(resolve => requestAnimationFrame(resolve)))
     field('Rename University').focus()
     change('Rename University', 'Study'); submit('Save category University')
