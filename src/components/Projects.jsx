@@ -146,18 +146,20 @@ export default function Projects() {
       </> : <>
         <header className={styles.collectionHeader}>
           <h2 ref={headingRef} tabIndex={-1}>Your projects</h2>
-          <Button variant="primary" onClick={() => setForm('new')}>New project</Button>
         </header>
         <div className={styles.statusViews} aria-label="Project status">
           <Button aria-pressed={!completed} onClick={() => setCompleted(false)}>Active</Button>
           <Button aria-pressed={completed} onClick={() => setCompleted(true)}>Completed</Button>
-          <div ref={optionsRef} className={styles.collectionOptions}>
-            <Button ref={optionsTriggerRef} variant="ghost" className={styles.optionsTrigger} aria-label="Project options" title="Project options" aria-expanded={optionsOpen} aria-controls="project-options" onClick={() => setOptionsOpen(open => !open)}>
-              <span aria-hidden="true">•••</span>
-            </Button>
-            {optionsOpen && <div id="project-options" className={styles.optionsPopover}>
-              <button type="button" data-options-action onClick={() => { optionsTriggerRef.current?.focus(); setOptionsOpen(false); setCategoriesOpen(true) }}>Manage categories</button>
-            </div>}
+          <div className={styles.collectionActions}>
+            <Button variant="primary" onClick={() => setForm('new')}>New project</Button>
+            <div ref={optionsRef} className={styles.collectionOptions}>
+              <Button ref={optionsTriggerRef} variant="ghost" className={styles.optionsTrigger} aria-label="Project options" title="Project options" aria-expanded={optionsOpen} aria-controls="project-options" onClick={() => setOptionsOpen(open => !open)}>
+                <span aria-hidden="true">•••</span>
+              </Button>
+              {optionsOpen && <div id="project-options" className={styles.optionsPopover}>
+                <button type="button" data-options-action onClick={() => { optionsTriggerRef.current?.focus(); setOptionsOpen(false); setCategoriesOpen(true) }}>Manage categories</button>
+              </div>}
+            </div>
           </div>
         </div>
         {visibleProjects.length ? <div className={styles.cards}>
@@ -175,7 +177,7 @@ export default function Projects() {
                 const target = visibleProjects[index + (event.key === 'ArrowUp' ? -1 : 1)]
                 if (target) moveProject(item.id, target.id)
               }}>
-              <span className={styles.projectIcon}><NavigationIcon name="projects" size={24} /></span>
+              <span className={styles.projectIcon}><NavigationIcon name="projects" size={40} /></span>
               <span className={styles.cardTitle}>{item.name}</span>
               <span className={styles.category}>{categories.find(category => category.id === item.categoryId)?.name ?? 'Uncategorized'}</span>
             </button>
