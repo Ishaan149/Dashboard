@@ -5,22 +5,25 @@ import { Button, Dialog, EmptyState } from './ui'
 import { NavigationIcon } from './navigation'
 import styles from './Projects.module.css'
 import ProjectCategories from './ProjectCategories'
+import { useTheme } from '../theme/ThemeProvider'
+import { isHexColor } from '../theme/theme'
 import ProjectNotes from './ProjectNotes'
 import ProjectTasks from './ProjectTasks'
 
 const EMPTY_PROJECTS = { projects: [], categories: [] }
 
-function ProjectForm({ project, categories, onSave, onClose }) {
+function ProjectForm({ project, categories, defaultColor, onSave, onClose }) {
   const [name, setName] = useState(project?.name ?? '')
   const [description, setDescription] = useState(project?.description ?? '')
   const [categoryId, setCategoryId] = useState(project?.categoryId ?? '')
   const [newCategory, setNewCategory] = useState('')
+  const [newCategoryColor, setNewCategoryColor] = useState(defaultColor)
   const nameRef = useRef(null)
   return (
     <Dialog open title={project ? 'Edit project' : 'New project'} onClose={onClose} initialFocusRef={nameRef}>
       <form className={styles.form} onSubmit={event => {
         event.preventDefault()
-        if (name.trim() && (categoryId !== '__new__' || newCategory.trim())) onSave({ name: name.trim(), description: description.trim(), categoryId: categoryId === '__new__' ? null : categoryId || null }, categoryId === '__new__' ? newCategory.trim() : '')
+        if (name.trim() && (categoryId !== '__new__' || newCategory.trim())) onSave({ name: name.trim(), description: description.trim(), categoryId: categoryId === '__new__' ? null : categoryId || null }, categoryId === '__new__' ? newCategory.trim() : '', newCategoryColor)
       }}>
         <label>Name<input ref={nameRef} aria-label="Project name" value={name} onChange={event => setName(event.target.value)} required /></label>
         <label>Description <span>(optional)</span><textarea aria-label="Project description" value={description} onChange={event => setDescription(event.target.value)} rows={3} /></label>
@@ -29,7 +32,10 @@ function ProjectForm({ project, categories, onSave, onClose }) {
           {categories.map(category => <option key={category.id} value={category.id}>{category.name}</option>)}
           <option value="__new__">+ New category…</option>
         </select></label>
-        {categoryId === '__new__' && <label>New category name<input aria-label="New category name" value={newCategory} onChange={event => setNewCategory(event.target.value)} required /></label>}
+        {categoryId === '__new__' && <>
+          <label>New category name<input aria-label="New category name" value={newCategory} onChange={event => setNewCategory(event.target.value)} required /></label>
+          <label>Category color<input className={styles.colorPicker} type="color" aria-label="New category color" value={newCategoryColor} onInput={event => setNewCategoryColor(event.currentTarget.value)} /></label>
+        </>}
         <div className={styles.actions}><Button onClick={onClose}>Cancel</Button><Button type="submit" variant="primary" disabled={!name.trim() || (categoryId === '__new__' && !newCategory.trim())}>{project ? 'Save project' : 'Create project'}</Button></div>
       </form>
     </Dialog>
@@ -37,6 +43,7 @@ function ProjectForm({ project, categories, onSave, onClose }) {
 }
 
 export default function Projects() {
+  const { theme } = useTheme()
   // Array positions are the persisted manual order, shared by both status views.
   const [data, setData] = useSyncedStorage('projects', EMPTY_PROJECTS)
   const [completed, setCompleted] = useState(false)
@@ -84,12 +91,12 @@ export default function Projects() {
     setData(previous => ({ ...previous, projects: moveWithinGroup(previous.projects, sourceId, targetId, item => item.completed === completed) }))
   }
 
-  function saveProject(fields, categoryName) {
+  function saveProject(fields, categoryName, color) {
     const newId = crypto.randomUUID()
     const categoryId = crypto.randomUUID()
     setData(previous => {
       const existing = previous.categories.find(item => item.name.toLowerCase() === categoryName.toLowerCase())
-      const category = categoryName ? (existing ?? { id: categoryId, name: categoryName }) : null
+      const category = categoryName ? (existing ?? { id: categoryId, name: categoryName, color: isHexColor(color) ? color.toUpperCase() : theme.colors.accent }) : null
       const savedFields = { ...fields, categoryId: category?.id ?? (previous.categories.some(item => item.id === fields.categoryId) ? fields.categoryId : null) }
       return {
         ...previous,
@@ -103,13 +110,13 @@ export default function Projects() {
     setForm(null)
   }
 
-  function createCategory(name) {
+  function createCategory(name, color) {
     const id = crypto.randomUUID()
-    setData(previous => previous.categories.some(item => item.name.toLowerCase() === name.toLowerCase()) ? previous : { ...previous, categories: [...previous.categories, { id, name }] })
+    setData(previous => previous.categories.some(item => item.name.toLowerCase() === name.toLowerCase()) ? previous : { ...previous, categories: [...previous.categories, { id, name, color: isHexColor(color) ? color.toUpperCase() : theme.colors.accent }] })
   }
 
-  function renameCategory(id, name) {
-    setData(previous => ({ ...previous, categories: previous.categories.map(item => item.id === id ? { ...item, name } : item) }))
+  function updateCategory(id, fields) {
+    setData(previous => ({ ...previous, categories: previous.categories.map(item => item.id === id ? { ...item, ...fields } : item) }))
   }
 
   function deleteCategory(id) {
@@ -160,7 +167,9 @@ export default function Projects() {
           </div>
         </div>
         {visibleProjects.length ? <div className={styles.cards}>
-          {visibleProjects.map((item, index) => <article className={styles.card} key={item.id}
+          {visibleProjects.map((item, index) => {
+            const category = categories.find(category => category.id === item.categoryId)
+            return <article className={styles.card} key={item.id} style={isHexColor(category?.color) ? { '--project-color': category.color } : undefined}
             onDragOver={event => { if (draggedProject.current) event.preventDefault() }}
             onDrop={event => { event.preventDefault(); if (draggedProject.current) moveProject(draggedProject.current, item.id); draggedProject.current = null }}>
 
@@ -176,9 +185,9 @@ export default function Projects() {
               }}>
               <span className={styles.projectIcon}><span className={styles.iconTile}><NavigationIcon name="projects" size={40} /></span></span>
               <span className={styles.cardTitle}>{item.name}</span>
-              <span className={styles.category}>{categories.find(category => category.id === item.categoryId)?.name ?? 'Uncategorized'}</span>
+              <span className={styles.category}>{category?.name ?? 'Uncategorized'}</span>
             </button>
-          </article>)}
+          </article>})}
         </div> : <EmptyState message={completed ? 'No completed projects yet. Completed work will stay here for reference.' : 'No active projects yet. Start with a name and make room for your next idea.'} actionLabel={completed ? undefined : 'Create your first project'} onAction={() => setForm('new')} />}
       </>}
       <Dialog open={Boolean(deleting)} title="Delete project?" description={`“${deleting?.name}” and all its notes and tasks will be permanently deleted.`} destructive initialFocusRef={cancelRef} onClose={() => setDeleting(null)}
@@ -189,8 +198,8 @@ export default function Projects() {
           setDeleting(null)
           requestAnimationFrame(() => viewFocusRef.current?.focus())
         }}>Delete project</Button></>} />
-      {categoriesOpen && <ProjectCategories categories={categories} onCreate={createCategory} onRename={renameCategory} onDelete={deleteCategory} onClose={() => setCategoriesOpen(false)} />}
-      {form && <ProjectForm project={form === 'new' ? null : form} categories={categories} onSave={saveProject} onClose={() => setForm(null)} />}
+      {categoriesOpen && <ProjectCategories categories={categories} onCreate={createCategory} defaultColor={theme.colors.accent} onUpdate={updateCategory} onDelete={deleteCategory} onClose={() => setCategoriesOpen(false)} />}
+      {form && <ProjectForm project={form === 'new' ? null : form} categories={categories} defaultColor={theme.colors.accent} onSave={saveProject} onClose={() => setForm(null)} />}
     </section>
   )
 }

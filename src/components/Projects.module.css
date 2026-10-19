@@ -9,7 +9,7 @@
 .card:hover { border-color: var(--border-hi); }
 .cardOpen { flex: 1; display: flex; flex-direction: column; align-items: flex-start; width: 100%; min-height: 280px; padding: 24px; background: transparent; color: var(--ink); border: 0; text-align: left; cursor: pointer; }
 .cardOpen:focus-visible { outline-offset: -4px; }
-.projectIcon { display: grid; place-items: center; align-self: stretch; flex: 1; min-height: 130px; padding-bottom: 26px; color: var(--accent); }
+.projectIcon { display: grid; place-items: center; align-self: stretch; flex: 1; min-height: 130px; padding-bottom: 26px; color: var(--project-color, var(--accent)); }
 .iconTile { display: grid; place-items: center; width: 72px; height: 72px; border: 1px solid var(--border-hi); border-radius: 16px; background: var(--surface-solid); }
 .cardTitle { font-size: 21px; font-weight: 620; line-height: 1.35; overflow-wrap: anywhere; }
 .category { display: block; margin-top: 8px; color: var(--ink-3); font-size: 12px; overflow-wrap: anywhere; }
@@ -24,7 +24,7 @@
 .form textarea { resize: vertical; }
 .form .actions { justify-content: flex-end; }
 .categoryRow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.categoryRow input { flex: 1 1 130px; width: 0; }
+.categoryRow input:not([type="color"]) { flex: 1 1 130px; width: 0; }
 .hint { color: var(--ink-3); font-size: 13px; line-height: 1.6; }
 .workspace { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: start; }
 .notesWorkspace { min-width: 0; display: grid; grid-template-columns: 170px minmax(0, 1fr); min-height: 530px; border: 1px solid var(--border); border-radius: 14px; background: var(--glass); overflow: hidden; }
@@ -89,3 +89,8 @@
 .optionsPopover { position: absolute; top: calc(100% + 6px); right: 0; z-index: var(--z-popover); min-width: 180px; padding: 5px; background: var(--surface-deep); border: 1px solid var(--border-hi); border-radius: 10px; box-shadow: var(--shadow-popover); }
 .optionsPopover button { width: 100%; min-height: 44px; padding: 8px 12px; border: 0; border-radius: 6px; background: transparent; color: var(--ink-2); text-align: left; cursor: pointer; font-size: 13px; }
 .optionsPopover button:hover { background: var(--glass-hover); color: var(--ink); }
+
+.form .colorPicker { flex: 0 0 44px; width: 44px; min-width: 44px; height: 44px; padding: 4px; border: 1px solid var(--border-hi); border-radius: 8px; background: var(--surface-solid); cursor: pointer; }
+.colorPicker::-webkit-color-swatch-wrapper { padding: 0; }
+.colorPicker::-webkit-color-swatch { border: 0; border-radius: 4px; }
+.colorPicker::-moz-color-swatch { border: 0; border-radius: 4px; }

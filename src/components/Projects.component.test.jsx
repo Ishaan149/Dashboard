@@ -17,6 +17,7 @@ vi.mock('../hooks/useSyncedStorage', () => ({
   },
 }))
 import Projects from './Projects'
+import { ThemeProvider } from '../theme/ThemeProvider'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 let container, root
@@ -38,7 +39,7 @@ function change(name, value) {
 }
 function submit(name) { act(() => control(name).closest('form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))) }
 function openCategories() { click('Project options'); click('Manage categories') }
-function mount() { root = createRoot(container); act(() => root.render(<Projects />)) }
+function mount() { root = createRoot(container); act(() => root.render(<ThemeProvider storage={{ getItem: () => null, setItem: () => {} }}><Projects /></ThemeProvider>)) }
 function remount() { act(() => root.unmount()); mount() }
 function project(overrides = {}) { return { id: 'a', name: 'Alpha', description: 'A project', categoryId: null, completed: false, notes: [], tasks: [], ...overrides } }
 
@@ -220,6 +221,42 @@ describe('Projects workspace', () => {
     change('Rename University', 'Study'); submit('Save category University')
     expect(document.activeElement).toBe(field('Rename Study'))
     expect(storage.value.categories).toEqual([{ id: 'uni', name: 'Study' }])
+  })
+
+  it('assigns a category color to every matching project icon and preserves it after remount', () => {
+    storage.value = { projects: [project({ categoryId: 'coding' }), project({ id: 'b', name: 'Beta', categoryId: 'coding' }), project({ id: 'c', name: 'Completed example', categoryId: 'coding', completed: true }), project({ id: 'd', name: 'Uncategorized example' })], categories: [{ id: 'coding', name: 'Coding' }] }
+    mount(); openCategories()
+    const before = structuredClone(storage.value)
+    change('Color for Coding', '#3b82f6'); click('Close dialog')
+    expect(storage.value).toEqual(before)
+    openCategories(); change('Color for Coding', '#3b82f6'); submit('Save category Coding'); click('Close dialog')
+    expect(storage.value.categories[0]).toMatchObject({ id: 'coding', name: 'Coding', color: '#3B82F6' })
+    expect(storage.value.projects).toEqual(before.projects)
+    for (const name of ['Alpha', 'Beta']) expect(control(`Open ${name}`).closest('article').style.getPropertyValue('--project-color')).toBe('#3B82F6')
+    expect(control('Open Uncategorized example').closest('article').style.getPropertyValue('--project-color')).toBe('')
+    click('Completed')
+    expect(control('Open Completed example').closest('article').style.getPropertyValue('--project-color')).toBe('#3B82F6')
+    remount(); openCategories()
+    expect(field('Color for Coding').value).toBe('#3b82f6')
+    change('Rename Coding', 'Development'); submit('Save category Coding'); click('Close dialog')
+    expect(storage.value.categories[0]).toMatchObject({ name: 'Development', color: '#3B82F6' })
+    openCategories(); click('Delete category Development'); click('Close dialog')
+    expect(control('Open Alpha').closest('article').style.getPropertyValue('--project-color')).toBe('')
+  })
+
+  it('lets new categories get colors in both creation flows and reuses an existing category color', () => {
+    mount(); openCategories()
+    change('Category name', 'Coding'); change('New category color', '#8b5cf6'); submit('Add category'); click('Close dialog')
+    const categoryId = storage.value.categories[0].id
+    expect(storage.value.categories[0]).toMatchObject({ name: 'Coding', color: '#8B5CF6' })
+    click('New project'); change('Project name', 'Website'); change('Project category', categoryId); submit('Create project')
+    expect(control('Open Website').closest('article').style.getPropertyValue('--project-color')).toBe('#8B5CF6')
+    click('New project'); change('Project name', 'Research'); change('Project category', '__new__'); change('New category name', 'University'); change('New category color', '#06b6d4'); submit('Create project')
+    expect(storage.value.categories[1]).toMatchObject({ name: 'University', color: '#06B6D4' })
+    expect(control('Open Research').closest('article').style.getPropertyValue('--project-color')).toBe('#06B6D4')
+    click('New project'); change('Project name', 'Another site'); change('Project category', '__new__'); change('New category name', 'coding'); change('New category color', '#ef4444'); submit('Create project')
+    expect(storage.value.categories).toHaveLength(2)
+    expect(control('Open Another site').closest('article').style.getPropertyValue('--project-color')).toBe('#8B5CF6')
   })
 
 })
