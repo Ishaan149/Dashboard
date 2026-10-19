@@ -9,6 +9,7 @@ Live at: [ishaan149.github.io/Dashboard](https://Ishaan149.github.io/Dashboard)
 - **Overview** — at-a-glance summary of tasks, habits, today's schedule, typed job-application logging and overall counts, weather (Tempe, AZ), brain dump preview, and a daily quote
 - **To-Do** — a navigable seven-day board with recurring weekday tasks, per-date completion and skipping, plus global This Week and folder-based Long Term lists
 - **Brain Dump** — a permanent pinned note plus Markdown notes with local title/body search, bounded previews, favorites, safe Edit/Preview modes, confirmations, editor metadata, and a mobile note browser
+- **Projects** — manually ordered Active and Completed project cards, reusable custom categories, multiple autosaved Markdown documents with safe checklist previews, and an independent task checklist; completed projects retain editable notes and tasks
 - **Action Command Palette** — open from the floating command button or with `Cmd/Ctrl+K` to create a task for today or this week, log one of the four job-application types, log a habit, or capture a flagged Quick Note directly into Brain Dump
 - **Habit Tracker** — define, rename, and delete daily habits; use an accessible labeled seven-day check-in grid with 7/30-day completion rates and current/best streaks
 - **Day Planner** — time-block calendar with configurable hours and categories (work, uni, gym, rest, meeting)
@@ -80,7 +81,7 @@ Recurring-task calendar behavior, Command Palette Quick Note capture, same-tab s
 npm test
 ```
 
-Command Palette, Habit Tracker, and Brain Dump tests use plain mocked/local values and jsdom. They do not connect to Firebase. Habit migration logic is tested only with synthetic in-memory fixtures and is not run automatically against any Firebase project. Legacy note records are normalized only in memory while reading; enhanced metadata is written forward only for the individual note a user explicitly edits or creates.
+Projects, Command Palette, Habit Tracker, and Brain Dump tests use plain mocked/local values and jsdom. They do not connect to Firebase. Habit migration logic is tested only with synthetic in-memory fixtures and is not run automatically against any Firebase project. Projects behavior is tested through page interactions with stateful in-memory storage, including project/category lifecycles, ordering, note autosave, checklist independence, deletion confirmations, Markdown safety, and navigation. The `projects` storage value owns its categories and project records; project and task array positions store manual order, while note timestamps determine the note index. Legacy note records are normalized only in memory while reading; enhanced metadata is written forward only for the individual note a user explicitly edits or creates.
 
 ## Deployment
 

@@ -1,6 +1,6 @@
 import { JSDOM } from 'jsdom'
 import { describe, expect, it } from 'vitest'
-import { isSafeMarkdownUrl, renderMarkdownPreview } from './brainDumpMarkdown'
+import { isSafeMarkdownUrl, renderMarkdownPreview, renderProjectMarkdownPreview } from './brainDumpMarkdown'
 
 const windowObject = new JSDOM('<!doctype html><html><body></body></html>').window
 
@@ -38,5 +38,27 @@ describe('Brain Dump Markdown preview', () => {
     expect(html).not.toContain('<table')
     expect(html).not.toContain('<input')
     expect(html).toContain('[x] done')
+  })
+})
+
+
+describe('Project Markdown preview', () => {
+  it('renders disabled checklist marks only for project notes', () => {
+    const source = '- [x] Done\n- [ ] Next'
+    const host = windowObject.document.createElement('div')
+    host.innerHTML = renderProjectMarkdownPreview(source, windowObject)
+    const checks = [...host.querySelectorAll('input')]
+    expect(checks).toHaveLength(2)
+    expect(checks.every(check => check.type === 'checkbox' && check.disabled)).toBe(true)
+    expect(checks.map(check => check.checked)).toEqual([true, false])
+    expect(renderMarkdownPreview(source, windowObject)).not.toContain('<input')
+  })
+
+  it('keeps raw executable markup inert and restricts links in project notes', () => {
+    const html = renderProjectMarkdownPreview('<input type=checkbox onclick="alert(1)">\n\n<script>alert(1)</script>\n\n![image](https://example.com/image.png)\n\n[safe](https://example.com) [mail](mailto:test@example.com) [bad](javascript:alert(1)) [data](data:text/html,boom) [relative](/local)', windowObject)
+    const host = windowObject.document.createElement('div'); host.innerHTML = html
+    expect(host.querySelectorAll('input, script, img, iframe, [onclick]')).toHaveLength(0)
+    expect([...host.querySelectorAll('a')].map(link => link.getAttribute('href'))).toEqual(['https://example.com', 'mailto:test@example.com'])
+    expect([...host.querySelectorAll('a')].every(link => link.rel.includes('noopener') && link.rel.includes('noreferrer'))).toBe(true)
   })
 })

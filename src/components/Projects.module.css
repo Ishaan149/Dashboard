@@ -1,0 +1,89 @@
+.page { min-width: 0; color: var(--ink); }
+.collectionHeader, .projectHeader { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 20px; margin: 8px 0 28px; }
+.collectionHeader h2, .projectHeader h2 { font-size: clamp(24px, 3vw, 32px); font-weight: 650; letter-spacing: -.03em; overflow-wrap: anywhere; }
+.collectionHeader p { margin-top: 8px; color: var(--ink-3); font-size: 14px; line-height: 1.6; }
+.actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.statusViews { display: flex; gap: 6px; padding-bottom: 20px; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+.statusViews button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--ink); }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); gap: 20px; }
+.card { display: flex; flex-direction: column; min-width: 0; overflow: hidden; border: 1px solid var(--border); border-radius: 16px; background: var(--glass); transition: border-color var(--motion-fast); }
+.card:hover { border-color: var(--border-hi); }
+.cardOpen { flex: 1; display: flex; flex-direction: column; align-items: flex-start; width: 100%; min-height: 240px; padding: 24px; background: transparent; color: var(--ink); border: 0; text-align: left; cursor: pointer; }
+.cardOpen:focus-visible { outline-offset: -4px; }
+.projectIcon { color: var(--accent); margin-bottom: auto; padding-bottom: 44px; }
+.cardTitle { font-size: 21px; font-weight: 620; line-height: 1.35; overflow-wrap: anywhere; }
+.category { display: block; margin-top: 8px; color: var(--ink-3); font-size: 12px; overflow-wrap: anywhere; }
+.back { margin-bottom: 20px; }
+.projectInfo { min-width: 0; flex: 1 1 300px; }
+.eyebrow { font-size: 11px; text-transform: uppercase; letter-spacing: .12em; color: var(--accent); margin-bottom: 10px; }
+.description { margin-top: 16px; max-width: 700px; color: var(--ink-2); white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; line-height: 1.7; }
+.form { display: grid; gap: 18px; }
+.form label { display: grid; gap: 8px; font-size: 13px; color: var(--ink-2); }
+.form label span { color: var(--ink-3); }
+.form input, .form textarea, .form select { width: 100%; min-width: 0; min-height: 44px; border: 1px solid var(--border-hi); border-radius: 8px; background: var(--surface-solid); color: var(--ink); padding: 10px 12px; }
+.form textarea { resize: vertical; }
+.form .actions { justify-content: flex-end; }
+.cardFooter { display: flex; align-items: center; justify-content: space-between; padding: 8px 14px; border-top: 1px solid var(--border); }
+.cardFooter button { min-width: 44px; }
+.dragHandle { display: grid; place-items: center; width: 44px; height: 44px; cursor: grab; color: var(--ink-3); font-size: 23px; }
+.dragHandle:active { cursor: grabbing; }
+.categoryRow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.categoryRow input { flex: 1 1 130px; width: 0; }
+.hint { color: var(--ink-3); font-size: 13px; line-height: 1.6; }
+.workspace { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: start; }
+.notesWorkspace { min-width: 0; display: grid; grid-template-columns: 170px minmax(0, 1fr); min-height: 530px; border: 1px solid var(--border); border-radius: 14px; background: var(--glass); overflow: hidden; }
+.noteIndex { min-width: 0; padding: 16px 12px; border-right: 1px solid var(--border); }
+.panelHeading { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.panelHeading h3 { font-size: 14px; font-weight: 650; }
+.noteList { display: grid; gap: 6px; max-height: 600px; overflow-y: auto; padding: 4px; }
+.noteList > button { width: 100%; min-width: 0; min-height: 44px; padding: 12px 10px; border: 1px solid transparent; background: transparent; color: var(--ink-2); border-radius: 8px; text-align: left; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; cursor: pointer; }
+.noteList > button:hover { background: var(--glass-hover); }
+.noteList > button[aria-current] { background: var(--accent-soft); color: var(--ink); border-color: var(--border-hi); }
+.editor { min-width: 0; display: flex; flex-direction: column; padding: 24px; }
+.noteTitle { width: 100%; min-width: 0; min-height: 44px; padding: 8px 0; border: 0; border-bottom: 1px solid var(--border); background: transparent; color: var(--ink); font-size: 23px; font-weight: 600; }
+.editorTools { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding-block: 14px; }
+.editorTools button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--border-hi); }
+.noteContent { display: block; width: 100%; min-height: 350px; flex: 1; resize: vertical; border: 0; border-radius: 4px; padding: 8px 0; background: transparent; color: var(--ink); font-size: 14px; line-height: 1.8; }
+.markdown { min-width: 0; min-height: 350px; padding-block: 8px; font-size: 14px; line-height: 1.8; overflow-wrap: anywhere; }
+.markdown :where(h1,h2,h3,h4,h5,h6) { line-height: 1.35; letter-spacing: -.02em; }
+.markdown :where(p,ul,ol,blockquote,pre,h1,h2,h3,h4,h5,h6) + * { margin-top: 1em; }
+.markdown ul, .markdown ol { padding-left: 1.6em; }
+.markdown a { color: var(--accent); text-underline-offset: 3px; }
+.markdown blockquote { border-left: 3px solid var(--accent); padding-left: 16px; color: var(--ink-2); }
+.markdown code { font-family: ui-monospace, monospace; background: var(--surface-deep); padding: 2px 5px; border-radius: 4px; }
+.markdown pre { max-width: 100%; overflow-x: auto; padding: 14px; background: var(--surface-deep); border-radius: 8px; }
+.markdown pre code { padding: 0; }
+.markdown hr { border: 0; border-top: 1px solid var(--border-hi); }
+@media (max-width: 1000px) and (min-width: 768px) {
+  .notesWorkspace { grid-template-columns: 140px minmax(0, 1fr); }
+  .editor { padding: 16px; }
+}
+@media (max-width: 767px) {
+  .collectionHeader { margin-top: 0; }
+  .cards { gap: 14px; }
+  .notesWorkspace { grid-template-columns: minmax(0, 1fr); }
+  .noteIndex { border-right: 0; border-bottom: 1px solid var(--border); }
+  .noteList { max-height: 200px; }
+  .editor { padding: 18px; }
+}
+.workspace { grid-template-columns: minmax(0, 1fr) clamp(220px, 23vw, 280px); grid-template-areas: 'notes tasks'; }
+.notesWorkspace { grid-area: notes; }
+.tasks { grid-area: tasks; min-width: 0; border: 1px solid var(--border); border-radius: 14px; padding: 20px 16px; background: var(--glass); }
+.addTask { display: flex; gap: 6px; margin-bottom: 18px; }
+.addTask input, .taskEdit input { min-width: 0; width: 100%; min-height: 44px; border: 1px solid var(--border-hi); border-radius: 8px; padding: 10px; background: var(--surface-solid); color: var(--ink); font-size: 13px; }
+.addTask button { min-width: 44px; font-size: 20px; }
+.taskList { list-style: none; }
+.taskRow { padding: 8px 0; border-bottom: 1px solid var(--border); }
+.taskLine { display: flex; gap: 4px; align-items: flex-start; }
+.taskCheck { display: grid; place-items: center; min-width: 44px; min-height: 44px; cursor: pointer; }
+.taskCheck input { width: 17px; height: 17px; accent-color: var(--accent); cursor: pointer; }
+.taskName { flex: 1; min-width: 0; min-height: 44px; padding: 10px 4px; background: transparent; border: 0; border-radius: 4px; color: var(--ink); line-height: 1.6; font-size: 13px; text-align: left; overflow-wrap: anywhere; cursor: text; }
+.taskName:hover { background: var(--glass-hover); }
+.taskDone { text-decoration: line-through; color: var(--ink-3); }
+.taskActions { display: flex; justify-content: flex-end; gap: 4px; }
+.taskActions button { min-width: 44px; min-height: 44px; padding: 6px; }
+.taskEdit { display: grid; gap: 8px; }
+.completedHeading { margin-top: 24px; margin-bottom: 4px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
+@media (max-width: 767px) {
+  .workspace { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'tasks' 'notes'; }
+}

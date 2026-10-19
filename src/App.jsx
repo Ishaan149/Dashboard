@@ -10,13 +10,14 @@ const VIEWS = {
   overview:   lazy(() => import('./components/Overview')),
   todo:       lazy(() => import('./components/TodoCard')),
   braindump:  lazy(() => import('./components/BrainDump')),
+  projects:   lazy(() => import('./components/Projects')),
   jobs:       lazy(() => import('./components/JobTracker')),
   habits:     lazy(() => import('./components/HabitTracker')),
   dayplanner: lazy(() => import('./components/DayPlanner')),
   settings:   lazy(() => import('./components/Settings')),
 }
 
-const FULL_WIDTH_VIEWS = new Set(['dayplanner', 'overview', 'todo', 'braindump', 'jobs', 'habits'])
+const FULL_WIDTH_VIEWS = new Set(['dayplanner', 'overview', 'todo', 'braindump', 'jobs', 'habits', 'projects'])
 
 function ViewReady({ onReady, children }) {
   useEffect(() => {
@@ -78,7 +79,7 @@ export default function App() {
   const ActiveView = VIEWS[view]
   const isFullWidth = FULL_WIDTH_VIEWS.has(view)
   const viewClassName = isFullWidth
-    ? `${styles.viewFull} ${view === 'todo' ? styles.viewTodo : ''} ${view === 'braindump' ? styles.viewBrainDump : ''} ${view === 'jobs' ? styles.viewJobs : ''} ${view === 'habits' ? styles.viewHabits : ''}`
+    ? `${styles.viewFull} ${view === 'todo' ? styles.viewTodo : ''} ${view === 'braindump' ? styles.viewBrainDump : ''} ${view === 'jobs' ? styles.viewJobs : ''} ${view === 'habits' ? styles.viewHabits : ''} ${view === 'projects' ? styles.viewProjects : ''}`
     : styles.view
 
   return (

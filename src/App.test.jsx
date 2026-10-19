@@ -10,6 +10,7 @@ vi.mock('./components/AppShell', () => ({
   default: ({ children, onNavigate }) => (
     <div>
       <button type="button" aria-label="Open To-Do navigation" onClick={() => onNavigate('todo')}>To-Do</button>
+      <button type="button" aria-label="Open Projects navigation" onClick={() => onNavigate('projects')}>Projects</button>
       <main id="main-content" tabIndex="-1">{children}</main>
     </div>
   ),
@@ -30,6 +31,7 @@ vi.mock('./components/Overview', () => ({
     </div>
   ),
 }))
+vi.mock('./components/Projects', () => ({ default: () => <div>Project notebook workspace</div> }))
 vi.mock('./components/TodoCard', () => ({
   default: ({ onChange, selectedJobType }) => (
     <div>
@@ -112,4 +114,12 @@ describe('App', () => {
     await act(async () => new Promise(resolve => requestAnimationFrame(resolve)))
     expect(document.activeElement).toBe(container.querySelector('#main-content'))
   })
+  it('lazy-loads Projects through navigation and focuses the main content', async () => {
+    click(container.querySelector('[aria-label="Open Projects navigation"]'))
+    await act(async () => {})
+    expect(container.textContent).toContain('Project notebook workspace')
+    await act(async () => new Promise(resolve => requestAnimationFrame(resolve)))
+    expect(document.activeElement).toBe(container.querySelector('#main-content'))
+  })
+
 })

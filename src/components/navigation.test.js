@@ -7,6 +7,7 @@ describe('primary navigation', () => {
       'overview',
       'todo',
       'braindump',
+      'projects',
       'jobs',
       'habits',
       'dayplanner',
@@ -23,6 +24,7 @@ describe('primary navigation', () => {
       'Today',
       'To-Do',
       'Brain',
+      'Projects',
       'Jobs',
       'Habits',
       'Planner',
@@ -32,5 +34,6 @@ describe('primary navigation', () => {
   it('exposes Settings as a utility destination', () => {
     expect(SETTINGS_NAV_ITEM).toMatchObject({ id: 'settings', label: 'Settings', icon: 'settings' })
     expect(getViewLabel('settings')).toBe('Settings')
+    expect(getViewLabel('projects')).toBe('Projects')
   })
 })

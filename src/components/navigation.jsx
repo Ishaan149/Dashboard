@@ -2,6 +2,7 @@ export const NAV_ITEMS = Object.freeze([
   { id: 'overview', label: 'Today', mobileLabel: 'Today', icon: 'today' },
   { id: 'todo', label: 'To-Do', mobileLabel: 'To-Do', icon: 'todo' },
   { id: 'braindump', label: 'Brain Dump', mobileLabel: 'Brain', icon: 'brain' },
+  { id: 'projects', label: 'Projects', mobileLabel: 'Projects', icon: 'projects' },
   { id: 'jobs', label: 'Job Applications', mobileLabel: 'Jobs', icon: 'jobs' },
   { id: 'habits', label: 'Habits', mobileLabel: 'Habits', icon: 'habits' },
   { id: 'dayplanner', label: 'Day Planner', mobileLabel: 'Planner', icon: 'planner' },
@@ -47,6 +48,9 @@ export function NavigationIcon({ name, size = 20 }) {
   }
   if (name === 'brain') {
     return <svg {...common}><path d="M12 2a7 7 0 00-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 001 1h6a1 1 0 001-1v-2.26A7 7 0 0012 2z"/><path d="M9 21h6"/></svg>
+  }
+  if (name === 'projects') {
+    return <svg {...common}><path d="M3 7V5a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/><path d="M3 9h18"/></svg>
   }
   if (name === 'jobs') {
     return <svg {...common}><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2M2 12h20"/><path d="M12 12h.01"/></svg>
