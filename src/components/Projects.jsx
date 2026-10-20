@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { moveWithinGroup } from '../domain/projects'
 import { useSyncedStorage } from '../hooks/useSyncedStorage'
 import { Button, Dialog, EmptyState } from './ui'
-import { NavigationIcon } from './navigation'
+import ProjectIcon, { PROJECT_ICONS, getProjectIcon } from './ProjectIcon'
 import styles from './Projects.module.css'
 import ProjectCategories from './ProjectCategories'
 import { useTheme } from '../theme/ThemeProvider'
@@ -16,6 +16,7 @@ function ProjectForm({ project, categories, defaultColor, onSave, onClose }) {
   const [name, setName] = useState(project?.name ?? '')
   const [description, setDescription] = useState(project?.description ?? '')
   const [categoryId, setCategoryId] = useState(project?.categoryId ?? '')
+  const [icon, setIcon] = useState(() => getProjectIcon(project?.icon).id)
   const [newCategory, setNewCategory] = useState('')
   const [newCategoryColor, setNewCategoryColor] = useState(defaultColor)
   const nameRef = useRef(null)
@@ -23,11 +24,19 @@ function ProjectForm({ project, categories, defaultColor, onSave, onClose }) {
     <Dialog open title={project ? 'Edit project' : 'New project'} onClose={onClose} initialFocusRef={nameRef}>
       <form className={styles.form} onSubmit={event => {
         event.preventDefault()
-        if (name.trim() && (categoryId !== '__new__' || newCategory.trim())) onSave({ name: name.trim(), description: description.trim(), categoryId: categoryId === '__new__' ? null : categoryId || null }, categoryId === '__new__' ? newCategory.trim() : '', newCategoryColor)
+        if (name.trim() && (categoryId !== '__new__' || newCategory.trim())) onSave({ name: name.trim(), description: description.trim(), icon, categoryId: categoryId === '__new__' ? null : categoryId || null }, categoryId === '__new__' ? newCategory.trim() : '', newCategoryColor)
       }}>
         <label>Name<input ref={nameRef} aria-label="Project name" value={name} onChange={event => setName(event.target.value)} required /></label>
-        <label>Description <span>(optional)</span><textarea aria-label="Project description" value={description} onChange={event => setDescription(event.target.value)} rows={3} /></label>
-        <label>Category <span>(optional)</span><select aria-label="Project category" value={categoryId} onChange={event => setCategoryId(event.target.value)}>
+        <fieldset className={styles.iconPicker} style={{ '--project-color': categories.find(category => category.id === categoryId)?.color || defaultColor }}>
+          <legend>Icon <span>{getProjectIcon(icon).label}</span></legend>
+          <div className={styles.iconChoices}>
+            {PROJECT_ICONS.map(option => <button key={option.id} type="button" aria-label={`Use ${option.label} icon`} title={option.label} aria-pressed={icon === option.id} onClick={() => setIcon(option.id)}>
+              <ProjectIcon name={option.id} />
+            </button>)}
+          </div>
+        </fieldset>
+        <label><div>Description <span>(optional)</span></div><textarea aria-label="Project description" value={description} onChange={event => setDescription(event.target.value)} rows={3} /></label>
+        <label><div>Category <span>(optional)</span></div><select aria-label="Project category" value={categoryId} onChange={event => setCategoryId(event.target.value)}>
           <option value="">Uncategorized</option>
           {categories.map(category => <option key={category.id} value={category.id}>{category.name}</option>)}
           <option value="__new__">+ New category…</option>
@@ -124,26 +133,31 @@ export default function Projects() {
   }
 
   function returnToProjects() {
+    setOptionsOpen(false)
     setCompleted(project.completed)
     setProjectId(null)
     requestAnimationFrame(() => viewFocusRef.current?.focus())
   }
 
   return (
-    <section className={styles.page} aria-label="Projects">
+    <section className={`${styles.page} ${project ? styles.detailPage : ''}`} aria-label="Projects">
       {project ? <>
         <Button aria-label="Back to projects" className={styles.back} onClick={returnToProjects}>← Back to projects</Button>
         <header className={styles.projectHeader}>
           <div className={styles.projectInfo}>
-            <p className={styles.eyebrow}>{project.completed ? 'Completed project' : 'Active project'}</p>
             <h2 ref={viewFocusRef} tabIndex={-1}>{project.name}</h2>
             {project.categoryId && <span className={styles.category}>{categories.find(item => item.id === project.categoryId)?.name ?? 'Uncategorized'}</span>}
             {project.description && <p className={styles.description}>{project.description}</p>}
           </div>
-          <div className={styles.actions}>
-            <Button onClick={() => setForm(project)}>Edit project</Button>
-            <Button onClick={() => updateProject(project.id, item => ({ ...item, completed: !item.completed }))}>{project.completed ? 'Reopen project' : 'Complete project'}</Button>
-            <Button variant="ghost" onClick={() => setDeleting({ id: project.id, name: project.name })}>Delete project</Button>
+          <div ref={optionsRef} className={`${styles.collectionOptions} ${styles.projectActions}`}>
+            <Button ref={optionsTriggerRef} variant="ghost" className={styles.optionsTrigger} title="Project actions" aria-label="Project actions" aria-expanded={optionsOpen} aria-controls="project-actions" onClick={() => setOptionsOpen(open => !open)}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="19" cy="12" r="1.5" /></svg>
+            </Button>
+            {optionsOpen && <div id="project-actions" className={styles.optionsPopover}>
+              <button type="button" data-options-action onClick={() => { optionsTriggerRef.current?.focus(); setOptionsOpen(false); setForm(project) }}>Edit project</button>
+              <button type="button" onClick={() => { optionsTriggerRef.current?.focus(); setOptionsOpen(false); updateProject(project.id, item => ({ ...item, completed: !item.completed })) }}>{project.completed ? 'Reopen project' : 'Complete project'}</button>
+              <button type="button" className={styles.deleteProjectAction} onClick={() => { optionsTriggerRef.current?.focus(); setOptionsOpen(false); setDeleting({ id: project.id, name: project.name }) }}>Delete project</button>
+            </div>}
           </div>
         </header>
         <div className={styles.workspace}>
@@ -183,7 +197,7 @@ export default function Projects() {
                 const target = visibleProjects[index + (event.key === 'ArrowUp' ? -1 : 1)]
                 if (target) moveProject(item.id, target.id)
               }}>
-              <span className={styles.projectIcon}><span className={styles.iconTile}><NavigationIcon name="projects" size={40} /></span></span>
+              <span className={styles.projectIcon}><span className={styles.iconTile}><ProjectIcon name={item.icon} size={40} /></span></span>
               <span className={styles.cardTitle}>{item.name}</span>
               <span className={styles.category}>{category?.name ?? 'Uncategorized'}</span>
             </button>

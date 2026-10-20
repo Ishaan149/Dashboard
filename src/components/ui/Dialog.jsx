@@ -12,10 +12,13 @@ export default function Dialog({
   open,
   onClose,
   title,
+  titleControl,
   description,
   children,
   footer,
+  headerActions,
   destructive = false,
+  fullscreen = false,
   initialFocusRef,
 }) {
   const panelRef = useRef(null)
@@ -41,7 +44,7 @@ export default function Dialog({
     >
       <section
         ref={panelRef}
-        className={styles.dialog}
+        className={`${styles.dialog} ${fullscreen ? styles.fullscreenDialog : ''}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
@@ -50,9 +53,11 @@ export default function Dialog({
       >
         <div className={styles.header}>
           <div>
-            <h2 id={titleId} className={styles.title}>{title}</h2>
+            <h2 id={titleId} className={titleControl ? styles.hiddenTitle : styles.title}>{title}</h2>
+            {titleControl}
             {description && <p id={descriptionId} className={styles.description}>{description}</p>}
           </div>
+          {headerActions}
           {!destructive && <IconButton label="Close dialog" onClick={onClose}><CloseIcon /></IconButton>}
         </div>
         {children && <div className={styles.body}>{children}</div>}

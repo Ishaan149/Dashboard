@@ -26,10 +26,15 @@ function control(name, scope = document.body) {
   expect(found, `control: ${name}`).toBeTruthy()
   return found
 }
-function click(name, scope) { act(() => control(name, scope).click()) }
-function field(name) { return document.querySelector(`[aria-label="${name}"]`) }
-function change(name, value) {
-  const node = field(name)
+function click(name, scope) {
+  if (!scope && ['Edit project', 'Complete project', 'Reopen project', 'Delete project'].includes(name) && !document.querySelector('#project-actions') && !document.querySelector('[role="dialog"]')) {
+    act(() => control('Project actions').click())
+  }
+  act(() => control(name, scope).click())
+}
+function field(name, scope = document.body) { return scope.querySelector(`[aria-label="${name}"]`) }
+function change(name, value, scope) {
+  const node = field(name, scope)
   expect(node, `field: ${name}`).toBeTruthy()
   const prototype = node.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : node.tagName === 'SELECT' ? HTMLSelectElement.prototype : HTMLInputElement.prototype
   act(() => {
@@ -38,6 +43,17 @@ function change(name, value) {
   })
 }
 function submit(name) { act(() => control(name).closest('form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))) }
+function dragTask(sourceName, targetName, position = 'before') {
+  const source = control(`Rename task ${sourceName}`).closest('li')
+  const target = control(`Rename task ${targetName}`).closest('li')
+  const dataTransfer = { setData: vi.fn() }
+  vi.spyOn(target, 'getBoundingClientRect').mockReturnValue({ top: 100, height: 40 })
+  for (const [node, type] of [[source, 'dragstart'], [target, 'dragover'], [target, 'drop'], [source, 'dragend']]) {
+    const event = new Event(type, { bubbles: true, cancelable: true })
+    Object.defineProperties(event, { dataTransfer: { value: dataTransfer }, clientY: { value: position === 'after' ? 135 : 105 } })
+    act(() => node.dispatchEvent(event))
+  }
+}
 function openCategories() { click('Project options'); click('Manage categories') }
 function mount() { root = createRoot(container); act(() => root.render(<ThemeProvider storage={{ getItem: () => null, setItem: () => {} }}><Projects /></ThemeProvider>)) }
 function remount() { act(() => root.unmount()); mount() }
@@ -51,6 +67,42 @@ beforeEach(() => {
 afterEach(() => { if (root) act(() => root.unmount()); root = null; container.remove(); vi.restoreAllMocks() })
 
 describe('Projects workspace', () => {
+  it('edits and persists project icons, cancels unsaved choices, and keeps category colors', () => {
+    const original = project({ categoryId: 'coding', notes: [{ id: 'n', title: 'Keep', content: 'Notes', createdAt: 1, updatedAt: 1 }], tasks: [{ id: 't', text: 'Keep task', completed: false }] })
+    storage.value = { projects: [original, project({ id: 'b', name: 'Beta' })], categories: [{ id: 'coding', name: 'Coding', color: '#3B82F6' }] }
+    mount()
+    expect(control('Open Alpha').querySelector('svg').dataset.projectIcon).toBe('folder')
+    click('Open Alpha'); click('Edit project')
+    expect(control('Use Folder icon').getAttribute('aria-pressed')).toBe('true')
+    click('Use Code icon')
+    expect(control('Use Code icon').getAttribute('aria-pressed')).toBe('true')
+    expect(control('Use Folder icon').getAttribute('aria-pressed')).toBe('false')
+    click('Cancel')
+    expect(storage.writes).toEqual([])
+    click('Edit project'); click('Use Code icon'); submit('Save project')
+    expect(storage.value.projects[0]).toEqual({ ...original, icon: 'code' })
+    expect(storage.value.projects[1]).toEqual(project({ id: 'b', name: 'Beta' }))
+    remount()
+    expect(control('Open Alpha').querySelector('svg').dataset.projectIcon).toBe('code')
+    expect(control('Open Alpha').closest('article').style.getPropertyValue('--project-color')).toBe('#3B82F6')
+    click('Open Alpha'); click('Edit project')
+    expect(control('Use Code icon').getAttribute('aria-pressed')).toBe('true')
+    click('Cancel'); click('Complete project'); click('Back to projects')
+    expect(control('Open Alpha').querySelector('svg').dataset.projectIcon).toBe('code')
+  })
+
+  it('chooses icons for new projects and falls back to Folder for unknown saved icons', () => {
+    storage.value = { projects: [project({ icon: 'unknown' })], categories: [] }
+    mount()
+    expect(control('Open Alpha').querySelector('svg').dataset.projectIcon).toBe('folder')
+    expect(storage.writes).toEqual([])
+    click('New project'); change('Project name', 'Launch'); click('Use Rocket icon')
+    expect(document.querySelector('[role="dialog"]')).not.toBeNull()
+    submit('Create project')
+    expect(storage.value.projects[1].icon).toBe('rocket')
+    expect(control('Open Launch').querySelector('svg').dataset.projectIcon).toBe('rocket')
+  })
+
   it('requires a name, creates and edits a project, and keeps cards limited to name and category', () => {
     mount()
     expect(container.textContent).toContain('No active projects')
@@ -70,6 +122,31 @@ describe('Projects workspace', () => {
     expect(storage.value.projects[0].name).toBe('Final thesis')
     expect(storage.writes.every(write => write.key === 'projects')).toBe(true)
   })
+  it('shows project actions in a dismissible dropdown and closes it after completing or reopening', async () => {
+    storage.value = { projects: [project()], categories: [] }
+    mount(); click('Open Alpha')
+    expect(container.textContent).not.toContain('Active project')
+    expect(container.textContent).not.toContain('Edit project')
+    expect(control('Project actions').getAttribute('aria-expanded')).toBe('false')
+    click('Project actions')
+    await act(async () => new Promise(resolve => requestAnimationFrame(resolve)))
+    expect(document.activeElement).toBe(control('Edit project'))
+    expect(document.querySelector('#project-actions').textContent).toBe('Edit projectComplete projectDelete project')
+    act(() => document.activeElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })))
+    expect(document.querySelector('#project-actions')).toBeNull()
+    expect(document.activeElement).toBe(control('Project actions'))
+    click('Project actions')
+    act(() => container.dispatchEvent(new Event('pointerdown', { bubbles: true })))
+    expect(document.querySelector('#project-actions')).toBeNull()
+    click('Complete project')
+    expect(storage.value.projects[0].completed).toBe(true)
+    expect(document.querySelector('#project-actions')).toBeNull()
+    expect(document.activeElement).toBe(control('Project actions'))
+    click('Reopen project')
+    expect(storage.value.projects[0].completed).toBe(false)
+    expect(document.querySelector('#project-actions')).toBeNull()
+  })
+
   it('persists manual ordering within each status, and completes or reopens without changing content', () => {
     const notes = [{ id: 'n', title: 'Reference', content: 'Keep me', createdAt: 1, updatedAt: 2 }]
     const tasks = [{ id: 't', text: 'Unfinished', completed: false }]
@@ -117,18 +194,25 @@ describe('Projects workspace', () => {
     click('New note'); change('Note title', 'Reference'); change('Note content', 'A reference')
     const beforeReading = structuredClone(storage.value)
     storage.writes = []
-    click('Select note Plan'); click('Preview')
-    expect(container.querySelector('h1').textContent).toBe('The plan')
+    click('Select note Plan'); click('Open note fullscreen')
+    const dialog = document.querySelector('[role="dialog"]')
+    click('Preview', dialog)
+    expect(dialog.querySelector('h1').textContent).toBe('The plan')
     expect(storage.writes).toEqual([])
     expect(storage.value).toEqual(beforeReading)
-    click('Edit')
-    expect(field('Note content').value).toBe('# The plan\n\n- First step')
+    click('Edit', dialog)
+    expect(field('Note content', dialog).value).toBe('# The plan\n\n- First step')
     vi.mocked(Date.now).mockReturnValue(300)
-    change('Note title', 'New plan')
-    expect(field('Note content').value).toBe('# The plan\n\n- First step')
+    change('Note title', 'New plan', dialog)
+    expect(field('Note content', dialog).value).toBe('# The plan\n\n- First step')
     expect([...container.querySelectorAll('[aria-label^="Select note "]')].map(item => item.textContent)).toEqual(['New plan', 'Reference'])
     expect(storage.value.projects[0].notes.find(note => note.id === firstId)).toMatchObject({ title: 'New plan', updatedAt: 300, createdAt: 100 })
     expect(storage.value.projects[1]).toEqual(project({ id: 'b', name: 'Beta' }))
+    change('Note content', '# Updated plan', dialog)
+    click('Close dialog', dialog)
+    expect(document.querySelector('[role="dialog"]')).toBeNull()
+    expect(field('Note title').value).toBe('New plan')
+    expect(field('Note content').value).toBe('# Updated plan')
     click('Back to projects'); remount(); click('Open Alpha')
     expect(field('Note title').value).toBe('New plan')
     expect(storage.value.projects.map(item => item.id)).toEqual(['a', 'b'])
@@ -157,12 +241,12 @@ describe('Projects workspace', () => {
     mount(); click('Open Alpha')
     expect(container.textContent).toContain('No tasks yet')
     for (const text of ['First', 'Second', 'Third']) { change('New task', text); submit('Add task') }
-    click('Move task Third up')
+    dragTask('Third', 'Second')
     expect(storage.value.projects[0].tasks.map(task => task.text)).toEqual(['First', 'Third', 'Second'])
     click('Complete task First')
-    click('Move task Third down')
+    dragTask('Third', 'Second', 'after')
     expect([...container.querySelector('[aria-label="Incomplete tasks"]').querySelectorAll('[aria-label^="Rename task "]')].map(node => node.textContent)).toEqual(['Second', 'Third'])
-    click('Complete task Third'); click('Move task Third up')
+    click('Complete task Third'); dragTask('Third', 'First')
     expect([...container.querySelector('[aria-label="Completed tasks"]').querySelectorAll('[aria-label^="Rename task "]')].map(node => node.textContent)).toEqual(['Third', 'First'])
     click('Rename task Second'); change('Task text', 'Revised'); submit('Save task')
     click('Complete task Revised')
@@ -178,10 +262,43 @@ describe('Projects workspace', () => {
     expect(storage.writes.every(write => write.key === 'projects')).toBe(true)
   })
 
+  it('reorders by dropping before or after a row, persists the order, and keeps completion groups separate', () => {
+    storage.value = { projects: [project({ tasks: [
+      { id: 'one', text: 'One', completed: false },
+      { id: 'done', text: 'Done', completed: true },
+      { id: 'two', text: 'Two', completed: false },
+      { id: 'three', text: 'Three', completed: false },
+    ] })], categories: [] }
+    mount(); click('Open Alpha')
+    expect(container.querySelector('[aria-label^="Move task "]')).toBeNull()
+    dragTask('One', 'Two', 'before')
+    expect(storage.value.projects[0].tasks.map(task => task.text)).toEqual(['One', 'Done', 'Two', 'Three'])
+    dragTask('One', 'Two', 'after')
+    expect(storage.value.projects[0].tasks.map(task => task.text)).toEqual(['Two', 'Done', 'One', 'Three'])
+    dragTask('Three', 'Two', 'before')
+    expect(storage.value.projects[0].tasks.map(task => task.text)).toEqual(['Three', 'Done', 'Two', 'One'])
+    const before = structuredClone(storage.value)
+    storage.writes = []
+    dragTask('Three', 'Three'); dragTask('Three', 'Done')
+    expect(storage.value).toEqual(before)
+    expect(storage.writes).toEqual([])
+    remount(); click('Open Alpha')
+    expect([...container.querySelector('[aria-label="Incomplete tasks"]').querySelectorAll('[aria-label^="Rename task "]')].map(node => node.textContent)).toEqual(['Three', 'Two', 'One'])
+    const keyboardTask = control('Rename task Two')
+    keyboardTask.focus()
+    act(() => keyboardTask.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', altKey: true, bubbles: true })))
+    expect(storage.value.projects[0].tasks.map(task => task.text)).toEqual(['Two', 'Done', 'Three', 'One'])
+    expect(document.activeElement).toBe(keyboardTask)
+    click('Rename task Two')
+    expect(field('Task text').closest('li').draggable).toBe(false)
+  })
+
   it('renders safe Markdown checklists through Preview without changing project tasks', () => {
     storage.value = { projects: [project({ notes: [{ id: 'n', title: 'Checklist', content: '# Plan\n\n- [x] Draft\n- [ ] Review\n\n[Reference](https://example.com)\n\n<script>boom()</script>', createdAt: 1, updatedAt: 1 }] })], categories: [] }
-    mount(); click('Open Alpha'); click('Preview')
-    const preview = container.querySelector('[aria-label="Note preview"]')
+    mount(); click('Open Alpha'); click('Open note fullscreen')
+    const dialog = document.querySelector('[role="dialog"]')
+    click('Preview', dialog)
+    const preview = dialog.querySelector('[aria-label="Note preview"]')
     expect([...preview.querySelectorAll('input')].map(input => [input.type, input.disabled, input.checked])).toEqual([['checkbox', true, true], ['checkbox', true, false]])
     expect(preview.querySelector('a').href).toBe('https://example.com/')
     expect(preview.querySelector('script')).toBeNull()
