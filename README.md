@@ -1,95 +1,52 @@
 # Personal Dashboard
 
-A personal productivity dashboard built with React and Firebase. Tracks tasks, habits, job applications, a day planner, and notes, with real-time Firestore sync and a local cache.
-
-Live at: [ishaan149.github.io/Dashboard](https://Ishaan149.github.io/Dashboard)
+A personal productivity dashboard built with React, Vite, and Firestore. It caches data in the browser and syncs it across devices. The deployed app is at [ishaan149.github.io/Dashboard](https://Ishaan149.github.io/Dashboard).
 
 ## Features
 
-- **Overview** — at-a-glance summary of tasks, habits, today's schedule, typed job-application logging and overall counts, weather (Tempe, AZ), brain dump preview, and a daily quote
-- **To-Do** — a navigable seven-day board with recurring weekday tasks, per-date completion and skipping, plus global This Week and folder-based Long Term lists
-- **Brain Dump** — a permanent pinned note plus Markdown notes with local title/body search, bounded previews, favorites, safe Edit/Preview modes, confirmations, editor metadata, and a mobile note browser
-- **Projects** — manually ordered Active and Completed project cards, reusable custom categories with assigned icon colors, multiple autosaved Markdown documents with safe checklist previews, and an independent task checklist; completed projects retain editable notes and tasks
-- **Action Command Palette** — open from the floating command button or with `Cmd/Ctrl+K` to create a task for today or this week, log one of the four job-application types, log a habit, or capture a flagged Quick Note directly into Brain Dump
-- **Habit Tracker** — define, rename, and delete daily habits; use an accessible labeled seven-day check-in grid with 7/30-day completion rates and current/best streaks
-- **Day Planner** — time-block calendar with configurable hours and categories (work, uni, gym, rest, meeting)
-- **Job Tracker** — log job applications by day, view a 7-day sparkline
+- **Today** — today's tasks, habits, planner blocks, application counts, pinned note, a daily quote, and weather for Tempe, Arizona.
+- **To-Do** — a navigable seven-day board, recurring weekday tasks, a This Week list, and folder-based Long Term tasks.
+- **Brain Dump** — a pinned note and searchable Markdown notes with favorites, Quick Notes, and sanitized previews.
+- **Projects** — manually ordered active and completed projects, custom categories, multiple Markdown notes, and independent task checklists.
+- **Job Applications** — daily counts for four application categories, email and LinkedIn outreach counters, history, and a note.
+- **Habits** — daily check-ins in a seven-day grid, completion rates, and streaks.
+- **Day Planner** — a time-block schedule with configurable hours and categories. The schedule is shared across days; it is not date-specific.
+- **Settings** — dark theme presets and custom accent, background, and foreground colors stored in the current browser.
+- **Command palette** — use `Cmd/Ctrl+K` or the floating button to create a task for today or this week, log an application or habit, and capture a Quick Note. Separate keyboard shortcuts navigate to Today, To-Do, Brain Dump, and Job Applications.
 
-Persisted data syncs across devices via Firestore with `localStorage` as an instant-render cache. Changes are debounced for 1 second before writing to Firestore. Authenticated views are loaded on demand after the password gate is cleared. Retired wellness food logs, saved foods, and weight history are cleared from browser storage on app startup; their existing Firestore records are retained.
+## Local development
 
-## Tech stack
+Prerequisites: Node.js 20 or later and Java 21 or later for the Firestore emulator. Install dependencies with `npm ci`.
 
-- React 18 + Vite
-- Firebase Firestore (real-time sync)
-- Marked + DOMPurify (restricted, sanitized Markdown preview)
-- CSS Modules
-- GitHub Actions → GitHub Pages (CI/CD)
+Development uses the Firestore emulator and the synthetic `dashboard-local` project. Create `.env.local` with a local password hash and placeholder Firebase web configuration:
 
-## Getting started
-
-### Prerequisites
-
-- Node 20+
-- A Firebase project with Firestore enabled
-
-### Setup
-
-1. Clone the repo and install dependencies:
-
-   ```bash
-   git clone https://github.com/Ishaan149/Dashboard.git
-   cd Dashboard
-   npm install
-   ```
-
-2. Copy the environment template and fill in your values:
-
-   ```bash
-   cp .env.local.example .env.local
-   ```
-
-   | Variable | Where to find it |
-   |---|---|
-   | `VITE_FIREBASE_API_KEY` | Firebase Console → Project Settings → Web app |
-   | `VITE_FIREBASE_AUTH_DOMAIN` | same |
-   | `VITE_FIREBASE_PROJECT_ID` | same |
-   | `VITE_FIREBASE_STORAGE_BUCKET` | same |
-   | `VITE_FIREBASE_MESSAGING_SENDER_ID` | same |
-   | `VITE_FIREBASE_APP_ID` | same |
-   | `VITE_PASSWORD_HASH` | lowercase SHA-256 hex digest of the dashboard password |
-   | `VITE_FIRESTORE_SECRET` | compatibility value expected by the current Firestore rules |
-
-   Generate the password digest with:
-
-   ```bash
-   printf '%s' 'your-password' | shasum -a 256
-   ```
-
-   The password gate is not security authentication: the hash and every other `VITE_*` value are included in the browser bundle. Protect sensitive data with Firebase Authentication and Firestore rules based on authenticated identity.
-
-3. Start the dev server:
-
-   ```bash
-   npm run dev
-   ```
-
-### Tests
-
-Recurring-task calendar behavior, Command Palette Quick Note capture, same-tab storage synchronization, and Connected Brain Dump normalization, write-forward updates, search/ranking, filters, deletion/clear protections, Markdown safety, and Palette-provider behavior are covered by deterministic Vitest tests:
-
-```bash
-npm test
+```dotenv
+VITE_FIREBASE_API_KEY=local-api-key
+VITE_FIREBASE_AUTH_DOMAIN=dashboard-local.firebaseapp.com
+VITE_FIREBASE_STORAGE_BUCKET=dashboard-local.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=123456789
+VITE_FIREBASE_APP_ID=local-app-id
+VITE_PASSWORD_HASH=<sha256-hex-digest>
+VITE_FIRESTORE_SECRET=local-value
 ```
 
-Projects, Command Palette, Habit Tracker, and Brain Dump tests use plain mocked/local values and jsdom. They do not connect to Firebase. Habit migration logic is tested only with synthetic in-memory fixtures and is not run automatically against any Firebase project. Projects behavior is tested through page interactions with stateful in-memory storage, including project/category lifecycles, ordering, note autosave, checklist independence, deletion confirmations, Markdown safety, and navigation. The `projects` storage value owns its categories and project records; project and task array positions store manual order, while note timestamps determine the note index. Legacy note records are normalized only in memory while reading; enhanced metadata is written forward only for the individual note a user explicitly edits or creates.
+Generate the hash with `printf '%s' 'your-password' | shasum -a 256`. Do not set a production project ID in `.env.local` for development: it overrides `.env.development`, which selects the local emulator project. See [local Firebase development](Docs/firebase-emulator.md) for details.
+
+In separate terminals, run:
+
+```sh
+npm run emulators:firestore
+npm run dev
+```
+
+Open the URL printed by Vite and use the password corresponding to your hash. Run `npm test` for the Vitest suite and `npm run build` to build the production bundle. `npm run preview` serves a built bundle locally.
+
+## Data and security
+
+The app reads cached values from `localStorage` and subscribes to Firestore documents for synchronization. Writes are debounced by one second after the initial snapshot. Theme preferences and the unlocked flag are browser-local. See the [technical guide](Full.md) for storage keys and synchronization details.
+
+The password gate is a convenience, not authentication: the hash and all `VITE_*` values are included in the browser bundle. Protect sensitive data with Firebase Authentication and Firestore rules based on authenticated identity. The Firestore compatibility value is also visible to the browser and is not a secret.
 
 ## Deployment
 
-Pushes to `main` automatically build and deploy to GitHub Pages via the included workflow. Add the environment variables above as repository secrets in **Settings → Secrets and variables → Actions**.
-
-Manual deploy:
-
-```bash
-npm run build
-npm run deploy
-```
+Pushes to `main` build and deploy to GitHub Pages through the included workflow. Configure the Firebase web variables, `VITE_PASSWORD_HASH`, and `VITE_FIRESTORE_SECRET` as GitHub Actions repository secrets. [.env.local.example](.env.local.example) lists the production configuration values. To deploy manually, put those values in `.env.production.local` or export them as environment variables, then run `npm run build` and `npm run deploy`.
