@@ -18,7 +18,7 @@ function NoteBody({ note, mode, onEdit }) {
     : <div className={noteStyles.previewSurface} aria-label="Note preview">{note.content ? <div className={noteStyles.markdown} dangerouslySetInnerHTML={{ __html: renderProjectMarkdownPreview(note.content) }} /> : <p className={noteStyles.previewEmpty}>Nothing to preview yet.</p>}</div>
 }
 
-export default function ProjectNotes({ project, onUpdate }) {
+export default function ProjectNotes({ project, onUpdate, accentStyle }) {
   const [selectedId, setSelectedId] = useState(null)
   const [fullscreenOpen, setFullscreenOpen] = useState(false)
   const [mode, setMode] = useState('edit')
@@ -78,7 +78,7 @@ export default function ProjectNotes({ project, onUpdate }) {
 
         </> : <EmptyState message="No notes yet. Create a document for ideas, plans, or reference." />}
       </section>
-      <Dialog open={fullscreenOpen && Boolean(note)} fullscreen title={note?.title || 'Untitled note'} titleControl={<input className={styles.popupNoteTitle} aria-label="Note title" value={note?.title ?? ''} placeholder="Untitled note" onChange={event => editNote('title', event.target.value)} />} headerActions={<MarkdownMode mode={mode} setMode={setMode} />} onClose={() => setFullscreenOpen(false)}>
+      <Dialog open={fullscreenOpen && Boolean(note)} style={accentStyle} fullscreen title={note?.title || 'Untitled note'} titleControl={<input className={styles.popupNoteTitle} aria-label="Note title" value={note?.title ?? ''} placeholder="Untitled note" onChange={event => editNote('title', event.target.value)} />} headerActions={<MarkdownMode mode={mode} setMode={setMode} />} onClose={() => setFullscreenOpen(false)}>
         <div className={styles.fullscreenNote}>
           {note && <NoteBody note={note} mode={mode} onEdit={value => editNote('content', value)} />}
         </div>

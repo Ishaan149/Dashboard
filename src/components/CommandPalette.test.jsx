@@ -168,11 +168,19 @@ describe('Command Palette Quick Note', () => {
   it.each([
     ['t', 'todo'],
     ['n', 'braindump'],
+    ['p', 'projects'],
     ['j', 'jobs'],
   ])('navigates with the %s keyboard shortcut', (key, view) => {
     act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key, metaKey: true, bubbles: true })))
 
     expect(onNavigate).toHaveBeenCalledWith(view)
+  })
+
+  it.each(['metaKey', 'ctrlKey'])('prevents printing and opens Projects with %s + P', modifier => {
+    const event = new KeyboardEvent('keydown', { key: 'p', [modifier]: true, bubbles: true, cancelable: true })
+    act(() => document.dispatchEvent(event))
+    expect(event.defaultPrevented).toBe(true)
+    expect(onNavigate).toHaveBeenCalledWith('projects')
   })
 
   it('keeps shortcut hints out of the command list', () => {

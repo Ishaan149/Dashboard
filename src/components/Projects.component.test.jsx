@@ -361,6 +361,16 @@ describe('Projects workspace', () => {
     expect(control('Open Alpha').closest('article').style.getPropertyValue('--project-color')).toBe('')
   })
 
+  it('uses the project category color in the workspace and fullscreen note, with a theme fallback', () => {
+    storage.value = { projects: [project({ categoryId: 'coding', notes: [{ id: 'n', title: 'Plan', content: '', createdAt: 1, updatedAt: 1 }] }), project({ id: 'b', name: 'Uncategorized' })], categories: [{ id: 'coding', name: 'Coding', color: '#3B82F6' }] }
+    mount(); click('Open Alpha')
+    expect(container.querySelector('[aria-label="Projects"]').style.getPropertyValue('--accent')).toBe('#3B82F6')
+    click('Open note fullscreen')
+    expect(document.querySelector('[role="dialog"]').style.getPropertyValue('--accent')).toBe('#3B82F6')
+    click('Close dialog'); click('Back to projects'); click('Open Uncategorized')
+    expect(container.querySelector('[aria-label="Projects"]').style.getPropertyValue('--accent')).toBe('')
+  })
+
   it('lets new categories get colors in both creation flows and reuses an existing category color', () => {
     mount(); openCategories()
     change('Category name', 'Coding'); change('New category color', '#8b5cf6'); submit('Add category'); click('Close dialog')

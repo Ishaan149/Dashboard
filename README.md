@@ -12,7 +12,7 @@ A personal productivity dashboard built with React, Vite, and Firestore. It cach
 - **Habits** — daily check-ins in a seven-day grid, completion rates, and streaks.
 - **Day Planner** — a time-block schedule with configurable hours and categories. The schedule is shared across days; it is not date-specific.
 - **Settings** — dark theme presets and custom accent, background, and foreground colors stored in the current browser.
-- **Command palette** — use `Cmd/Ctrl+K` or the floating button to create a task for today or this week, log an application or habit, and capture a Quick Note. Separate keyboard shortcuts navigate to Today, To-Do, Brain Dump, and Job Applications.
+- **Command palette** — use `Cmd/Ctrl+K` or the floating button to create a task for today or this week, log an application or habit, and capture a Quick Note. Separate keyboard shortcuts navigate to Today, To-Do, Brain Dump, Projects, and Job Applications.
 
 ## Local development
 

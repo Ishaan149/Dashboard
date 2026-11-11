@@ -70,6 +70,12 @@ export default function Projects() {
   const categories = data?.categories ?? []
   const project = projects.find(item => item.id === projectId)
   const visibleProjects = projects.filter(item => item.completed === completed)
+  const projectCategory = categories.find(item => item.id === project?.categoryId)
+  const projectAccent = isHexColor(projectCategory?.color) ? {
+    '--accent': projectCategory.color,
+    '--accent-soft': `color-mix(in srgb, ${projectCategory.color} 12%, transparent)`,
+    '--accent-glow': `color-mix(in srgb, ${projectCategory.color} 35%, transparent)`,
+  } : undefined
 
   useEffect(() => { if (projectId !== null) viewFocusRef.current?.focus() }, [projectId])
 
@@ -140,13 +146,13 @@ export default function Projects() {
   }
 
   return (
-    <section className={`${styles.page} ${project ? styles.detailPage : ''}`} aria-label="Projects">
+    <section className={`${styles.page} ${project ? styles.detailPage : ''}`} style={projectAccent} aria-label="Projects">
       {project ? <>
         <Button aria-label="Back to projects" className={styles.back} onClick={returnToProjects}>← Back to projects</Button>
         <header className={styles.projectHeader}>
           <div className={styles.projectInfo}>
             <h2 ref={viewFocusRef} tabIndex={-1}>{project.name}</h2>
-            {project.categoryId && <span className={styles.category}>{categories.find(item => item.id === project.categoryId)?.name ?? 'Uncategorized'}</span>}
+            {project.categoryId && <span className={styles.category}>{projectCategory?.name ?? 'Uncategorized'}</span>}
             {project.description && <p className={styles.description}>{project.description}</p>}
           </div>
           <div ref={optionsRef} className={`${styles.collectionOptions} ${styles.projectActions}`}>
@@ -162,7 +168,7 @@ export default function Projects() {
         </header>
         <div className={styles.workspace}>
           <ProjectTasks key={`tasks-${project.id}`} project={project} onUpdate={update => updateProject(project.id, update)} />
-          <ProjectNotes key={project.id} project={project} onUpdate={update => updateProject(project.id, update)} />
+          <ProjectNotes key={project.id} project={project} accentStyle={projectAccent} onUpdate={update => updateProject(project.id, update)} />
         </div>
       </> : <>
         <div className={styles.statusViews} aria-label="Project status">

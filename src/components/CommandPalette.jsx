@@ -15,6 +15,7 @@ const NAVIGATION_SHORTCUTS = Object.freeze([
   { key: 'h', view: 'overview' },
   { key: 't', view: 'todo' },
   { key: 'n', view: 'braindump' },
+  { key: 'p', view: 'projects' },
   { key: 'j', view: 'jobs' },
 ])
 

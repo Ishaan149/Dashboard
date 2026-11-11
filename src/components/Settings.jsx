@@ -7,6 +7,7 @@ export const SHORTCUTS = Object.freeze([
   { key: 'H', label: 'Home' },
   { key: 'T', label: 'To-Do' },
   { key: 'N', label: 'Brain Dump' },
+  { key: 'P', label: 'Projects' },
   { key: 'J', label: 'Job Applications' },
 ])
 

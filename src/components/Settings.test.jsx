@@ -29,17 +29,18 @@ describe('Settings shortcut cheat sheet', () => {
   })
 
   it('lists every active dashboard shortcut', () => {
-    expect(SHORTCUTS.map(shortcut => shortcut.key)).toEqual(['K', 'H', 'T', 'N', 'J'])
+    expect(SHORTCUTS.map(shortcut => shortcut.key)).toEqual(['K', 'H', 'T', 'N', 'P', 'J'])
     expect(container.textContent).toContain('Command palette')
     expect(container.textContent).toContain('Home')
     expect(container.textContent).toContain('To-Do')
     expect(container.textContent).toContain('Brain Dump')
+    expect(container.textContent).toContain('Projects')
     expect(container.textContent).toContain('Job Applications')
   })
 
   it('renders each shortcut as an accessible key combination', () => {
     expect(container.querySelectorAll('kbd')).toHaveLength(SHORTCUTS.length * 2)
-    expect(container.querySelectorAll('[aria-label$="plus K"], [aria-label$="plus H"], [aria-label$="plus T"], [aria-label$="plus N"], [aria-label$="plus J"]')).toHaveLength(5)
+    expect(container.querySelectorAll('[aria-label$="plus K"], [aria-label$="plus H"], [aria-label$="plus T"], [aria-label$="plus N"], [aria-label$="plus J"], [aria-label$="plus P"]')).toHaveLength(6)
   })
 
   it('locks the dashboard from Settings', () => {

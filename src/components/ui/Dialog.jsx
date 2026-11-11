@@ -20,6 +20,7 @@ export default function Dialog({
   destructive = false,
   fullscreen = false,
   initialFocusRef,
+  style,
 }) {
   const panelRef = useRef(null)
   const titleId = useId()
@@ -44,6 +45,7 @@ export default function Dialog({
     >
       <section
         ref={panelRef}
+        style={style}
         className={`${styles.dialog} ${fullscreen ? styles.fullscreenDialog : ''}`}
         role="dialog"
         aria-modal="true"
