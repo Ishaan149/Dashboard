@@ -3,6 +3,7 @@
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import ClockWidget from './components/ClockWidget'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
@@ -16,18 +17,19 @@ vi.mock('./components/AppShell', () => ({
   ),
 }))
 vi.mock('./theme/ThemeProvider', () => ({ ThemeProvider: ({ children }) => children }))
-vi.mock('./components/ui', () => ({
+vi.mock('./components/ui', async importOriginal => ({
+  ...await importOriginal(),
   LoadingState: () => <span>Loading</span>,
-  ToastProvider: ({ children }) => children,
 }))
 vi.mock('./components/Overview', () => ({
-  default: ({ onChange, selectedJobType, onSelectedJobTypeChange }) => (
+  default: ({ onChange, selectedJobType, onSelectedJobTypeChange, clock }) => (
     <div>
       <select aria-label="Mock job type" value={selectedJobType} onChange={event => onSelectedJobTypeChange(event.target.value)}>
         <option value="">Choose job type</option>
         <option value="backend">Backend</option>
       </select>
       <button type="button" aria-label="Open To-Do" onClick={() => onChange('todo')}>Open To-Do</button>
+      <ClockWidget clock={clock} />
     </div>
   ),
 }))
@@ -43,11 +45,11 @@ vi.mock('./components/TodoCard', () => ({
 
 import App from './App'
 
-function changeSelect(select, value) {
-  const setter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set
+function changeValue(field, value) {
+  const setter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(field), 'value').set
   act(() => {
-    setter.call(select, value)
-    select.dispatchEvent(new Event('change', { bubbles: true }))
+    setter.call(field, value)
+    field.dispatchEvent(new Event(field.tagName === 'INPUT' ? 'input' : 'change', { bubbles: true }))
   })
 }
 
@@ -77,6 +79,9 @@ describe('App', () => {
     if (root) act(() => root.unmount())
     container.remove()
     localStorage.clear()
+    sessionStorage.clear()
+    vi.useRealTimers()
+    vi.restoreAllMocks()
   })
 
   it('clears only retired wellness browser records on startup', () => {
@@ -92,7 +97,7 @@ describe('App', () => {
   it('survives view unmount/remount but resets with a fresh application mount', async () => {
     const select = container.querySelector('[aria-label="Mock job type"]')
     expect(select.value).toBe('')
-    changeSelect(select, 'backend')
+    changeValue(select, 'backend')
     click(container.querySelector('[aria-label="Open To-Do"]'))
     await act(async () => {})
     expect(container.textContent).toContain('To-Do selection: backend')
@@ -122,4 +127,83 @@ describe('App', () => {
     expect(document.activeElement).toBe(container.querySelector('#main-content'))
   })
 
+  function clockButton(label) {
+    return [...container.querySelectorAll('section button')].find(button => (button.getAttribute('aria-label') ?? button.textContent.trim()) === label)
+  }
+
+  function clockReadout() {
+    return container.querySelector('[role="timer"]').textContent
+  }
+
+  it('pauses a custom countdown and announces completion once from another view', async () => {
+    vi.useFakeTimers()
+    expect(clockButton('Set custom duration')).toBeUndefined()
+    click(clockButton('Set timer duration, 30:00'))
+    click(clockButton('Set custom duration'))
+    changeValue(container.querySelector('[name="minutes"]'), '0')
+    changeValue(container.querySelector('[name="seconds"]'), '3')
+    act(() => container.querySelector('form').requestSubmit())
+    expect(clockReadout()).toBe('00:03')
+    expect(clockButton('Set timer duration, 00:03').getAttribute('aria-expanded')).toBe('false')
+
+    click(clockButton('Start'))
+    act(() => vi.advanceTimersByTime(1000))
+    click(clockButton('Pause'))
+    act(() => vi.advanceTimersByTime(4000))
+    expect(clockReadout()).toBe('00:02')
+    expect(container.textContent).not.toContain('Timer complete')
+
+    click(clockButton('Resume'))
+    click(container.querySelector('[aria-label="Open To-Do"]'))
+    await act(async () => {})
+    expect(container.querySelector('[role="timer"]')).toBeNull()
+    act(() => vi.advanceTimersByTime(2000))
+    expect(container.textContent.match(/Timer complete/g)).toHaveLength(1)
+
+    click(container.querySelector('[aria-label="Open Overview"]'))
+    await act(async () => {})
+    expect(clockReadout()).toBe('00:00')
+    expect(clockButton('Restart')).toBeDefined()
+    expect(container.textContent.match(/Timer complete/g)).toHaveLength(1)
+  })
+
+  it('preserves a running stopwatch through mode changes and a fresh application mount', async () => {
+    vi.useFakeTimers()
+    click(clockButton('Stopwatch'))
+    click(clockButton('Start'))
+    act(() => vi.advanceTimersByTime(2200))
+    expect(clockReadout()).toBe('00:02')
+
+    click(clockButton('Timer'))
+    click(clockButton('Set timer duration, 30:00'))
+    click(clockButton('1 hour'))
+    expect(clockReadout()).toBe('01:00:00')
+    act(() => root.unmount())
+    act(() => vi.advanceTimersByTime(3000))
+    root = createRoot(container)
+    await act(async () => root.render(<App />))
+    expect(clockReadout()).toBe('01:00:00')
+
+    click(clockButton('Stopwatch'))
+    expect(clockReadout()).toBe('00:05')
+    click(clockButton('Pause'))
+    act(() => vi.advanceTimersByTime(2000))
+    expect(clockReadout()).toBe('00:05')
+    click(clockButton('Reset'))
+    expect(clockReadout()).toBe('00:00')
+  })
+
+  it('shows an expired timer notice when the browser tab becomes visible', () => {
+    vi.useFakeTimers()
+    const hidden = vi.spyOn(document, 'hidden', 'get').mockReturnValue(false)
+    click(clockButton('Start'))
+
+    hidden.mockReturnValue(true)
+    act(() => vi.advanceTimersByTime(30 * 60_000 + 9000))
+    expect(container.textContent).not.toContain('Timer complete')
+
+    hidden.mockReturnValue(false)
+    act(() => document.dispatchEvent(new Event('visibilitychange')))
+    expect(container.textContent.match(/Timer complete/g)).toHaveLength(1)
+  })
 })

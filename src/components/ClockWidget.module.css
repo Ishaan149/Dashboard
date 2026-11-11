@@ -1,0 +1,216 @@
+.switchMode,
+.durationTrigger,
+.presets button {
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.switchMode {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin: -8px -4px;
+  border: 0;
+  min-height: 32px;
+  padding: 0 4px;
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.switchMode:hover, .switchMode:focus-visible { color: var(--ink); }
+
+.openCard { z-index: 2; }
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 44px;
+}
+
+.readout {
+  position: relative;
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+}
+
+.digits {
+  color: var(--ink);
+  font-size: 36px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 680;
+  letter-spacing: -.014em;
+  line-height: 1.1;
+}
+
+.durationTrigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  margin-left: -5px;
+  padding: 0 5px;
+  border: 0;
+  color: var(--ink-2);
+}
+
+.durationTrigger:hover, .durationTrigger[aria-expanded="true"] {
+  color: var(--ink);
+}
+
+.durationPanel {
+  position: absolute;
+  top: calc(100% + 5px);
+  inset-inline-start: 0;
+  width: 224px;
+  max-width: calc(100vw - 64px);
+  padding: 7px;
+  border: 1px solid var(--border-hi);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-popover);
+}
+
+.caption { color: var(--ink-3); font-size: 12px; }
+.finished { color: var(--accent); }
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.actions .transport, .custom .action, .actions .reset {
+  min-height: 36px;
+  border-radius: 9px;
+  font-size: 13px;
+}
+
+.actions .transport { width: 36px; padding: 0; }
+.actions .transport svg { width: 16px; height: 16px; }
+.actions .reset { width: 34px; padding: 0; }
+
+.actions .transport[data-accent="true"] {
+  border-color: color-mix(in srgb, var(--accent) 32%, var(--border));
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.actions .transport[data-accent="true"]:hover {
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.transportSlot {
+  position: relative;
+  display: grid;
+}
+
+.actions .transport.transportWithRing {
+  border-color: transparent;
+  border-radius: 50%;
+}
+
+.timerRing {
+  position: absolute;
+  inset: -4px;
+  width: calc(100% + 8px);
+  height: calc(100% + 8px);
+  pointer-events: none;
+}
+
+.timerRing circle {
+  fill: none;
+  stroke-width: 2px;
+  vector-effect: non-scaling-stroke;
+}
+
+.ringTrack { stroke: var(--border-hi); }
+
+.ringProgress {
+  stroke: var(--accent);
+  stroke-linecap: round;
+}
+
+.timerRing[data-running="true"] .ringProgress {
+  transition: stroke-dasharray 200ms linear;
+}
+
+.presets {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.presets button {
+  min-height: 30px;
+  padding: 0 6px;
+  border: 0;
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.presets button:hover,
+.presets button[aria-pressed="true"] {
+  background: var(--glass-hover);
+  color: var(--ink);
+}
+
+.presets .customToggle {
+  display: grid;
+  place-items: center;
+  min-width: 30px;
+  margin-inline-start: auto;
+}
+
+.custom {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  align-items: end;
+  gap: 8px;
+}
+
+.custom label {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  color: var(--ink-2);
+  font-size: 12px;
+}
+
+.custom input {
+  width: 100%;
+  min-height: 36px;
+  padding: 0 6px;
+  border: 1px solid var(--border-hi);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--ink);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (pointer: coarse) {
+  .switchMode { min-height: 44px; margin-block: -14px; }
+  .actions .transport, .actions .reset, .presets button, .custom .action, .custom input {
+    min-height: var(--control-min-touch);
+  }
+  .actions .transport, .actions .reset { width: var(--control-min-touch); }
+  .presets .customToggle { min-width: var(--control-min-touch); }
+}
+
+@media (forced-colors: active) {
+  .presets button[aria-pressed="true"] { outline: 1px solid Highlight; }
+  .ringTrack { stroke: GrayText; }
+  .ringProgress { stroke: Highlight; }
+}

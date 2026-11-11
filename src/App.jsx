@@ -2,7 +2,8 @@ import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import AppShell from './components/AppShell'
 import PasswordGate from './components/PasswordGate'
 import { getViewLabel } from './components/navigation'
-import { LoadingState, ToastProvider } from './components/ui'
+import { LoadingState, ToastProvider, useToast } from './components/ui'
+import { timerDeadline, useDashboardClock } from './hooks/useDashboardClock'
 import { ThemeProvider } from './theme/ThemeProvider'
 import styles from './App.module.css'
 
@@ -27,9 +28,41 @@ function ViewReady({ onReady, children }) {
   return children
 }
 
+function TimerCompletionNotice({ deadline, dispatch }) {
+  const { showToast } = useToast()
+  useEffect(() => {
+    if (deadline === null) return
+    let timeout
+    let announced = false
+
+    function checkDeadline() {
+      clearTimeout(timeout)
+      if (announced) return
+      const now = Date.now()
+      if (now < deadline) {
+        timeout = setTimeout(checkDeadline, deadline - now)
+        return
+      }
+      if (document.hidden) return
+      announced = true
+      dispatch({ type: 'finish', now })
+      showToast('Timer complete', { tone: 'success', duration: 8000 })
+    }
+
+    timeout = setTimeout(checkDeadline, Math.max(0, deadline - Date.now()))
+    document.addEventListener('visibilitychange', checkDeadline)
+    return () => {
+      clearTimeout(timeout)
+      document.removeEventListener('visibilitychange', checkDeadline)
+    }
+  }, [deadline, dispatch, showToast])
+  return null
+}
+
 export default function App() {
   const [view, setView] = useState('overview')
   const [overviewJobType, setOverviewJobType] = useState('')
+  const clock = useDashboardClock()
   const [unlocked, setUnlocked] = useState(
     () => localStorage.getItem('dashboard-unlocked') === 'true'
   )
@@ -85,6 +118,7 @@ export default function App() {
   return (
     <ThemeProvider>
       <ToastProvider>
+        <TimerCompletionNotice deadline={timerDeadline(clock.state.timer)} dispatch={clock.dispatch} />
         <AppShell activeView={view} onNavigate={handleNavigate}>
           <div className={styles.content}>
             <div className={viewClassName} key={view}>
@@ -95,6 +129,7 @@ export default function App() {
                     onLock={handleLock}
                     selectedJobType={overviewJobType}
                     onSelectedJobTypeChange={setOverviewJobType}
+                    clock={view === 'overview' ? clock : undefined}
                   />
                 </ViewReady>
               </Suspense>

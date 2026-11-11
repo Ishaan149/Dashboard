@@ -1,5 +1,6 @@
 import { useSyncedStorage } from '../hooks/useSyncedStorage'
 import { useState, useEffect } from 'react'
+import ClockWidget from './ClockWidget'
 import { getDailyQuote } from '../data/quotes'
 import { DEFAULT_CATEGORIES } from '../data/categories'
 import { getDateKey, getWeekStartKey } from '../utils/date'
@@ -337,7 +338,7 @@ function JobsCard({ today, week, spark, selectedType, selectedCount, onSelectedT
 }
 
 // ── main ──────────────────────────────────────────────────────────────────────
-export default function Overview({ selectedJobType = '', onSelectedJobTypeChange = () => {} }) {
+export default function Overview({ selectedJobType = '', onSelectedJobTypeChange = () => {}, clock }) {
   const [dailyTasks, setDailyTasks] = useSyncedStorage('todos-daily', {})
   const [recurringSeries]           = useSyncedStorage('todos-recurring', [])
   const [recurringState, setRecurringState] = useSyncedStorage('todos-recurring-state', {})
@@ -451,6 +452,7 @@ export default function Overview({ selectedJobType = '', onSelectedJobTypeChange
     return (
       <div className={styles.mobileGrid}>
         <QuoteCard quote={quote} />
+        {clock && <ClockWidget clock={clock} />}
         <ScheduleCard blocks={sortedBlocks} categories={categories} nowMin={nowMinutes} />
         <TasksCard tasks={todayTodos} onToggle={toggleTask} />
         <HabitsCard habits={habits} todayDone={todayDone} onToggle={toggleHabit} />
@@ -473,6 +475,7 @@ export default function Overview({ selectedJobType = '', onSelectedJobTypeChange
         <TasksCard tasks={todayTodos} onToggle={toggleTask} />
       </div>
       <div className={styles.col}>
+        {clock && <ClockWidget clock={clock} />}
         <HabitsCard habits={habits} todayDone={todayDone} onToggle={toggleHabit} />
         <ScheduleCard blocks={sortedBlocks} categories={categories} nowMin={nowMinutes} />
       </div>
