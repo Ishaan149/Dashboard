@@ -8,6 +8,24 @@ import styles from './DayPlanner.module.css'
 
 const HOUR_HEIGHT  = 64        // px per hour
 const PX_PER_MIN   = HOUR_HEIGHT / 60
+function timeValue(hour) {
+  const minutes = Math.round(hour * 60) % (24 * 60)
+  return `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`
+}
+
+function RangeTimeInput({ label, value, onChange, nextDay }) {
+  return (
+    <div className={styles.settingsGroup}>
+      <div className={styles.fieldHeading}>
+        <label className={styles.settingsLabel} htmlFor={`planner-${label.toLowerCase()}`}>{label}</label>
+        {nextDay && <span className={styles.nextDayLabel}>Next day</span>}
+      </div>
+      <div className={styles.timeControl}>
+        <input id={`planner-${label.toLowerCase()}`} className={styles.settingsTime} type="time" step="900" value={value} onChange={e => onChange(e.target.value)} />
+      </div>
+    </div>
+  )
+}
 
 export default function DayPlanner() {
   const [blocks, setBlocks]         = useSyncedStorage('dayplanner-blocks', [])
@@ -15,6 +33,45 @@ export default function DayPlanner() {
   const [categories, setCategories] = useSyncedStorage('dayplanner-categories', DEFAULT_CATEGORIES)
   const [selectedId, setSelectedId] = useState(null)
   const [showClearConfirm, setShowClearConfirm] = useState(false)
+  const [openPopover, setOpenPopover] = useState(null)
+  const [startDraft, setStartDraft] = useState(() => timeValue(settings.startHour))
+  const [endDraft, setEndDraft] = useState(() => timeValue(settings.endHour))
+  const settingsBarRef = useRef(null)
+
+  useEffect(() => {
+    if (!openPopover) return
+    function dismiss(e) {
+      if (e.type === 'keydown' && e.key !== 'Escape') return
+      if (e.type === 'pointerdown' && settingsBarRef.current?.contains(e.target)) return
+      setOpenPopover(null)
+      setShowClearConfirm(false)
+      setStartDraft(timeValue(settings.startHour))
+      setEndDraft(timeValue(settings.endHour))
+    }
+    document.addEventListener('pointerdown', dismiss)
+    document.addEventListener('keydown', dismiss)
+    return () => {
+      document.removeEventListener('pointerdown', dismiss)
+      document.removeEventListener('keydown', dismiss)
+    }
+  }, [openPopover, settings.startHour, settings.endHour])
+
+  useEffect(() => {
+    setStartDraft(timeValue(settings.startHour))
+    setEndDraft(timeValue(settings.endHour))
+  }, [settings.startHour, settings.endHour])
+
+  function draftMinutes(value) {
+    if (!/^\d{2}:\d{2}$/.test(value)) return null
+    const [hours, minutes] = value.split(':').map(Number)
+    return minutes % 15 === 0 ? hours * 60 + minutes : null
+  }
+  const draftStart = draftMinutes(startDraft)
+  const draftEnd = draftMinutes(endDraft)
+  const validDraft = draftStart !== null && draftEnd !== null
+  const endNextDay = validDraft && draftEnd <= draftStart
+  const endAbsolute = validDraft ? draftEnd + (endNextDay ? 1440 : 0) : null
+  const rangeChanged = validDraft && (draftStart !== settings.startHour * 60 || endAbsolute !== settings.endHour * 60)
 
   const resizeRef        = useRef(null)
   const dragRef          = useRef(null)
@@ -172,7 +229,7 @@ export default function DayPlanner() {
 
   // ── Hour labels ────────────────────────────────────────────────────────
   function formatHourLabel(h) {
-    return formatMinutes(h * 60, { compact: true })
+    return `${formatMinutes(h * 60, { compact: true })}${h >= 24 ? ' +1' : ''}`
   }
 
   const hours = []
@@ -180,50 +237,35 @@ export default function DayPlanner() {
     hours.push({ h, label: formatHourLabel(h) })
   }
 
-  // ── Settings bar values ────────────────────────────────────────────────
-  const MAX_END_HOUR = 28  // allows schedule up to 4 AM next day
-  const hourOptions = Array.from({ length: MAX_END_HOUR + 1 }, (_, i) => i)
-
   return (
     <div className={styles.root}>
       {/* Settings bar */}
-      <div className={styles.settingsBar}>
-        <div className={styles.settingsGroup}>
-          <label className={styles.settingsLabel}>Start</label>
-          <select
-            className={styles.settingsSelect}
-            value={settings.startHour}
-            onChange={e => setSettings(s => ({ ...s, startHour: Math.min(Number(e.target.value), s.endHour - 1) }))}
-          >
-            {hourOptions.map(h => (
-              <option key={h} value={h}>{formatHourLabel(h)}{h >= 24 ? ' +' : ''}</option>
-            ))}
-          </select>
-        </div>
-        <div className={styles.settingsGroup}>
-          <label className={styles.settingsLabel}>End</label>
-          <select
-            className={styles.settingsSelect}
-            value={settings.endHour}
-            onChange={e => setSettings(s => ({ ...s, endHour: Math.max(Number(e.target.value), s.startHour + 1) }))}
-          >
-            {hourOptions.map(h => (
-              <option key={h} value={h}>{formatHourLabel(h)}{h >= 24 ? ' +' : ''}</option>
-            ))}
-          </select>
-        </div>
-        <div className={styles.settingsSpacer} />
-        {!showClearConfirm ? (
-          <button className={styles.clearBtn} onClick={() => setShowClearConfirm(true)}>
-            Clear Day
+      <div className={styles.settingsBar} ref={settingsBarRef}>
+        <div className={styles.popoverAnchor}>
+          <button className={styles.rangeButton} aria-label="Edit schedule hours" aria-expanded={openPopover === 'range'} onClick={() => {
+            setStartDraft(timeValue(settings.startHour)); setEndDraft(timeValue(settings.endHour))
+            setOpenPopover(openPopover === 'range' ? null : 'range'); setShowClearConfirm(false)
+          }}>
+            <svg className={styles.toolbarIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            <span>{formatMinutes(settings.startHour * 60)} – {formatMinutes(settings.endHour * 60)}</span>
+            {settings.endHour >= 24 && <span className={styles.nextDayLabel}>+1</span>}
+            <svg className={styles.chevron} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="m4 6 4 4 4-4" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </button>
-        ) : (
-          <div className={styles.confirmRow}>
-            <span className={styles.confirmText}>Clear all blocks?</span>
-            <button className={styles.confirmYes} onClick={() => { setBlocks([]); setSelectedId(null); setShowClearConfirm(false) }}>Yes</button>
-            <button className={styles.confirmNo}  onClick={() => setShowClearConfirm(false)}>No</button>
-          </div>
-        )}
+          {openPopover === 'range' && <div className={styles.popover} role="group" aria-label="Schedule hours">
+            <div className={styles.popoverTitle}>Schedule hours</div>
+            <RangeTimeInput label="Start" value={startDraft} onChange={setStartDraft} />
+            <RangeTimeInput label="End" value={endDraft} onChange={setEndDraft} nextDay={endNextDay} />
+            {!validDraft && <span className={styles.rangeHint}>Choose times in 15-minute increments</span>}
+            <button className={styles.applyBtn} disabled={!rangeChanged} onClick={() => { setSettings(s => ({ ...s, startHour: draftStart / 60, endHour: endAbsolute / 60 })); setOpenPopover(null) }}>Apply</button>
+          </div>}
+        </div>
+        <div className={styles.clearAnchor}>
+            {!showClearConfirm ? <button className={styles.clearBtn} onClick={() => { setOpenPopover(null); setShowClearConfirm(true) }}>Clear</button> : <div className={styles.confirmRow}>
+              <span className={styles.confirmText}>Clear all blocks?</span>
+              <div className={styles.confirmActions}><button className={styles.confirmNo} onClick={() => setShowClearConfirm(false)}>Cancel</button>
+              <button className={styles.confirmYes} onClick={() => { setBlocks([]); setSelectedId(null); setShowClearConfirm(false); setOpenPopover(null) }}>Clear day</button></div>
+            </div>}
+        </div>
       </div>
 
       {/* Main row */}
