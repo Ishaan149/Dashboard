@@ -2,11 +2,9 @@ import { describe, expect, it } from 'vitest'
 import {
   adjustCategory,
   adjustOutreach,
-  adjustUncategorized,
   getCategorizedTotal,
   getJobRecord,
   getOverallApplicationCount,
-  getUncategorizedCount,
   normalizeJobRecord,
   normalizeJobRecords,
 } from './jobActivity'
@@ -27,7 +25,7 @@ describe('job activity compatibility helpers', () => {
       linkedin: 0,
     })
     expect(getCategorizedTotal(normalized)).toBe(0)
-    expect(getUncategorizedCount(normalized)).toBe(7)
+    expect(getOverallApplicationCount(normalized)).toBe(7)
     expect(legacy).toEqual(before)
   })
 
@@ -57,7 +55,6 @@ describe('job activity compatibility helpers', () => {
     const record = { date, count: 1, categories: { backend: 3, data: 2 } }
     expect(getCategorizedTotal(record)).toBe(5)
     expect(getOverallApplicationCount(record)).toBe(5)
-    expect(getUncategorizedCount(record)).toBe(0)
   })
 
   it('increments and decrements each category while keeping count synchronized', () => {
@@ -75,18 +72,15 @@ describe('job activity compatibility helpers', () => {
     expect(adjustCategory(records, date, 'backend', -1)).toEqual(records)
   })
 
-  it('preserves Uncategorized applications when changing a category', () => {
-    const records = [{ date, count: 5, categories: { data: 2 }, source: 'synthetic' }]
-    const updated = adjustCategory(records, date, 'data', 1)
-    expect(updated[0]).toMatchObject({ count: 6, source: 'synthetic', categories: { data: 3 } })
-    expect(getUncategorizedCount(updated[0])).toBe(3)
-  })
+  it('preserves uncategorized totals and extra fields through category and outreach updates', () => {
+    const metadata = { tag: 'keep' }
+    const records = [{ date, count: 5, categories: { data: 2 }, emails: 2, source: 'synthetic', metadata }]
 
-  it('changes only Uncategorized through its helper and never below zero', () => {
-    const enhanced = [{ date, count: 5, categories: { backend: 2 }, emails: 4, linkedin: 1, future: true }]
-    const decreased = adjustUncategorized(enhanced, date, -1)
-    expect(decreased[0]).toMatchObject({ count: 4, future: true, categories: { backend: 2 }, emails: 4, linkedin: 1 })
-    expect(adjustUncategorized([{ date, count: 2, categories: { backend: 2 } }], date, -1)[0].count).toBe(2)
+    const categorized = adjustCategory(records, date, 'data', 1)
+    expect(categorized[0]).toMatchObject({ count: 6, source: 'synthetic', categories: { data: 3 }, emails: 2, metadata })
+    const contacted = adjustOutreach(categorized, date, 'linkedin', 1)
+    expect(contacted[0]).toMatchObject({ count: 6, categories: { data: 3 }, emails: 2, linkedin: 1, metadata })
+    expect(adjustCategory(contacted, date, 'data', -3)[0]).toMatchObject({ count: 3, categories: { data: 0 } })
   })
 
   it('changes outreach independently and retains an outreach-only date', () => {
@@ -95,18 +89,6 @@ describe('job activity compatibility helpers', () => {
     expect(records[0]).toMatchObject({ count: 0, emails: 1, linkedin: 2 })
     expect(adjustOutreach(records, date, 'emails', -1)[0]).toMatchObject({ count: 0, emails: 0, linkedin: 2 })
     expect(adjustOutreach(records, date, 'linkedin', -3)[0]).toMatchObject({ count: 0, emails: 1, linkedin: 0 })
-  })
-
-  it('preserves unknown fields through category, outreach, and aggregate updates', () => {
-    const original = [{ date, count: 1, categories: { data: 1 }, emails: 2, metadata: { tag: 'keep' } }]
-    const updated = adjustOutreach(
-      adjustCategory(original, date, 'data', 1),
-      date,
-      'linkedin',
-      1,
-    )
-    const final = adjustUncategorized(updated, date, 1)[0]
-    expect(final).toMatchObject({ count: 3, categories: { data: 2 }, emails: 2, linkedin: 1, metadata: { tag: 'keep' } })
   })
 
   it('removes a date only when all application and outreach values are zero', () => {

@@ -65,7 +65,7 @@
 .stat:first-child { padding-left: 0; }
 .stat:last-child { padding-right: 0; border-right: 0; }
 .stat strong { color: var(--ink); font-size: 26px; line-height: 1; font-variant-numeric: tabular-nums; }
-.stat span, .totalLabel { color: var(--ink-3); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
+.stat span { color: var(--ink-3); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
 
 .logging { padding: 22px; }
 .activityGroup + .activityGroup { margin-top: 25px; }

@@ -10,7 +10,6 @@
   overflow: hidden;
 }
 
-/* Top shimmer */
 .card::after {
   content: '';
   position: absolute;

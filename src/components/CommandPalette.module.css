@@ -62,7 +62,6 @@
 .optionIconAction { color: color-mix(in srgb, var(--accent) 48%, var(--ink-2)); }
 .optionText { min-width: 0; flex: 1; }
 .optionText strong { font-size: 13px; }
-.currentBadge { padding: 3px 7px; border-radius: 999px; background: var(--glass); color: var(--ink-2); font-size: 9px; font-weight: 750; text-transform: uppercase; }
 .empty { padding: 42px 16px; color: var(--ink-3); font-size: 13px; text-align: center; }
 
 .paletteFooter {

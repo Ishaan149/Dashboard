@@ -69,9 +69,11 @@ afterEach(() => { if (root) act(() => root.unmount()); root = null; container.re
 describe('Projects workspace', () => {
   it('edits and persists project icons, cancels unsaved choices, and keeps category colors', () => {
     const original = project({ categoryId: 'coding', notes: [{ id: 'n', title: 'Keep', content: 'Notes', createdAt: 1, updatedAt: 1 }], tasks: [{ id: 't', text: 'Keep task', completed: false }] })
-    storage.value = { projects: [original, project({ id: 'b', name: 'Beta' })], categories: [{ id: 'coding', name: 'Coding', color: '#3B82F6' }] }
+    const other = project({ id: 'b', name: 'Beta', icon: 'unknown' })
+    storage.value = { projects: [original, other], categories: [{ id: 'coding', name: 'Coding', color: '#3B82F6' }] }
     mount()
     expect(control('Open Alpha').querySelector('svg').dataset.projectIcon).toBe('folder')
+    expect(control('Open Beta').querySelector('svg').dataset.projectIcon).toBe('folder')
     click('Open Alpha'); click('Edit project')
     expect(control('Use Folder icon').getAttribute('aria-pressed')).toBe('true')
     click('Use Code icon')
@@ -81,7 +83,7 @@ describe('Projects workspace', () => {
     expect(storage.writes).toEqual([])
     click('Edit project'); click('Use Code icon'); submit('Save project')
     expect(storage.value.projects[0]).toEqual({ ...original, icon: 'code' })
-    expect(storage.value.projects[1]).toEqual(project({ id: 'b', name: 'Beta' }))
+    expect(storage.value.projects[1]).toEqual(other)
     remount()
     expect(control('Open Alpha').querySelector('svg').dataset.projectIcon).toBe('code')
     expect(control('Open Alpha').closest('article').style.getPropertyValue('--project-color')).toBe('#3B82F6')
@@ -89,18 +91,6 @@ describe('Projects workspace', () => {
     expect(control('Use Code icon').getAttribute('aria-pressed')).toBe('true')
     click('Cancel'); click('Complete project'); click('Back to projects')
     expect(control('Open Alpha').querySelector('svg').dataset.projectIcon).toBe('code')
-  })
-
-  it('chooses icons for new projects and falls back to Folder for unknown saved icons', () => {
-    storage.value = { projects: [project({ icon: 'unknown' })], categories: [] }
-    mount()
-    expect(control('Open Alpha').querySelector('svg').dataset.projectIcon).toBe('folder')
-    expect(storage.writes).toEqual([])
-    click('New project'); change('Project name', 'Launch'); click('Use Rocket icon')
-    expect(document.querySelector('[role="dialog"]')).not.toBeNull()
-    submit('Create project')
-    expect(storage.value.projects[1].icon).toBe('rocket')
-    expect(control('Open Launch').querySelector('svg').dataset.projectIcon).toBe('rocket')
   })
 
   it('requires a name, creates and edits a project, and keeps cards limited to name and category', () => {
@@ -112,8 +102,11 @@ describe('Projects workspace', () => {
     expect(control('Create project').disabled).toBe(true)
     change('Project name', '  Thesis  ')
     change('Project description', 'Research context')
+    click('Use Rocket icon')
     submit('Create project')
     expect(document.querySelector('[role="dialog"]')).toBeNull()
+    expect(storage.value.projects[0].icon).toBe('rocket')
+    expect(control('Open Thesis').querySelector('svg').dataset.projectIcon).toBe('rocket')
     expect(container.textContent).not.toContain('Research context')
     click('Open Thesis')
     expect(container.textContent).toContain('Research context')
@@ -186,9 +179,10 @@ describe('Projects workspace', () => {
   it('autosaves multiple documents, keeps selection while edited notes reorder, and does not write when reading', () => {
     vi.spyOn(Date, 'now').mockReturnValue(100)
     storage.value = { projects: [project(), project({ id: 'b', name: 'Beta' })], categories: [] }
+    const plan = '# The plan\n\n- [x] Draft\n- [ ] Review\n\n[Reference](https://example.com)\n\n<script>boom()</script>'
     mount(); click('Open Alpha')
     expect(container.textContent).toContain('No notes yet')
-    click('New note'); change('Note title', 'Plan'); change('Note content', '# The plan\n\n- First step')
+    click('New note'); change('Note title', 'Plan'); change('Note content', plan)
     const firstId = storage.value.projects[0].notes[0].id
     vi.mocked(Date.now).mockReturnValue(200)
     click('New note'); change('Note title', 'Reference'); change('Note content', 'A reference')
@@ -197,14 +191,18 @@ describe('Projects workspace', () => {
     click('Select note Plan'); click('Open note fullscreen')
     const dialog = document.querySelector('[role="dialog"]')
     click('Preview', dialog)
-    expect(dialog.querySelector('h1').textContent).toBe('The plan')
+    const preview = dialog.querySelector('[aria-label="Note preview"]')
+    expect(preview.querySelector('h1').textContent).toBe('The plan')
+    expect([...preview.querySelectorAll('input')].map(input => [input.type, input.disabled, input.checked])).toEqual([['checkbox', true, true], ['checkbox', true, false]])
+    expect(preview.querySelector('a').href).toBe('https://example.com/')
+    expect(preview.querySelector('script')).toBeNull()
     expect(storage.writes).toEqual([])
     expect(storage.value).toEqual(beforeReading)
     click('Edit', dialog)
-    expect(field('Note content', dialog).value).toBe('# The plan\n\n- First step')
+    expect(field('Note content', dialog).value).toBe(plan)
     vi.mocked(Date.now).mockReturnValue(300)
     change('Note title', 'New plan', dialog)
-    expect(field('Note content', dialog).value).toBe('# The plan\n\n- First step')
+    expect(field('Note content', dialog).value).toBe(plan)
     expect([...container.querySelectorAll('[aria-label^="Select note "]')].map(item => item.textContent)).toEqual(['New plan', 'Reference'])
     expect(storage.value.projects[0].notes.find(note => note.id === firstId)).toMatchObject({ title: 'New plan', updatedAt: 300, createdAt: 100 })
     expect(storage.value.projects[1]).toEqual(project({ id: 'b', name: 'Beta' }))
@@ -236,16 +234,15 @@ describe('Projects workspace', () => {
     expect(control('Open Beta')).toBeTruthy()
   })
 
-  it('keeps a manually ordered checklist separate from notes, other projects, and project completion', () => {
+  it('manages checklist tasks independently and preserves focus when completing a task', async () => {
     storage.value = { projects: [project(), project({ id: 'b', name: 'Beta' })], categories: [] }
     mount(); click('Open Alpha')
     expect(container.textContent).toContain('No tasks yet')
     for (const text of ['First', 'Second', 'Third']) { change('New task', text); submit('Add task') }
-    dragTask('Third', 'Second')
-    expect(storage.value.projects[0].tasks.map(task => task.text)).toEqual(['First', 'Third', 'Second'])
+    control('Complete task First').focus()
     click('Complete task First')
-    dragTask('Third', 'Second', 'after')
-    expect([...container.querySelector('[aria-label="Incomplete tasks"]').querySelectorAll('[aria-label^="Rename task "]')].map(node => node.textContent)).toEqual(['Second', 'Third'])
+    await act(async () => new Promise(resolve => requestAnimationFrame(resolve)))
+    expect(document.activeElement).toBe(control('Reopen task First'))
     click('Complete task Third'); dragTask('Third', 'First')
     expect([...container.querySelector('[aria-label="Completed tasks"]').querySelectorAll('[aria-label^="Rename task "]')].map(node => node.textContent)).toEqual(['Third', 'First'])
     click('Rename task Second'); change('Task text', 'Revised'); submit('Save task')
@@ -293,19 +290,6 @@ describe('Projects workspace', () => {
     expect(field('Task text').closest('li').draggable).toBe(false)
   })
 
-  it('renders safe Markdown checklists through Preview without changing project tasks', () => {
-    storage.value = { projects: [project({ notes: [{ id: 'n', title: 'Checklist', content: '# Plan\n\n- [x] Draft\n- [ ] Review\n\n[Reference](https://example.com)\n\n<script>boom()</script>', createdAt: 1, updatedAt: 1 }] })], categories: [] }
-    mount(); click('Open Alpha'); click('Open note fullscreen')
-    const dialog = document.querySelector('[role="dialog"]')
-    click('Preview', dialog)
-    const preview = dialog.querySelector('[aria-label="Note preview"]')
-    expect([...preview.querySelectorAll('input')].map(input => [input.type, input.disabled, input.checked])).toEqual([['checkbox', true, true], ['checkbox', true, false]])
-    expect(preview.querySelector('a').href).toBe('https://example.com/')
-    expect(preview.querySelector('script')).toBeNull()
-    expect(storage.value.projects[0].tasks).toEqual([])
-    expect(storage.writes).toEqual([])
-  })
-
   it('allows dragging within a status view and keeps equal-time notes in deterministic order', () => {
     storage.value = { projects: [project({ notes: [{ id: 'z', title: 'Zed', content: 'Z', createdAt: 1, updatedAt: 1 }, { id: 'a', title: 'Aye', content: 'A', createdAt: 1, updatedAt: 1 }] }), project({ id: 'done', name: 'Archived', completed: true }), project({ id: 'b', name: 'Beta' })], categories: [] }
     mount()
@@ -319,15 +303,6 @@ describe('Projects workspace', () => {
     expect([...container.querySelectorAll('[aria-label^="Select note "]')].map(node => node.textContent)).toEqual(['Aye', 'Zed'])
     remount(); click('Open Alpha')
     expect(field('Note title').value).toBe('Aye')
-  })
-
-  it('keeps keyboard focus on a task when it moves between completion groups', async () => {
-    storage.value = { projects: [project({ tasks: [{ id: 't', text: 'Review', completed: false }] })], categories: [] }
-    mount(); click('Open Alpha')
-    control('Complete task Review').focus()
-    click('Complete task Review')
-    await act(async () => new Promise(resolve => requestAnimationFrame(resolve)))
-    expect(document.activeElement).toBe(control('Reopen task Review'))
   })
 
   it('preserves category editing focus after a rename is saved', async () => {

@@ -209,25 +209,14 @@ const CommandPalette = forwardRef(function CommandPalette({ onNavigate }, ref) {
         return
       }
 
-      const command = NAVIGATION_SHORTCUTS.find(item => item.key === key)
-      if (!command) return
+      const shortcut = NAVIGATION_SHORTCUTS.find(item => item.key === key)
+      if (!shortcut) return
 
       event.preventDefault()
       if (openRef.current && stepRef.current !== 'root') return
 
-      if (command.view) {
-        onNavigate?.(command.view)
-        if (openRef.current) closeImmediately()
-        return
-      }
-
-      openRef.current = true
-      setOpen(true)
-      setQuery('')
-      setError('')
-      if (command.step === 'task') setTaskTarget(command.target)
-      setStep(command.step)
-      stepRef.current = command.step
+      onNavigate?.(shortcut.view)
+      if (openRef.current) closeImmediately()
     }
     document.addEventListener('keydown', handleShortcut)
     return () => document.removeEventListener('keydown', handleShortcut)
@@ -261,11 +250,6 @@ const CommandPalette = forwardRef(function CommandPalette({ onNavigate }, ref) {
   }, [open, step])
 
   function activate(item) {
-    if (item.view) {
-      onNavigate?.(item.view)
-      closeImmediately()
-      return
-    }
     if (item.step === 'task') {
       setTaskTarget(item.target)
     } else if (item.step === 'habit') {

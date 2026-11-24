@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { completeHabitTrackerMigration, getBestStreak, getCurrentStreak, getHabitCompletionSummary, getHabitDateRange, getHabitDateWindow, getOverallCompletionSummary, migrateHabitTrackerData, normalizeHabitLogs, toggleHabitCompletion } from './habits'
+import { completeHabitTrackerMigration, getHabitCompletionSummary, getHabitDateRange, getHabitDateWindow, getOverallCompletionSummary, migrateHabitTrackerData, normalizeHabitLogs, toggleHabitCompletion } from './habits'
 
 const today = new Date(2026, 2, 1, 9)
 const habit = { id: 1, name: 'Read', createdAt: '2026-02-26' }
@@ -23,15 +23,6 @@ describe('habit domain', () => {
     expect(getHabitCompletionSummary(habit, logs, 7, today)).toEqual({ completed: 4, eligible: 4, percentage: 100 })
     expect(getOverallCompletionSummary([habit, { id: 2, name: 'New', createdAt: '2026-03-02' }], logs, 30, today)).toEqual({ completed: 4, eligible: 4, percentage: 100 })
     expect(getOverallCompletionSummary([], logs, 7, today)).toEqual({ completed: 0, eligible: 0, percentage: null })
-  })
-
-  it('calculates current and best streaks with incomplete today and missed past days', () => {
-    const logs = { '2026-02-26': [1], '2026-02-27': [1], '2026-02-28': [1] }
-    expect(getCurrentStreak(habit, logs, today)).toBe(3)
-    expect(getBestStreak(habit, logs, today)).toBe(3)
-    const completedToday = { ...logs, '2026-03-01': [1] }
-    expect(getCurrentStreak(habit, completedToday, today)).toBe(4)
-    expect(getBestStreak({ ...habit, createdAt: '2026-02-20' }, { '2026-02-20': [1], '2026-02-21': [1], '2026-02-23': [1], '2026-02-24': [1], '2026-02-25': [1] }, today)).toBe(3)
   })
 
   it('has an idempotent recoverable two-phase migration using synthetic state', () => {

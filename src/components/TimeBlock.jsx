@@ -39,7 +39,6 @@ export default function TimeBlock({ block, categories, isSelected, onResizeStart
         </span>
       </div>
 
-      {/* Resize handle */}
       <div
         onMouseDown={(e) => { if (e.button !== 0) return; e.stopPropagation(); onResizeStart(e, block.id) }}
         style={{

@@ -69,7 +69,6 @@ export default function App() {
   const shouldFocusAfterViewChange = useRef(false)
 
   useEffect(() => {
-    // Retire browser caches only; the archived Firestore records stay intact.
     for (const key of ['wellness_food_records', 'wellness_saved_foods', 'wellness_weight_records']) {
       try {
         localStorage.removeItem(key)
@@ -125,7 +124,6 @@ export default function App() {
               <Suspense fallback={<LoadingState label={getViewLabel(view)} />}>
                 <ViewReady onReady={handleViewReady}>
                   <ActiveView
-                    onChange={handleNavigate}
                     onLock={handleLock}
                     selectedJobType={overviewJobType}
                     onSelectedJobTypeChange={setOverviewJobType}

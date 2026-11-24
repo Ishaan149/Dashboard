@@ -6,7 +6,7 @@ import { DEFAULT_CATEGORIES } from '../data/categories'
 import { formatMinutes, getScheduleMinutes } from '../utils/time'
 import styles from './DayPlanner.module.css'
 
-const HOUR_HEIGHT  = 64        // px per hour
+const HOUR_HEIGHT  = 64
 const PX_PER_MIN   = HOUR_HEIGHT / 60
 function timeValue(hour) {
   const minutes = Math.round(hour * 60) % (24 * 60)
@@ -81,7 +81,6 @@ export default function DayPlanner() {
   const totalHours = settings.endHour - settings.startHour
   const gridHeight = totalHours * HOUR_HEIGHT
 
-  // ── Clamp blocks when schedule range changes ───────────────────────────
   useEffect(() => {
     const { startHour, endHour } = settings
     setBlocks(prev => prev.map(b => {
@@ -92,10 +91,8 @@ export default function DayPlanner() {
     }))
   }, [settings.startHour, settings.endHour, setBlocks])
 
-  // ── Selected block object ──────────────────────────────────────────────
   const selectedBlock = blocks.find(b => b.id === selectedId) ?? null
 
-  // ── "Now" line ────────────────────────────────────────────────────────
   const [nowMinutes, setNowMinutes] = useState(() => getScheduleMinutes(settings.endHour))
   useEffect(() => {
     setNowMinutes(getScheduleMinutes(settings.endHour))
@@ -105,7 +102,6 @@ export default function DayPlanner() {
   const nowTop = (nowMinutes - settings.startHour * 60) * PX_PER_MIN
   const showNow = nowMinutes >= settings.startHour * 60 && nowMinutes <= settings.endHour * 60
 
-  // ── Resize handlers ───────────────────────────────────────────────────
   const handleResizeMove = useCallback((e) => {
     if (!resizeRef.current) return
     const { blockId, startY, originalEndMinutes, startMinutes } = resizeRef.current
@@ -140,7 +136,6 @@ export default function DayPlanner() {
     window.addEventListener('mouseup', handleResizeEnd)
   }, [blocks, handleResizeMove, handleResizeEnd])
 
-  // ── Drag-to-move handlers ─────────────────────────────────────────────
   const handleDragMove = useCallback((e) => {
     if (!dragRef.current) return
     const { blockId, startY, originalStart, duration } = dragRef.current
@@ -184,7 +179,6 @@ export default function DayPlanner() {
     window.addEventListener('mouseup', handleDragEnd)
   }, [blocks, handleDragMove, handleDragEnd])
 
-  // ── Click-to-create ────────────────────────────────────────────────────
   function handleGridClick(e) {
     if (suppressClick.current) { suppressClick.current = false; return }
     const rect = gridRef.current.getBoundingClientRect()
@@ -205,7 +199,6 @@ export default function DayPlanner() {
     setSelectedId(newBlock.id)
   }
 
-  // ── Block updates ──────────────────────────────────────────────────────
   function handleUpdate(patch) {
     setBlocks(prev => prev.map(b => b.id === selectedId ? { ...b, ...patch } : b))
   }
@@ -215,7 +208,6 @@ export default function DayPlanner() {
     setSelectedId(null)
   }
 
-  // ── Category management ───────────────────────────────────────────────
   function addCategory(cat) {
     setCategories(prev => [...prev, cat])
   }
@@ -227,7 +219,6 @@ export default function DayPlanner() {
     setBlocks(prev => prev.map(b => b.category === id ? { ...b, category: fallback } : b))
   }
 
-  // ── Hour labels ────────────────────────────────────────────────────────
   function formatHourLabel(h) {
     return `${formatMinutes(h * 60, { compact: true })}${h >= 24 ? ' +1' : ''}`
   }
@@ -239,7 +230,6 @@ export default function DayPlanner() {
 
   return (
     <div className={styles.root}>
-      {/* Settings bar */}
       <div className={styles.settingsBar} ref={settingsBarRef}>
         <div className={styles.popoverAnchor}>
           <button className={styles.rangeButton} aria-label="Edit schedule hours" aria-expanded={openPopover === 'range'} onClick={() => {
@@ -268,9 +258,7 @@ export default function DayPlanner() {
         </div>
       </div>
 
-      {/* Main row */}
       <div className={styles.body}>
-        {/* Timeline */}
         <div className={styles.timelineWrap}>
           <div
             className={styles.grid}
@@ -278,7 +266,6 @@ export default function DayPlanner() {
             style={{ height: gridHeight }}
             onClick={handleGridClick}
           >
-            {/* Hour rows */}
             {hours.map(({ h, label }) => (
               <div
                 key={h}
@@ -290,14 +277,12 @@ export default function DayPlanner() {
               </div>
             ))}
 
-            {/* "Now" indicator */}
             {showNow && (
               <div className={styles.nowLine} style={{ top: nowTop }}>
                 <div className={styles.nowDot} />
               </div>
             )}
 
-            {/* Blocks */}
             {blocks.map(block => (
               <TimeBlock
                 key={block.id}
@@ -313,7 +298,6 @@ export default function DayPlanner() {
           </div>
         </div>
 
-        {/* Edit panel */}
         <BlockEditPanel
           block={selectedBlock}
           categories={categories}

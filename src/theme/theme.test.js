@@ -1,17 +1,12 @@
-// @vitest-environment jsdom
-
-import { beforeEach, describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import {
   getForestTheme,
   loadThemePreferences,
   parseThemePreferences,
   THEME_PRESETS,
-  THEME_STORAGE_KEY,
 } from './theme'
 
 describe('theme preferences', () => {
-  beforeEach(() => localStorage.clear())
-
   it.each([
     ['missing state', null],
     ['malformed state', '{nope'],
@@ -19,8 +14,7 @@ describe('theme preferences', () => {
     ['unknown preset', JSON.stringify({ version: 1, presetId: 'ocean', colors: THEME_PRESETS[1].colors })],
     ['invalid color', JSON.stringify({ version: 1, presetId: 'slate', colors: { ...THEME_PRESETS[1].colors, accent: 'blue' } })],
   ])('%s falls back completely to Forest', (_label, value) => {
-    if (value !== null) localStorage.setItem(THEME_STORAGE_KEY, value)
-    expect(loadThemePreferences()).toEqual(getForestTheme())
+    expect(loadThemePreferences({ getItem: () => value })).toEqual(getForestTheme())
   })
 
   it('resolves every preset to its exact canonical colors', () => {

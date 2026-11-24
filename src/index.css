@@ -82,13 +82,11 @@ button, input, select, textarea { font: inherit; }
   box-shadow: var(--focus-ring);
 }
 
-/* Scrollbar */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--theme-foreground) 12%, transparent); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--theme-foreground) 22%, transparent); }
 
-/* Selection */
 ::selection { background: var(--accent-glow); color: var(--ink); }
 
 @media (prefers-reduced-motion: reduce) {

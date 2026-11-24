@@ -22,7 +22,6 @@ import {
 } from '../domain/jobActivity'
 import styles from './Overview.module.css'
 
-// ── icons ─────────────────────────────────────────────────────────────────────
 const ICheck = (p) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.2"
        strokeLinecap="round" strokeLinejoin="round" {...p}>
@@ -76,7 +75,6 @@ const ICase   = (p) => (
 
 const HABIT_ICONS = [IDrop, IBook, ILotus, ISpark, IMoon, ICase]
 
-// ── sub-components ────────────────────────────────────────────────────────────
 function CardHead({ title, separated = true }) {
   return (
     <div className={`${styles.cardHead} ${separated ? '' : styles.cardHeadPlain}`}>
@@ -337,7 +335,6 @@ function JobsCard({ today, week, spark, selectedType, selectedCount, onSelectedT
   )
 }
 
-// ── main ──────────────────────────────────────────────────────────────────────
 export default function Overview({ selectedJobType = '', onSelectedJobTypeChange = () => {}, clock }) {
   const [dailyTasks, setDailyTasks] = useSyncedStorage('todos-daily', {})
   const [recurringSeries]           = useSyncedStorage('todos-recurring', [])

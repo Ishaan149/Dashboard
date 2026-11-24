@@ -46,7 +46,7 @@ export function useToast() {
   return value
 }
 
-export default function ToastRegion({ toasts = [], onDismiss = () => {} }) {
+function ToastRegion({ toasts, onDismiss }) {
   return (
     <section className={styles.region} aria-label="Notifications" aria-live="polite" aria-atomic="false">
       {toasts.map(toast => <Toast key={toast.id} toast={toast} onDismiss={onDismiss} />)}

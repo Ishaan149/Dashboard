@@ -1,7 +1,6 @@
-import { normalizePinnedNote, normalizeRegularNotes, PINNED_NOTE_ID } from './brainDump'
+import { normalizePinnedNote, normalizeRegularNotes } from './brainDump'
 
 export const NOTE_PREVIEW_LIMIT = 160
-export const PALETTE_NOTE_LIMIT = 50
 
 export function normalizeNoteSearchText(value) {
   return String(value ?? '')
@@ -112,32 +111,4 @@ export function getBrainDumpPageResults({ notes, pinnedNote, query = '', favorit
     .map(({ note, match }) => resultFor(note, normalizedQuery, match))
 
   return { pinned, regular, count: regular.length + (pinned ? 1 : 0) }
-}
-
-function providerResult(note) {
-  return {
-    id: note.id,
-    providerId: 'notes',
-    group: 'notes',
-    label: note.title || 'Untitled',
-    detail: getNotePreview(note),
-    searchText: [note.title, note.content],
-    target: { view: 'braindump', target: { kind: 'note', id: note.id } },
-  }
-}
-
-export const brainDumpSearchProvider = Object.freeze({
-  id: 'notes',
-  getResults(snapshot = {}) {
-    const pinned = normalizePinnedNote(snapshot.pinnedNote ?? snapshot.brainDumpPinnedNote)
-    const regular = normalizeRegularNotes(snapshot.notes ?? snapshot.brainDumpNotes)
-    return [providerResult(pinned), ...regular.map(providerResult)].slice(0, PALETTE_NOTE_LIMIT)
-  },
-})
-
-export function isBrainDumpNoteTarget(intent) {
-  return intent?.view === 'braindump'
-    && intent?.target?.kind === 'note'
-    && typeof intent.target.id === 'string'
-    && (intent.target.id === PINNED_NOTE_ID || intent.target.id.length > 0)
 }

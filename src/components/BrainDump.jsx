@@ -240,8 +240,6 @@ export default function BrainDump() {
   }, [])
 
   function focusTitle() {
-    // Let a closing BottomSheet restore its trigger first, then move focus to
-    // the selected note as the final, intentional destination.
     setTimeout(() => requestAnimationFrame(() => titleRef.current?.focus()), 0)
   }
 

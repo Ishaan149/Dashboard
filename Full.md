@@ -2,15 +2,15 @@
 
 ## Architecture
 
-Dashboard is a client-only React single-page application. `src/main.jsx` mounts `App`, which controls the password gate and selected view. The unlocked shell provides navigation, the command palette, theme context, and toasts. Views are loaded lazily: Today (`overview`), To-Do, Brain Dump, Projects, Job Applications, Habits, Day Planner, and Settings.
+Dashboard is a client-only React single-page application. `src/main.jsx` mounts `App`, which controls the password gate, selected view, and clock state. The unlocked shell provides navigation, the command palette, theme context, and toasts. Each view loads on demand.
 
 The interface uses CSS Modules and shared components under `src/components/ui`. Domain logic for tasks, notes, habits, projects, and job activity lives in `src/domain`; local date and time helpers are in `src/utils`. Markdown previews use Marked and DOMPurify. Today fetches a daily forecast from Open-Meteo for Tempe, Arizona.
 
 ## Persistence
 
-`useSyncedStorage` initializes from browser `localStorage` and subscribes to `dashboard/<key>` in Firestore. If the remote document exists, its `value` updates local state. If it does not exist, the hook seeds it from the local value. Writes wait for the first snapshot or a snapshot error, then are debounced for one second. A same-tab custom event keeps mounted consumers of a key in sync. Each write replaces the document with `value` and the configured `_secret` compatibility field.
+`useSyncedStorage` initializes from `localStorage` and subscribes to `dashboard/<key>` in Firestore. The first snapshot applies the remote `value` or seeds a missing document from the local value. Local updates reach the cache and other mounted consumers in the same tab immediately. Once the initial snapshot or subscription error arrives, the hook debounces updates to Firestore by one second. An unmount cancels that consumer's pending update. Each write replaces the document with `value` and the configured `_secret` compatibility field.
 
-These documents are whole values rather than per-item records. Concurrent edits from different clients can overwrite each other; the hook does not merge conflicting changes. Writes and subscription errors are logged or handled locally, and there is no user-facing sync status. A browser cache is not a backup.
+Each document stores the entire value for a key, so concurrent edits from different clients can overwrite each other. The hook logs write failures to the browser console and handles subscription errors without a user-facing sync status.
 
 | Storage keys | Use |
 | --- | --- |
@@ -22,19 +22,21 @@ These documents are whole values rather than per-item records. Concurrent edits 
 | `habits`, `habit_logs` | Habit definitions and check-ins |
 | `dayplanner-blocks`, `dayplanner-settings`, `dayplanner-categories` | Shared planner schedule and configuration |
 
-Theme preferences (`dashboard-theme-preferences-v1`) and the unlock flag (`dashboard-unlocked`) stay in browser storage. Startup removes the retired wellness cache keys from browser storage; it does not delete their Firestore documents.
+Theme preferences (`dashboard-theme-preferences-v1`) and the unlock flag (`dashboard-unlocked`) use `localStorage`. The timer and stopwatch share `dashboard-clock-v1` in `sessionStorage`, so their state survives navigation and reloads in the current tab. Startup clears retired wellness keys from `localStorage`.
 
 ## Feature notes
 
-- Recurring tasks are derived from weekday series and per-date state rather than copied into future dates. Date keys use local calendar dates.
-- Project and task array positions represent manual order. Project notes are autosaved and their timestamps determine the note index.
-- Legacy Brain Dump note records are normalized in memory; enhanced metadata is written when an individual note is edited or created.
-- The Day Planner stores one shared set of blocks, not separate plans for each date.
-- Application counts are categorized; legacy uncategorized counts remain included in totals.
-- Settings theme changes are local to the browser. Selecting a different preset resets custom colors to that preset's defaults.
+- To-Do derives recurring tasks from weekday series and per-date state. Date keys use local calendar dates.
+- Project and task array positions represent manual order. Project notes autosave and the note index shows the most recently updated notes first.
+- Brain Dump normalizes legacy note records in memory and writes enhanced metadata when a note is created or edited.
+- Habits calculates seven- and 30-day completion rates using eligible dates on or after a habit's creation date.
+- Day Planner stores a single block schedule shared across dates. Its start and end values use hours, including fractional hours for quarter-hour increments. Overnight ranges store the end as 24 or more hours, so 3 a.m. the next day is `27`.
+- Job Applications includes legacy uncategorized counts in its totals.
+- The timer and stopwatch calculate elapsed time from stored timestamps. If the countdown reaches zero while the tab is hidden, the completion toast appears after the tab becomes visible.
+- Selecting a different theme preset resets custom colors to that preset's defaults.
 
 ## Configuration and commands
 
-See the [README](README.md) for local setup, commands, security considerations, and deployment. [Local Firebase development](Docs/firebase-emulator.md) explains the emulator configuration. `src/config/firebaseEnvironment.js` rejects non-production configurations unless they use the emulator or an explicitly marked synthetic test project, and rejects configurations marked as production credentials outside production mode.
+In development mode, `.env.development` configures the `dashboard-local` Firestore emulator. `src/config/firebaseEnvironment.js` requires the emulator or an explicitly configured synthetic project for all non-production modes. It also rejects non-production settings flagged as production credentials or matching the configured production project ID. The setup and deployment commands are in the [README](README.md).
 
-Tests use Vitest and jsdom; component tests mock storage and do not require a live Firebase project. GitHub Actions installs dependencies, builds on pushes to `main`, and deploys `dist` to GitHub Pages. The workflow does not run tests.
+Vitest covers domain logic and uses jsdom for browser-oriented tests. Component tests mock storage, and the storage hook tests mock Firestore. The deployment workflow installs dependencies, builds on pushes to `main`, and publishes `dist` to the `gh-pages` branch.

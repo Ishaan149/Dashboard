@@ -98,40 +98,6 @@ export function getOverallCompletionSummary(habits, logs, days, today = new Date
   return { completed, eligible, percentage: eligible ? Math.round((completed / eligible) * 100) : null }
 }
 
-export function getCurrentStreak(habit, logs, today = new Date()) {
-  if (!habit?.createdAt) return 0
-  const cleanLogs = normalizeHabitLogs(logs)
-  const todayKey = toLocalDateKey(today)
-  let date = dateAtNoon(today)
-  if (!isCompleted(cleanLogs, todayKey, habit.id)) date = addDays(date, -1)
-  let streak = 0
-  while (toLocalDateKey(date) >= habit.createdAt) {
-    if (!isCompleted(cleanLogs, toLocalDateKey(date), habit.id)) break
-    streak += 1
-    date = addDays(date, -1)
-  }
-  return streak
-}
-
-export function getBestStreak(habit, logs, today = new Date()) {
-  if (!habit?.createdAt || !isLocalDateKey(habit.createdAt)) return 0
-  const cleanLogs = normalizeHabitLogs(logs)
-  const start = parseLocalDateKey(habit.createdAt)
-  const end = dateAtNoon(today)
-  let best = 0
-  let current = 0
-  for (let date = start; date <= end; date = addDays(date, 1)) {
-    if (isCompleted(cleanLogs, toLocalDateKey(date), habit.id)) {
-      current += 1
-      best = Math.max(best, current)
-    } else current = 0
-  }
-  return best
-}
-
-// This pure state machine is deliberately not invoked automatically. A release
-// coordinator may persist each returned phase in a synthetic/test environment,
-// then separately authorize its production execution.
 export function migrateHabitTrackerData({ habits, habitLogs, metadata }, resetDate) {
   const current = metadata && typeof metadata === 'object' ? metadata : {}
   const storedResetDate = current.version === HABIT_TRACKER_DATA_VERSION && isLocalDateKey(current.resetDate)
@@ -143,8 +109,6 @@ export function migrateHabitTrackerData({ habits, habitLogs, metadata }, resetDa
     return { habits: normalizeHabits(habits, current.resetDate), habitLogs: normalizeHabitLogs(habitLogs), metadata: current, phase: 'complete', changed: false }
   }
   const migratedHabits = normalizeHabits(habits, effectiveResetDate).map(habit => ({ ...habit, createdAt: effectiveResetDate }))
-  // `prepared` is safe to persist before logs are cleared. Re-running from it
-  // keeps the same resetDate, so an interruption cannot create a second reset.
   const preparedMetadata = { version: HABIT_TRACKER_DATA_VERSION, resetDate: effectiveResetDate, phase: 'prepared' }
   if (current.phase !== 'logs-cleared') {
     return { habits: migratedHabits, habitLogs: normalizeHabitLogs(habitLogs), metadata: preparedMetadata, phase: 'prepared', changed: true }

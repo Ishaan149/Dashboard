@@ -53,7 +53,6 @@ function ProjectForm({ project, categories, defaultColor, onSave, onClose }) {
 
 export default function Projects() {
   const { theme } = useTheme()
-  // Array positions are the persisted manual order, shared by both status views.
   const [data, setData] = useSyncedStorage('projects', EMPTY_PROJECTS)
   const [completed, setCompleted] = useState(false)
   const [projectId, setProjectId] = useState(null)

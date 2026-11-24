@@ -1,13 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
-  brainDumpSearchProvider,
   getBrainDumpPageResults,
   getNotePreview,
-  isBrainDumpNoteTarget,
   matchNote,
   normalizeNoteSearchText,
   NOTE_PREVIEW_LIMIT,
-  PALETTE_NOTE_LIMIT,
 } from './brainDumpSearch'
 import { PINNED_NOTE_ID } from './brainDump'
 
@@ -18,27 +15,20 @@ describe('Brain Dump search', () => {
     expect(normalizeNoteSearchText('  ＰＯＲＴＦＯＬＩＯ\n\tIdeas  ')).toBe('portfolio ideas')
   })
 
-  it('token-prefix matches and ranks exact title, title prefix, title token, then body', () => {
+  it('ranks token-prefix matches and keeps storage order within each tier', () => {
     const notes = [
       { id: 'body', title: 'Journal', content: 'Portfolio planning' },
       { id: 'token', title: 'Ideas for Portfolio', content: '' },
-      { id: 'prefix', title: 'Portfolio Ideas', content: '' },
+      { id: 'z-prefix', title: 'Portfolio Update', content: '' },
       { id: 'exact', title: 'Portfolio', content: '' },
+      { id: 'a-prefix', title: 'Portfolio Ideas', content: '' },
       { id: 'miss', title: 'Work', content: 'Unrelated' },
     ]
 
     const results = getBrainDumpPageResults({ notes, pinnedNote, query: 'portfolio' })
-    expect(results.regular.map(note => note.id)).toEqual(['exact', 'prefix', 'token', 'body'])
+    expect(results.regular.map(note => note.id)).toEqual(['exact', 'z-prefix', 'a-prefix', 'token', 'body'])
     expect(matchNote(notes[0], 'plan port').matches).toBe(true)
-    expect(matchNote(notes[4], 'port').matches).toBe(false)
-  })
-
-  it('keeps stored array order inside a ranking tier', () => {
-    const notes = [
-      { id: 'a', title: 'Alpha notes', content: '' },
-      { id: 'b', title: 'Alpha plans', content: '' },
-    ]
-    expect(getBrainDumpPageResults({ notes, pinnedNote, query: 'alp' }).regular.map(note => note.id)).toEqual(['a', 'b'])
+    expect(matchNote(notes.at(-1), 'port').matches).toBe(false)
   })
 
   it('builds body-centered, whitespace-collapsed previews bounded to 160 characters', () => {
@@ -79,28 +69,5 @@ describe('Brain Dump search', () => {
 
     const composed = getBrainDumpPageResults({ notes, pinnedNote, query: 'alpha', favoritesOnly: true, quickNotesOnly: true })
     expect(composed.regular.map(note => note.id)).toEqual(['quick-fav'])
-  })
-
-  it('exposes pure, bounded Palette results with pinned navigation', () => {
-    const notes = Array.from({ length: PALETTE_NOTE_LIMIT + 10 }, (_, index) => ({
-      id: `note-${index}`,
-      title: `Note ${index}`,
-      content: `Content ${index}`,
-    }))
-    const snapshot = { notes, pinnedNote }
-    const original = structuredClone(snapshot)
-
-    const results = brainDumpSearchProvider.getResults(snapshot)
-
-    expect(results).toHaveLength(PALETTE_NOTE_LIMIT)
-    expect(results[0]).toMatchObject({
-      id: PINNED_NOTE_ID,
-      providerId: 'notes',
-      group: 'notes',
-      target: { view: 'braindump', target: { kind: 'note', id: PINNED_NOTE_ID } },
-    })
-    expect(snapshot).toEqual(original)
-    expect(isBrainDumpNoteTarget(results[0].target)).toBe(true)
-    expect(isBrainDumpNoteTarget({ view: 'todo', target: { kind: 'note', id: 'x' } })).toBe(false)
   })
 })

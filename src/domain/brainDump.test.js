@@ -12,9 +12,13 @@ import {
 } from './brainDump'
 
 describe('Brain Dump note domain', () => {
-  it('normalizes legacy data without mutating, reordering, or dropping unknown fields', () => {
+  it('normalizes legacy notes in storage order without mutating the input', () => {
     const notes = [
+      null,
       { id: 'second', title: 'Second', content: 'Body', unknown: { kept: true } },
+      { id: '', title: 'Invalid', content: '' },
+      { id: 'second', title: 'Duplicate', content: '' },
+      { id: PINNED_NOTE_ID, title: 'Reserved', content: '' },
       { id: 'first', title: 42, content: null, favorite: 'yes' },
     ]
     const original = structuredClone(notes)
@@ -25,21 +29,6 @@ describe('Brain Dump note domain', () => {
     expect(normalized.map(note => note.id)).toEqual(['second', 'first'])
     expect(normalized[0]).toMatchObject({ title: 'Second', content: 'Body', unknown: { kept: true }, favorite: false, createdAt: 0, updatedAt: 0 })
     expect(normalized[1]).toMatchObject({ title: '42', content: '', contentFormat: 'markdown' })
-  })
-
-  it('keeps the first duplicate winner and ignores malformed records without cleanup', () => {
-    const notes = [
-      null,
-      { id: '', title: 'Invalid', content: '' },
-      { id: 'same', title: 'Winner', content: '' },
-      { id: 'same', title: 'Duplicate', content: '' },
-      { id: PINNED_NOTE_ID, title: 'Reserved', content: '' },
-      { id: 'valid', title: 'Valid', content: '' },
-    ]
-    const original = structuredClone(notes)
-
-    expect(normalizeRegularNotes(notes).map(note => note.title)).toEqual(['Winner', 'Valid'])
-    expect(notes).toEqual(original)
   })
 
   it('normalizes pinned notes as a runtime favorite while preserving source data', () => {

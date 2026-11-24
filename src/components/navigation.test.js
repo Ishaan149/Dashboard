@@ -2,37 +2,21 @@ import { describe, expect, it } from 'vitest'
 import { NAV_ITEMS, SETTINGS_NAV_ITEM, getViewLabel } from './navigation'
 
 describe('primary navigation', () => {
-  it('keeps the stable view IDs in product order', () => {
-    expect(NAV_ITEMS.map(item => item.id)).toEqual([
-      'overview',
-      'todo',
-      'braindump',
-      'projects',
-      'jobs',
-      'habits',
-      'dayplanner',
+  it('keeps stable view IDs and compact mobile labels in navigation order', () => {
+    expect(NAV_ITEMS.map(({ id, mobileLabel }) => [id, mobileLabel])).toEqual([
+      ['overview', 'Today'],
+      ['todo', 'To-Do'],
+      ['braindump', 'Brain'],
+      ['projects', 'Projects'],
+      ['jobs', 'Jobs'],
+      ['habits', 'Habits'],
+      ['dayplanner', 'Planner'],
     ])
   })
 
-  it('displays overview as Today without changing its internal ID', () => {
-    expect(NAV_ITEMS[0]).toMatchObject({ id: 'overview', label: 'Today', mobileLabel: 'Today' })
-    expect(getViewLabel('overview')).toBe('Today')
-  })
-
-  it('uses the approved compact mobile labels', () => {
-    expect(NAV_ITEMS.map(item => item.mobileLabel)).toEqual([
-      'Today',
-      'To-Do',
-      'Brain',
-      'Projects',
-      'Jobs',
-      'Habits',
-      'Planner',
-    ])
-  })
-
-  it('exposes Settings as a utility destination', () => {
+  it('resolves desktop view labels and exposes Settings as a utility destination', () => {
     expect(SETTINGS_NAV_ITEM).toMatchObject({ id: 'settings', label: 'Settings', icon: 'settings' })
+    expect(getViewLabel('overview')).toBe('Today')
     expect(getViewLabel('settings')).toBe('Settings')
     expect(getViewLabel('projects')).toBe('Projects')
   })

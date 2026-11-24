@@ -11,10 +11,6 @@ export const APPLICATION_CATEGORY_KEYS = APPLICATION_CATEGORIES.map(category => 
 
 const EMPTY_CATEGORIES = Object.fromEntries(APPLICATION_CATEGORY_KEYS.map(key => [key, 0]))
 
-/**
- * Counts are persisted as integers. Invalid values are deliberately treated as
- * zero in memory; reading a malformed record never writes the repair back.
- */
 export function normalizeCount(value) {
   if (typeof value !== 'number' || !Number.isFinite(value)) return 0
   return Math.max(0, Math.floor(value))
@@ -35,10 +31,6 @@ export function getCategorizedTotal(record) {
 export function getOverallApplicationCount(record) {
   const count = normalizeCount(record?.count)
   return Math.max(count, getCategorizedTotal(record))
-}
-
-export function getUncategorizedCount(record) {
-  return Math.max(0, getOverallApplicationCount(record) - getCategorizedTotal(record))
 }
 
 export function normalizeJobRecord(record) {
@@ -81,10 +73,6 @@ function mergeRecords(records) {
   return merged
 }
 
-/**
- * Returns a normalized, date-unique view of records without mutating the
- * supplied array. This is intentionally a read helper, not a migration.
- */
 export function normalizeJobRecords(records) {
   if (!Array.isArray(records)) return []
   const byDate = new Map()
@@ -149,21 +137,6 @@ export function adjustCategory(records, date, categoryKey, delta) {
   return replaceDateRecords(records, date, next)
 }
 
-export function adjustUncategorized(records, date, delta) {
-  const amount = typeof delta === 'number' && Number.isFinite(delta) ? Math.trunc(delta) : 0
-  if (amount === 0) return Array.isArray(records) ? records : []
-
-  const existing = findRawRecord(records, date)
-  const next = buildBaseRecord(records, date)
-  const currentUncategorized = getUncategorizedCount(next)
-  if (!existing && amount < 0) return Array.isArray(records) ? records : []
-  if (amount < 0 && currentUncategorized === 0) return Array.isArray(records) ? records : []
-
-  const actualDelta = amount < 0 ? -Math.min(currentUncategorized, Math.abs(amount)) : amount
-  next.count = Math.max(getCategorizedTotal(next), getOverallApplicationCount(next) + actualDelta)
-  return replaceDateRecords(records, date, next)
-}
-
 export function adjustOutreach(records, date, field, delta) {
   if (field !== 'emails' && field !== 'linkedin') return Array.isArray(records) ? records : []
   const amount = typeof delta === 'number' && Number.isFinite(delta) ? Math.trunc(delta) : 0
@@ -188,8 +161,4 @@ export function getPeriodApplicationTotal(records, startDateKey) {
 export function getAllTimeApplicationTotal(records) {
   return normalizeJobRecords(records)
     .reduce((total, record) => total + getOverallApplicationCount(record), 0)
-}
-
-export function hasAnyJobActivity(record) {
-  return hasActivity(record)
 }

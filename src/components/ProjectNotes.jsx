@@ -40,7 +40,6 @@ export default function ProjectNotes({ project, onUpdate, accentStyle }) {
 
   function editNote(field, value) {
     if (note[field] === value) return
-    // Pin selection before an edit changes the sorted note index.
     setSelectedId(note.id)
     const now = Date.now()
     onUpdate(item => ({ ...item, notes: item.notes.map(current => current.id === note.id ? { ...current, [field]: value, updatedAt: now } : current) }))

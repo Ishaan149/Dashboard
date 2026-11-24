@@ -10,6 +10,7 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true
 vi.mock('./components/AppShell', () => ({
   default: ({ children, onNavigate }) => (
     <div>
+      <button type="button" aria-label="Open Today navigation" onClick={() => onNavigate('overview')}>Today</button>
       <button type="button" aria-label="Open To-Do navigation" onClick={() => onNavigate('todo')}>To-Do</button>
       <button type="button" aria-label="Open Projects navigation" onClick={() => onNavigate('projects')}>Projects</button>
       <main id="main-content" tabIndex="-1">{children}</main>
@@ -22,26 +23,18 @@ vi.mock('./components/ui', async importOriginal => ({
   LoadingState: () => <span>Loading</span>,
 }))
 vi.mock('./components/Overview', () => ({
-  default: ({ onChange, selectedJobType, onSelectedJobTypeChange, clock }) => (
+  default: ({ selectedJobType, onSelectedJobTypeChange, clock }) => (
     <div>
       <select aria-label="Mock job type" value={selectedJobType} onChange={event => onSelectedJobTypeChange(event.target.value)}>
         <option value="">Choose job type</option>
         <option value="backend">Backend</option>
       </select>
-      <button type="button" aria-label="Open To-Do" onClick={() => onChange('todo')}>Open To-Do</button>
       <ClockWidget clock={clock} />
     </div>
   ),
 }))
 vi.mock('./components/Projects', () => ({ default: () => <div>Project notebook workspace</div> }))
-vi.mock('./components/TodoCard', () => ({
-  default: ({ onChange, selectedJobType }) => (
-    <div>
-      <span>To-Do selection: {selectedJobType}</span>
-      <button type="button" aria-label="Open Overview" onClick={() => onChange('overview')}>Open Overview</button>
-    </div>
-  ),
-}))
+vi.mock('./components/TodoCard', () => ({ default: () => <div>Weekly task board</div> }))
 
 import App from './App'
 
@@ -94,15 +87,19 @@ describe('App', () => {
     expect(localStorage.getItem('dashboard-unlocked')).toBe('true')
   })
 
-  it('survives view unmount/remount but resets with a fresh application mount', async () => {
+  it('focuses the main landmark on To-Do and keeps the job selection until App remounts', async () => {
     const select = container.querySelector('[aria-label="Mock job type"]')
     expect(select.value).toBe('')
     changeValue(select, 'backend')
-    click(container.querySelector('[aria-label="Open To-Do"]'))
+    const todoNavigation = container.querySelector('[aria-label="Open To-Do navigation"]')
+    todoNavigation.focus()
+    click(todoNavigation)
     await act(async () => {})
-    expect(container.textContent).toContain('To-Do selection: backend')
+    expect(container.textContent).toContain('Weekly task board')
+    await act(async () => new Promise(resolve => requestAnimationFrame(resolve)))
+    expect(document.activeElement).toBe(container.querySelector('#main-content'))
 
-    click(container.querySelector('[aria-label="Open Overview"]'))
+    click(container.querySelector('[aria-label="Open Today navigation"]'))
     await act(async () => {})
     expect(container.querySelector('[aria-label="Mock job type"]').value).toBe('backend')
 
@@ -112,15 +109,10 @@ describe('App', () => {
     expect(container.querySelector('[aria-label="Mock job type"]').value).toBe('')
   })
 
-  it('loads To-Do through navigation and hands focus to the main landmark', async () => {
-    click(container.querySelector('[aria-label="Open To-Do navigation"]'))
-    await act(async () => {})
-    expect(container.textContent).toContain('To-Do selection:')
-    await act(async () => new Promise(resolve => requestAnimationFrame(resolve)))
-    expect(document.activeElement).toBe(container.querySelector('#main-content'))
-  })
   it('lazy-loads Projects through navigation and focuses the main content', async () => {
-    click(container.querySelector('[aria-label="Open Projects navigation"]'))
+    const projectsNavigation = container.querySelector('[aria-label="Open Projects navigation"]')
+    projectsNavigation.focus()
+    click(projectsNavigation)
     await act(async () => {})
     expect(container.textContent).toContain('Project notebook workspace')
     await act(async () => new Promise(resolve => requestAnimationFrame(resolve)))
@@ -154,13 +146,13 @@ describe('App', () => {
     expect(container.textContent).not.toContain('Timer complete')
 
     click(clockButton('Resume'))
-    click(container.querySelector('[aria-label="Open To-Do"]'))
+    click(container.querySelector('[aria-label="Open To-Do navigation"]'))
     await act(async () => {})
     expect(container.querySelector('[role="timer"]')).toBeNull()
     act(() => vi.advanceTimersByTime(2000))
     expect(container.textContent.match(/Timer complete/g)).toHaveLength(1)
 
-    click(container.querySelector('[aria-label="Open Overview"]'))
+    click(container.querySelector('[aria-label="Open Today navigation"]'))
     await act(async () => {})
     expect(clockReadout()).toBe('00:00')
     expect(clockButton('Restart')).toBeDefined()

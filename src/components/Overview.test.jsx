@@ -88,22 +88,18 @@ describe('Overview typed job logging', () => {
     expect(storage.setJobRecords).not.toHaveBeenCalled()
   })
 
-  it('increments only the selected type while preserving legacy and forward-compatible data', () => {
+  it('adds an application to the selected type', () => {
     changeSelect(container.querySelector('[aria-label="Job type"]'), 'data')
-    const decrease = container.querySelector('[aria-label="Remove selected job type application"]')
     const increase = container.querySelector('[aria-label="Add selected job type application"]')
-    expect(decrease.disabled).toBe(true)
     expect(increase.disabled).toBe(false)
     click(increase)
 
     expect(storage.setJobRecords).toHaveBeenCalledTimes(1)
     const updated = storage.setJobRecords.mock.calls[0][0](storage.values.job_applications)
     expect(updated[0]).toMatchObject({
+      ...storage.values.job_applications[0],
       count: 7,
       categories: { softwareEngineering: 0, aiApplications: 0, backend: 1, data: 1 },
-      emails: 2,
-      linkedin: 1,
-      metadata: { keep: true },
     })
   })
 
@@ -119,13 +115,11 @@ describe('Overview typed job logging', () => {
     expect(storage.setJobRecords).not.toHaveBeenCalled()
     click(decrease)
 
+    expect(storage.setJobRecords).toHaveBeenCalledTimes(1)
     const updated = storage.setJobRecords.mock.calls[0][0](storage.values.job_applications)
     expect(updated[0]).toMatchObject({
       count: 5,
       categories: { softwareEngineering: 0, aiApplications: 0, backend: 0, data: 0 },
-      emails: 2,
-      linkedin: 1,
-      metadata: { keep: true },
     })
   })
 

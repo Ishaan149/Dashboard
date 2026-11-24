@@ -1,4 +1,3 @@
-// Move within one visible group, preserving the positions of all other records.
 export function moveWithinGroup(items, sourceId, targetId, belongsToGroup, position) {
   const group = items.filter(belongsToGroup)
   const from = group.findIndex(item => item.id === sourceId)

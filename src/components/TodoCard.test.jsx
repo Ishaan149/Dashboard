@@ -48,10 +48,12 @@ beforeEach(() => {
 afterEach(() => { act(() => root.unmount()); container.remove() })
 
 describe('To-do drag feedback and placement', () => {
-  it('clears a row insertion marker when the pointer leaves the row', () => {
+  it('keeps the insertion marker within a row and clears it when the pointer leaves', () => {
     const data = transfer(); const target = row('Beta')
     drag(row('Alpha'), 'dragstart', data)
     drag(target, 'dragover', data)
+    expect(target.className).toContain(styles.taskDragOver)
+    drag(target, 'dragleave', data, { relatedTarget: target.querySelector('button') })
     expect(target.className).toContain(styles.taskDragOver)
     drag(target, 'dragleave', data)
     expect(target.className).not.toContain(styles.taskDragOver)
@@ -65,15 +67,6 @@ describe('To-do drag feedback and placement', () => {
     drag(source, 'dragend', data)
     expect(zone.className).not.toContain(styles.dropZoneActive)
     expect(zone.textContent).not.toContain('Drop task here')
-  })
-
-  it('highlights only the inner folder when hovering its empty contents', () => {
-    const data = transfer(); const zone = folderRow('Projects').nextElementSibling
-    drag(row('Alpha'), 'dragstart', data); drag(zone, 'dragover', data)
-    expect(container.querySelectorAll(`.${styles.dropZoneActive}`)).toHaveLength(1)
-    drag(zone, 'drop', data)
-    expect(store.values['todos-longterm'][0].items.map(item => item.text)).toEqual(['Alpha'])
-    expect(store.values['todos-thisweek'].map(item => item.text)).toEqual(['Beta'])
   })
 
   it('does not advertise a folder drop onto a day or task', () => {
@@ -113,13 +106,6 @@ describe('To-do drag feedback and placement', () => {
     expect(store.values['todos-recurring'].map(item => item.id)).toEqual(['Two', 'One'])
   })
 
-  it('keeps a row highlighted when crossing its own child controls', () => {
-    const data = transfer(); const target = row('Beta')
-    drag(row('Alpha'), 'dragstart', data); drag(target, 'dragover', data)
-    drag(target, 'dragleave', data, { relatedTarget: target.querySelector('button') })
-    expect(target.className).toContain(styles.taskDragOver)
-  })
-
   it('places a task above the upper half and clears every drop indicator on success', () => {
     const data = transfer(); const target = row('Alpha'); bounds(target)
     drag(row('Beta'), 'dragstart', data); drag(target, 'dragover', data, { clientY: 5 })
@@ -133,7 +119,11 @@ describe('To-do drag feedback and placement', () => {
     const data = transfer()
     drag(row('Alpha'), 'dragstart', data); drag(folderRow('Projects'), 'drop', data)
     expect(store.values['todos-longterm'][0].items.map(item => item.id)).toEqual([1])
-    drag(row('Alpha'), 'dragstart', data); drag(folderRow('Later').nextElementSibling, 'drop', data)
+    expect(store.values['todos-thisweek'].map(item => item.id)).toEqual([2])
+    const emptyFolder = folderRow('Later').nextElementSibling
+    drag(row('Alpha'), 'dragstart', data); drag(emptyFolder, 'dragover', data)
+    expect([...container.querySelectorAll(`.${styles.dropZoneActive}`)]).toEqual([emptyFolder])
+    drag(emptyFolder, 'drop', data)
     expect(store.values['todos-longterm'][0].items).toEqual([])
     expect(store.values['todos-longterm'][1].items.map(item => item.id)).toEqual([1])
     const dayZone = container.querySelector('section').children[1]

@@ -36,24 +36,23 @@ function Harness() {
   )
 }
 
-function SharedHarness() {
-  const [first, setFirst] = useSyncedStorage('shared', [])
-  const [second] = useSyncedStorage('shared', [])
-  return (
-    <button type="button" onClick={() => setFirst([{ id: 'quick' }])}>
-      {first.length}:{second.length}
-    </button>
-  )
-}
+const activityDate = '2026-08-18'
 
 function JobConsumersHarness() {
-  const [, setPaletteRecords] = useSyncedStorage('job_applications', [])
-  const [overviewRecords] = useSyncedStorage('job_applications', [])
-  const backend = getJobRecord(overviewRecords, '2026-08-18')?.categories.backend ?? 0
+  const [paletteRecords, setPaletteRecords] = useSyncedStorage('job_applications', [])
+  const [overviewRecords, setOverviewRecords] = useSyncedStorage('job_applications', [])
+  const paletteCount = getJobRecord(paletteRecords, activityDate)?.count ?? 0
+  const overviewBackendCount = getJobRecord(overviewRecords, activityDate)?.categories.backend ?? 0
   return (
-    <button type="button" onClick={() => setPaletteRecords(previous => adjustCategory(previous, '2026-08-18', 'backend', 1))}>
-      Overview backend: {backend}
-    </button>
+    <>
+      <button type="button" onClick={() => setOverviewRecords([{ date: activityDate, count: 1 }])}>
+        Add legacy record
+      </button>
+      <button type="button" onClick={() => setPaletteRecords(previous => adjustCategory(previous, activityDate, 'backend', 1))}>
+        Log Backend application
+      </button>
+      <output>{paletteCount} total, {overviewBackendCount} Backend</output>
+    </>
   )
 }
 
@@ -65,7 +64,6 @@ describe('useSyncedStorage Firebase safety', () => {
   beforeEach(() => {
     vi.useFakeTimers()
     localStorage.clear()
-    localStorage.setItem('brainDumpNotes', JSON.stringify(legacy))
     firestore.listener = null
     firestore.doc.mockClear()
     firestore.onSnapshot.mockClear()
@@ -82,6 +80,7 @@ describe('useSyncedStorage Firebase safety', () => {
   })
 
   it('does not echo cached or hydrated legacy notes, then writes only after an explicit edit', () => {
+    localStorage.setItem('brainDumpNotes', JSON.stringify(legacy))
     act(() => root.render(<Harness />))
     expect(container.textContent).toBe('Original')
     expect(firestore.setDoc).not.toHaveBeenCalled()
@@ -102,28 +101,21 @@ describe('useSyncedStorage Firebase safety', () => {
     expect(firestore.setDoc.mock.calls[0][1].value[0]).toEqual({ ...legacy[0], content: 'Edited' })
   })
 
-  it('keeps multiple same-tab consumers of one key synchronized without real Firestore', () => {
-    localStorage.removeItem('shared')
-    act(() => root.render(<SharedHarness />))
-    expect(container.textContent).toBe('0:0')
-
-    act(() => container.querySelector('button').dispatchEvent(new MouseEvent('click', { bubbles: true })))
-
-    expect(container.textContent).toBe('1:1')
-    expect(JSON.parse(localStorage.getItem('shared'))).toEqual([{ id: 'quick' }])
-  })
-
-  it('shows a palette-style typed job update in another mounted same-tab consumer immediately', () => {
-    localStorage.removeItem('job_applications')
+  it('shares direct writes and typed job updates between same-tab consumers', () => {
     act(() => root.render(<JobConsumersHarness />))
-    expect(container.textContent).toBe('Overview backend: 0')
+    const [addLegacyRecord, logBackend] = container.querySelectorAll('button')
+    const counts = container.querySelector('output')
+    expect(counts.textContent).toBe('0 total, 0 Backend')
 
-    act(() => container.querySelector('button').dispatchEvent(new MouseEvent('click', { bubbles: true })))
+    act(() => addLegacyRecord.click())
+    expect(counts.textContent).toBe('1 total, 0 Backend')
+    expect(JSON.parse(localStorage.getItem('job_applications'))).toEqual([{ date: activityDate, count: 1 }])
 
-    expect(container.textContent).toBe('Overview backend: 1')
+    act(() => logBackend.click())
+    expect(counts.textContent).toBe('2 total, 1 Backend')
     expect(JSON.parse(localStorage.getItem('job_applications'))[0]).toMatchObject({
-      date: '2026-08-18',
-      count: 1,
+      date: activityDate,
+      count: 2,
       categories: { backend: 1 },
     })
   })

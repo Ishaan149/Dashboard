@@ -50,27 +50,29 @@ describe('Job Applications page', () => {
     vi.useRealTimers()
   })
 
-  it('selects local today without creating a record and renders approved controls in order', () => {
+  it('selects local today and renders empty counters in order', () => {
     const dateDisplay = container.querySelector('time[aria-label="Selected activity date"]')
     expect(dateDisplay.getAttribute('dateTime')).toBe('2026-08-14')
     expect(dateDisplay.textContent).toBe('Today')
     expect(storage.setRecords).not.toHaveBeenCalled()
 
-    const headings = [...container.querySelectorAll('section[aria-label="Job activity logging"] li h3')].map(node => node.textContent)
-    expect(headings).toEqual(['Software Engineering', 'AI Applications', 'Backend', 'Data', 'Emails', 'LinkedIn'])
+    const counters = [...container.querySelectorAll('section[aria-label="Job activity logging"] li')]
+    expect(counters.map(counter => counter.querySelector('h3').textContent)).toEqual([
+      'Software Engineering', 'AI Applications', 'Backend', 'Data', 'Emails', 'LinkedIn',
+    ])
+    const decreases = container.querySelectorAll('button[aria-label^="Decrease"]')
+    expect(decreases).toHaveLength(counters.length)
+    expect([...decreases].every(button => button.disabled)).toBe(true)
   })
 
-  it('renders contextual accessible names and updates only through the mocked boundary', () => {
+  it('uses the selected date in the accessible name and the application update', () => {
     const backendIncrease = container.querySelector('button[aria-label^="Increase Backend"]')
-    const backendDecrease = container.querySelector('button[aria-label^="Decrease Backend"]')
     expect(backendIncrease.getAttribute('aria-label')).toContain('Friday, August 14, 2026')
-    expect(backendDecrease.disabled).toBe(true)
 
     click(backendIncrease)
     expect(storage.setRecords).toHaveBeenCalledTimes(1)
     const updated = storage.setRecords.mock.calls[0][0](storage.records)
     expect(updated[0]).toMatchObject({ date: '2026-08-14', count: 1, categories: { backend: 1 } })
-    expect(backendDecrease.disabled).toBe(true)
   })
 
   it('allows past and future dates without creating records on navigation', () => {
@@ -106,12 +108,5 @@ describe('Job Applications page', () => {
     expect(historyItems[0].textContent).toContain('4')
     expect(container.querySelector('section[aria-label="Job activity logging"] li span[aria-live="polite"]').textContent).toBe('0')
     expect([...historyItems].some(item => item.textContent.includes('0'))).toBe(true)
-  })
-
-  it('uses native disabled semantics for every zero-valued decrease control', () => {
-    const decreases = [...container.querySelectorAll('button[aria-label^="Decrease"]')]
-    expect(decreases).toHaveLength(6)
-    expect(decreases.every(button => button.disabled)).toBe(true)
-    expect(decreases.every(button => button.offsetWidth >= 0)).toBe(true)
   })
 })

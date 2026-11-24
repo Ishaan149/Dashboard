@@ -50,36 +50,27 @@ describe('recurrence derivation', () => {
     for (let day = 3; day <= 9; day += 1) expect(seriesOccursOn(item, `2026-08-0${day}`, {})).toBe(true)
   })
 
-  it('uses schedule revisions without changing earlier dates', () => {
+  it('uses the new schedule on its effective date and preserves earlier dates', () => {
     const item = series({ scheduleRevisions: [
       { effectiveFrom: '2026-08-03', weekdays: [1] },
       { effectiveFrom: '2026-08-06', weekdays: [4] },
     ] })
     expect(getScheduleForDate(item, '2026-08-03').weekdays).toEqual([1])
     expect(getScheduleForDate(item, '2026-08-06').weekdays).toEqual([4])
+    expect(seriesOccursOn(item, '2026-08-06', {})).toBe(true)
     expect(seriesOccursOn(item, '2026-08-10', {})).toBe(false)
   })
 
-  it('supports adding today in a same-day edit', () => {
-    const item = series({ createdDate: '2026-08-08', scheduleRevisions: [{ effectiveFrom: '2026-08-08', weekdays: [6] }] })
-    expect(seriesOccursOn(item, '2026-08-08', {})).toBe(true)
-  })
-
-  it('removes an incomplete occurrence when today is removed', () => {
+  it('keeps only a preserved completion when a revision removes its weekday', () => {
     const item = series({ scheduleRevisions: [
       { effectiveFrom: '2026-08-03', weekdays: [1, 6] },
       { effectiveFrom: '2026-08-08', weekdays: [1] },
     ] })
-    expect(seriesOccursOn(item, '2026-08-08', {})).toBe(false)
-  })
+    const date = '2026-08-08'
+    const state = { [makeOccurrenceId(item.id, date)]: { status: 'done', preserveOccurrence: true } }
 
-  it('preserves a completed occurrence when today is removed', () => {
-    const item = series({ scheduleRevisions: [
-      { effectiveFrom: '2026-08-03', weekdays: [1, 6] },
-      { effectiveFrom: '2026-08-08', weekdays: [1] },
-    ] })
-    const state = { [makeOccurrenceId(item.id, '2026-08-08')]: { status: 'done', preserveOccurrence: true } }
-    expect(getRecurringOccurrences([item], state, '2026-08-08')).toMatchObject([{ done: true, text: 'Gym' }])
+    expect(getRecurringOccurrences([item], {}, date)).toEqual([])
+    expect(getRecurringOccurrences([item], state, date)).toMatchObject([{ done: true, text: 'Gym' }])
   })
 
   it('keeps completion independent across dates and can toggle it off', () => {
@@ -97,15 +88,11 @@ describe('recurrence derivation', () => {
     expect(getRecurringOccurrences([series()], state, '2026-08-05')).toHaveLength(1)
   })
 
-  it('keeps archive day and stops occurrences beginning tomorrow', () => {
-    const item = series({ archivedDate: '2026-08-07', scheduleRevisions: [{ effectiveFrom: '2026-08-03', weekdays: [5, 6] }] })
-    expect(seriesOccursOn(item, '2026-08-07', {})).toBe(true)
-    expect(seriesOccursOn(item, '2026-08-08', {})).toBe(false)
-  })
-
-  it('renders historical dates for archived series', () => {
-    const item = series({ archivedDate: '2026-08-07' })
+  it('keeps scheduled occurrences through the archive date and stops future ones', () => {
+    const item = series({ archivedDate: '2026-08-07', scheduleRevisions: [{ effectiveFrom: '2026-08-03', weekdays: [3, 5, 6] }] })
     expect(getRecurringOccurrences([item], {}, '2026-08-05')).toHaveLength(1)
+    expect(getRecurringOccurrences([item], {}, '2026-08-07')).toHaveLength(1)
+    expect(getRecurringOccurrences([item], {}, '2026-08-08')).toEqual([])
   })
 
   it('keeps identities stable across renames and reordering', () => {
